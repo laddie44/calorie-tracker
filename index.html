@@ -74,24 +74,28 @@
   .log-item {
     display: flex; justify-content: space-between; align-items: center;
     padding: 14px 16px; border-bottom: 0.5px solid var(--border);
+    transition: opacity 0.3s;
   }
   .log-item:last-child { border-bottom: none; }
+  .log-item.deleting { opacity: 0.3; pointer-events: none; }
   .log-left { flex: 1; min-width: 0; }
   .log-food { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .log-macros { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .log-cal { font-size: 15px; font-weight: 600; margin-left: 12px; flex-shrink: 0; }
+  .log-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: 12px; }
+  .log-cal { font-size: 15px; font-weight: 600; }
   .log-cal-unit { font-size: 11px; font-weight: 400; color: var(--text3); }
+  .delete-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: transparent; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3); transition: all 0.15s; flex-shrink: 0;
+  }
+  .delete-btn:active { background: #ffe5e5; color: #ff3b30; }
+  .delete-btn svg { width: 14px; height: 14px; }
   .empty-state { padding: 40px 24px; text-align: center; }
   .empty-icon { font-size: 32px; margin-bottom: 12px; }
   .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
   .empty-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
-  .streak-card { background: var(--bg2); border-radius: var(--radius); padding: 20px; display: flex; align-items: center; justify-content: space-between; }
-  .streak-num { font-size: 42px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
-  .streak-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
-  .streak-dots { display: flex; gap: 6px; margin-top: 12px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg3); }
-  .dot.active { background: var(--text); }
-  .streak-icon { font-size: 44px; line-height: 1; }
   .sms-cta { background: var(--bg2); border-radius: var(--radius); padding: 20px; text-align: center; }
   .sms-number { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
   .sms-label { font-size: 13px; color: var(--text2); }
@@ -102,6 +106,15 @@
   .no-phone-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
   .no-phone-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
   .no-phone-number { font-size: 22px; font-weight: 700; margin-top: 20px; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff; padding: 12px 20px; border-radius: 100px;
+    font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -124,9 +137,15 @@
 <main id="main-content">
   <div class="loading-state"><div class="spinner"></div>Loading your day...</div>
 </main>
+<div class="toast" id="toast"></div>
+
 <script>
 const TOKEN = 'patEiyxoH237fBgX6.a451d770b4ba97c24a7e5f949c1ab7fa4a09e162f7f1906f3808a80d7d2c4f76';
 const BASE = 'app6vFHfJflNKS7RN';
+
+let currentRecords = [];
+let currentTotals = {};
+let currentGoals = {};
 
 function getPhone() {
   const p = new URLSearchParams(window.location.search).get('phone') || '';
@@ -152,6 +171,13 @@ function isToday(t) {
   return n.getFullYear() === d.getFullYear() && n.getMonth() === d.getMonth() && n.getDate() === d.getDate();
 }
 
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
 async function airtableFetch(table, formula) {
   const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?filterByFormula=${encodeURIComponent(formula)}&pageSize=100`;
   const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
@@ -159,13 +185,40 @@ async function airtableFetch(table, formula) {
   return (await r.json()).records;
 }
 
+async function deleteRecord(recordId) {
+  const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent('Food Logs')}/${recordId}`;
+  const r = await fetch(url, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${TOKEN}` }
+  });
+  if (!r.ok) throw new Error('Delete failed');
+}
+
+async function handleDelete(recordId, itemEl) {
+  if (!confirm('Delete this entry?')) return;
+  itemEl.classList.add('deleting');
+  try {
+    await deleteRecord(recordId);
+    itemEl.remove();
+    showToast('Entry deleted ✓');
+    loadData();
+  } catch (e) {
+    itemEl.classList.remove('deleting');
+    showToast('Could not delete — try again');
+  }
+}
+
 function ring(pct) {
   const r = 40, c = 2 * Math.PI * r, d = c * Math.min(pct / 100, 1);
-  return `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-dasharray="${d} ${c - d}" stroke-linecap="round"/></svg>`;
+  return `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-dasharray="${d} ${c-d}" stroke-linecap="round"/></svg>`;
 }
 
 function bar(pct, color) {
   return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
+}
+
+function trashIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>`;
 }
 
 function render(records, totals, goals, name) {
@@ -174,7 +227,19 @@ function render(records, totals, goals, name) {
 
   const logHTML = records.length === 0
     ? `<div class="empty-state"><div class="empty-icon">🍽</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals to the number below and they'll appear here.</div></div>`
-    : records.map(r => `<div class="log-item"><div class="log-left"><div class="log-food">${r.fields['Food Description'] || 'Food item'}</div><div class="log-macros">${r.fields['Protein (g)'] || 0}g P · ${r.fields['Carbs (g)'] || 0}g C · ${r.fields['Fat (g)'] || 0}g F</div></div><div class="log-cal">${r.fields['Calories'] || 0}<span class="log-cal-unit"> cal</span></div></div>`).join('');
+    : records.map(r => `
+        <div class="log-item" id="record-${r.id}">
+          <div class="log-left">
+            <div class="log-food">${r.fields['Food Description'] || 'Food item'}</div>
+            <div class="log-macros">${r.fields['Protein (g)'] || 0}g P · ${r.fields['Carbs (g)'] || 0}g C · ${r.fields['Fat (g)'] || 0}g F</div>
+          </div>
+          <div class="log-right">
+            <div class="log-cal">${r.fields['Calories'] || 0}<span class="log-cal-unit"> cal</span></div>
+            <button class="delete-btn" onclick="handleDelete('${r.id}', document.getElementById('record-${r.id}'))" aria-label="Delete entry">
+              ${trashIcon()}
+            </button>
+          </div>
+        </div>`).join('');
 
   document.getElementById('username').textContent = name || 'Macro';
   document.getElementById('main-content').innerHTML = `
@@ -196,6 +261,7 @@ function render(records, totals, goals, name) {
         </div>
       </div>
     </div>
+
     <div class="section" style="padding-top:24px">
       <div class="section-label">Macros</div>
       <div class="macro-grid">
@@ -204,10 +270,12 @@ function render(records, totals, goals, name) {
         <div class="macro-card"><div class="macro-header"><div class="macro-name">Fat</div><div class="macro-val">${totals.fat}g / ${goals.fat}g</div></div>${bar(Math.round((totals.fat/goals.fat)*100),'#aaa')}</div>
       </div>
     </div>
+
     <div class="section" style="padding-top:24px">
       <div class="section-label">Today's log</div>
       <div class="log-list">${logHTML}</div>
     </div>
+
     <div class="section" style="padding-top:24px">
       <div class="section-label">Log a meal</div>
       <div class="sms-cta"><div class="sms-number">+1 (647) 424-4438</div><div class="sms-label">Text this number to log any meal instantly</div></div>
@@ -255,7 +323,7 @@ async function loadData() {
 
     render(todayLogs, totals, goals, name);
 
-  } catch (e) {
+  } catch(e) {
     document.getElementById('main-content').innerHTML = `<div class="loading-state"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div><div style="font-size:14px">Check your connection and try refreshing.</div></div>`;
   }
 
