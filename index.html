@@ -9,429 +9,108 @@
 <title>Macro</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
   :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f7;
-    --bg3: #ebebed;
-    --text: #000000;
-    --text2: #6e6e73;
-    --text3: #aeaeb2;
-    --border: rgba(0,0,0,0.08);
-    --accent: #000000;
-    --green: #34c759;
-    --radius: 18px;
+    --bg: #ffffff; --bg2: #f5f5f7; --bg3: #ebebed;
+    --text: #000000; --text2: #6e6e73; --text3: #aeaeb2;
+    --border: rgba(0,0,0,0.08); --radius: 18px;
   }
-
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    max-width: 430px;
-    margin: 0 auto;
-    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; max-width: 430px; margin: 0 auto; overflow-x: hidden;
   }
-
   .safe-top { height: env(safe-area-inset-top, 44px); background: var(--bg); }
-
   header {
-    padding: 12px 24px 20px;
-    background: var(--bg);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    padding: 12px 24px 20px; background: var(--bg);
+    position: sticky; top: 0; z-index: 100;
     border-bottom: 0.5px solid var(--border);
   }
-
-  .header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .greeting {
-    font-size: 13px;
-    color: var(--text2);
-    font-weight: 400;
-    margin-bottom: 2px;
-    letter-spacing: -0.1px;
-  }
-
-  .name {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.8px;
-    line-height: 1.1;
-  }
-
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .greeting { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
+  .name { font-size: 28px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; }
   .date-pill {
-    margin-top: 10px;
-    display: inline-block;
-    background: var(--bg2);
-    border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 12px;
-    color: var(--text2);
-    font-weight: 400;
-    letter-spacing: -0.1px;
+    margin-top: 10px; display: inline-block; background: var(--bg2);
+    border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2);
   }
-
   .refresh-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--bg2);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 4px;
-    transition: background 0.15s;
+    width: 36px; height: 36px; border-radius: 50%; background: var(--bg2);
+    border: none; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; margin-top: 4px;
   }
-
-  .refresh-btn:active { background: var(--bg3); }
-
-  .refresh-btn svg {
-    width: 16px;
-    height: 16px;
-    color: var(--text2);
-  }
-
+  .refresh-btn svg { width: 16px; height: 16px; color: var(--text2); }
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
   main { padding: 0 0 40px; }
-
   .section { padding: 24px 24px 0; }
-
   .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 14px;
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px;
   }
-
-  .calorie-card {
-    background: var(--text);
-    border-radius: var(--radius);
-    padding: 24px;
-    color: #fff;
-    margin-bottom: 0;
-  }
-
-  .calorie-top {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-
-  .ring-wrap {
-    position: relative;
-    width: 96px;
-    height: 96px;
-    flex-shrink: 0;
-  }
-
+  .calorie-card { background: var(--text); border-radius: var(--radius); padding: 24px; color: #fff; }
+  .calorie-top { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+  .ring-wrap { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
   .ring-wrap svg { transform: rotate(-90deg); }
-
-  .ring-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-  }
-
-  .ring-pct {
-    font-size: 20px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1;
-    letter-spacing: -0.5px;
-  }
-
-  .ring-sub {
-    font-size: 10px;
-    color: rgba(255,255,255,0.5);
-    margin-top: 2px;
-    font-weight: 400;
-  }
-
+  .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .ring-pct { font-size: 20px; font-weight: 700; color: #fff; line-height: 1; }
+  .ring-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
   .cal-info { flex: 1; }
-
-  .cal-label {
-    font-size: 12px;
-    color: rgba(255,255,255,0.55);
-    margin-bottom: 4px;
-    font-weight: 400;
-  }
-
-  .cal-remain {
-    font-size: 36px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1;
-    letter-spacing: -1.5px;
-  }
-
-  .cal-unit {
-    font-size: 14px;
-    font-weight: 400;
-    color: rgba(255,255,255,0.6);
-    margin-left: 2px;
-  }
-
-  .cal-meta {
-    font-size: 12px;
-    color: rgba(255,255,255,0.45);
-    margin-top: 6px;
-    font-weight: 400;
-  }
-
-  .cal-divider {
-    height: 0.5px;
-    background: rgba(255,255,255,0.12);
-    margin-bottom: 16px;
-  }
-
-  .cal-stats {
-    display: flex;
-    justify-content: space-between;
-  }
-
+  .cal-label { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 4px; }
+  .cal-remain { font-size: 36px; font-weight: 700; color: #fff; line-height: 1; letter-spacing: -1.5px; }
+  .cal-unit { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.6); margin-left: 2px; }
+  .cal-meta { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 6px; }
+  .cal-divider { height: 0.5px; background: rgba(255,255,255,0.12); margin-bottom: 16px; }
+  .cal-stats { display: flex; justify-content: space-between; }
   .cal-stat { text-align: center; }
-
-  .cal-stat-num {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: -0.5px;
-  }
-
-  .cal-stat-label {
-    font-size: 11px;
-    color: rgba(255,255,255,0.45);
-    margin-top: 2px;
-    font-weight: 400;
-  }
-
-  .macro-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .macro-card {
-    background: var(--bg2);
-    border-radius: 14px;
-    padding: 16px;
-  }
-
-  .macro-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 10px;
-  }
-
-  .macro-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    letter-spacing: -0.2px;
-  }
-
-  .macro-val {
-    font-size: 13px;
-    color: var(--text2);
-    font-weight: 400;
-  }
-
-  .macro-bar-bg {
-    height: 6px;
-    background: var(--bg3);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .macro-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-  }
-
-  .log-list {
-    background: var(--bg2);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
+  .cal-stat-num { font-size: 18px; font-weight: 600; color: #fff; }
+  .cal-stat-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+  .macro-grid { display: flex; flex-direction: column; gap: 12px; }
+  .macro-card { background: var(--bg2); border-radius: 14px; padding: 16px; }
+  .macro-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .macro-name { font-size: 14px; font-weight: 500; }
+  .macro-val { font-size: 13px; color: var(--text2); }
+  .macro-bar-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .macro-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .log-list { background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
   .log-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-    background: var(--bg2);
-    border-bottom: 0.5px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; border-bottom: 0.5px solid var(--border);
   }
-
   .log-item:last-child { border-bottom: none; }
-
   .log-left { flex: 1; min-width: 0; }
-
-  .log-food {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    letter-spacing: -0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .log-macros {
-    font-size: 12px;
-    color: var(--text3);
-    margin-top: 2px;
-    font-weight: 400;
-  }
-
-  .log-cal {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.3px;
-    margin-left: 12px;
-    flex-shrink: 0;
-  }
-
-  .log-cal-unit {
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--text3);
-  }
-
-  .empty-state {
-    padding: 40px 24px;
-    text-align: center;
-  }
-
-  .empty-icon {
-    font-size: 32px;
-    margin-bottom: 12px;
-  }
-
-  .empty-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 6px;
-    letter-spacing: -0.3px;
-  }
-
-  .empty-sub {
-    font-size: 14px;
-    color: var(--text2);
-    line-height: 1.5;
-  }
-
-  .streak-card {
-    background: var(--bg2);
-    border-radius: var(--radius);
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .streak-num {
-    font-size: 42px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -2px;
-    line-height: 1;
-  }
-
-  .streak-label {
-    font-size: 13px;
-    color: var(--text2);
-    margin-top: 4px;
-    font-weight: 400;
-  }
-
-  .streak-dots {
-    display: flex;
-    gap: 6px;
-    margin-top: 12px;
-  }
-
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--bg3);
-  }
-
+  .log-food { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-macros { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .log-cal { font-size: 15px; font-weight: 600; margin-left: 12px; flex-shrink: 0; }
+  .log-cal-unit { font-size: 11px; font-weight: 400; color: var(--text3); }
+  .empty-state { padding: 40px 24px; text-align: center; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .empty-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
+  .streak-card { background: var(--bg2); border-radius: var(--radius); padding: 20px; display: flex; align-items: center; justify-content: space-between; }
+  .streak-num { font-size: 42px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
+  .streak-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .streak-dots { display: flex; gap: 6px; margin-top: 12px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg3); }
   .dot.active { background: var(--text); }
-
-  .streak-icon {
-    font-size: 44px;
-    line-height: 1;
-  }
-
-  .loading-state {
-    padding: 60px 24px;
-    text-align: center;
-    color: var(--text2);
-    font-size: 14px;
-  }
-
-  .spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid var(--bg3);
-    border-top-color: var(--text);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 16px;
-  }
-
-  .sms-cta {
-    background: var(--bg2);
-    border-radius: var(--radius);
-    padding: 20px;
-    text-align: center;
-  }
-
-  .sms-number {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
-  }
-
-  .sms-label {
-    font-size: 13px;
-    color: var(--text2);
-  }
+  .streak-icon { font-size: 44px; line-height: 1; }
+  .sms-cta { background: var(--bg2); border-radius: var(--radius); padding: 20px; text-align: center; }
+  .sms-number { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .sms-label { font-size: 13px; color: var(--text2); }
+  .loading-state { padding: 60px 24px; text-align: center; color: var(--text2); font-size: 14px; }
+  .spinner { width: 24px; height: 24px; border: 2px solid var(--bg3); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  .no-phone { padding: 60px 24px; text-align: center; }
+  .no-phone-icon { font-size: 48px; margin-bottom: 16px; }
+  .no-phone-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .no-phone-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .no-phone-number { font-size: 22px; font-weight: 700; margin-top: 20px; }
 </style>
 </head>
 <body>
-
 <div class="safe-top"></div>
-
 <header>
   <div class="header-row">
     <div>
       <div class="greeting" id="greeting">Good morning</div>
-      <div class="name">Macro</div>
+      <div class="name" id="username">Macro</div>
     </div>
     <button class="refresh-btn" onclick="loadData()" id="refresh-btn" aria-label="Refresh">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -442,218 +121,149 @@
   </div>
   <div class="date-pill" id="date-pill">Today</div>
 </header>
-
 <main id="main-content">
-  <div class="loading-state">
-    <div class="spinner"></div>
-    Loading your day...
-  </div>
+  <div class="loading-state"><div class="spinner"></div>Loading your day...</div>
 </main>
-
 <script>
-const AIRTABLE_TOKEN = 'patEiyxoH237fBgX6.a451d770b4ba97c24a7e5f949c1ab7fa4a09e162f7f1906f3808a80d7d2c4f76';
-const BASE_ID = 'app6vFHfJflNKS7RN';
-const FOOD_LOGS_TABLE = 'Food Logs';
+const TOKEN = 'patEiyxoH237fBgX6.a451d770b4ba97c24a7e5f949c1ab7fa4a09e162f7f1906f3808a80d7d2c4f76';
+const BASE = 'app6vFHfJflNKS7RN';
 
-const DAILY_GOALS = {
-  calories: 2100,
-  protein: 150,
-  carbs: 200,
-  fat: 70
-};
+function getPhone() {
+  const p = new URLSearchParams(window.location.search).get('phone') || '';
+  return p.replace(/\D/g, '');
+}
+
+function phoneWithPlus(p) {
+  return p.startsWith('+') ? p : '+' + p;
+}
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
 function formatDate() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-function getTodayDateString() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+function isToday(t) {
+  if (!t) return false;
+  const n = new Date(), d = new Date(t);
+  return n.getFullYear() === d.getFullYear() && n.getMonth() === d.getMonth() && n.getDate() === d.getDate();
 }
 
-function isToday(createdTime) {
-  if (!createdTime) return false;
-  const recordDate = new Date(createdTime).toISOString().slice(0,10);
-  return recordDate === getTodayDateString();
-}
-
-async function fetchFoodLogs() {
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(FOOD_LOGS_TABLE)}?sort[0][field]=Created&sort[0][direction]=desc&pageSize=100`;
-  const res = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
-  });
-  if (!res.ok) throw new Error('Failed to fetch');
-  const data = await res.json();
-  return data.records.filter(r => isToday(r.createdTime));
-}
-
-function calcTotals(records) {
-  return records.reduce((acc, r) => {
-    acc.calories += Number(r.fields['Calories'] || 0);
-    acc.protein += Number(r.fields['Protein (g)'] || 0);
-    acc.carbs += Number(r.fields['Carbs (g)'] || 0);
-    acc.fat += Number(r.fields['Fat (g)'] || 0);
-    return acc;
-  }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-}
-
-function macroBar(pct, color) {
-  const w = Math.min(pct, 100);
-  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${w}%;background:${color}"></div></div>`;
+async function airtableFetch(table, formula) {
+  const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?filterByFormula=${encodeURIComponent(formula)}&pageSize=100`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
+  if (!r.ok) throw new Error('Airtable error ' + r.status);
+  return (await r.json()).records;
 }
 
 function ring(pct) {
-  const r = 40;
-  const circ = 2 * Math.PI * r;
-  const dash = circ * Math.min(pct / 100, 1);
-  const gap = circ - dash;
-  return `<svg width="96" height="96" viewBox="0 0 96 96">
-    <circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/>
-    <circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8"
-      stroke-dasharray="${dash} ${gap}" stroke-linecap="round"/>
-  </svg>`;
+  const r = 40, c = 2 * Math.PI * r, d = c * Math.min(pct / 100, 1);
+  return `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-dasharray="${d} ${c - d}" stroke-linecap="round"/></svg>`;
 }
 
-function renderDashboard(records, totals) {
-  const calPct = Math.round((totals.calories / DAILY_GOALS.calories) * 100);
-  const remain = Math.max(DAILY_GOALS.calories - totals.calories, 0);
-  const proteinPct = Math.round((totals.protein / DAILY_GOALS.protein) * 100);
-  const carbsPct = Math.round((totals.carbs / DAILY_GOALS.carbs) * 100);
-  const fatPct = Math.round((totals.fat / DAILY_GOALS.fat) * 100);
+function bar(pct, color) {
+  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
+}
+
+function render(records, totals, goals, name) {
+  const calPct = Math.round((totals.calories / goals.calories) * 100);
+  const remain = Math.max(goals.calories - totals.calories, 0);
 
   const logHTML = records.length === 0
-    ? `<div class="empty-state">
-        <div class="empty-icon">🍽</div>
-        <div class="empty-title">Nothing logged yet</div>
-        <div class="empty-sub">Text your meals to log them and they'll appear here.</div>
-       </div>`
-    : records.map(r => `
-        <div class="log-item">
-          <div class="log-left">
-            <div class="log-food">${r.fields['Food Description'] || 'Food item'}</div>
-            <div class="log-macros">${r.fields['Protein (g)'] || 0}g P · ${r.fields['Carbs (g)'] || 0}g C · ${r.fields['Fat (g)'] || 0}g F</div>
-          </div>
-          <div class="log-cal">${r.fields['Calories'] || 0}<span class="log-cal-unit"> cal</span></div>
-        </div>`).join('');
+    ? `<div class="empty-state"><div class="empty-icon">🍽</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals to the number below and they'll appear here.</div></div>`
+    : records.map(r => `<div class="log-item"><div class="log-left"><div class="log-food">${r.fields['Food Description'] || 'Food item'}</div><div class="log-macros">${r.fields['Protein (g)'] || 0}g P · ${r.fields['Carbs (g)'] || 0}g C · ${r.fields['Fat (g)'] || 0}g F</div></div><div class="log-cal">${r.fields['Calories'] || 0}<span class="log-cal-unit"> cal</span></div></div>`).join('');
 
-  const streakDots = Array.from({length: 7}, (_,i) => `<div class="dot active"></div>`).join('');
-
+  document.getElementById('username').textContent = name || 'Macro';
   document.getElementById('main-content').innerHTML = `
-
     <div class="section">
       <div class="calorie-card">
         <div class="calorie-top">
-          <div class="ring-wrap">
-            ${ring(calPct)}
-            <div class="ring-center">
-              <div class="ring-pct">${calPct}%</div>
-              <div class="ring-sub">of goal</div>
-            </div>
-          </div>
+          <div class="ring-wrap">${ring(calPct)}<div class="ring-center"><div class="ring-pct">${calPct}%</div><div class="ring-sub">of goal</div></div></div>
           <div class="cal-info">
             <div class="cal-label">Calories remaining</div>
             <div class="cal-remain">${remain.toLocaleString()}<span class="cal-unit">cal</span></div>
-            <div class="cal-meta">${totals.calories.toLocaleString()} eaten · ${DAILY_GOALS.calories.toLocaleString()} goal</div>
+            <div class="cal-meta">${totals.calories.toLocaleString()} eaten · ${goals.calories.toLocaleString()} goal</div>
           </div>
         </div>
         <div class="cal-divider"></div>
         <div class="cal-stats">
-          <div class="cal-stat">
-            <div class="cal-stat-num">${totals.calories.toLocaleString()}</div>
-            <div class="cal-stat-label">Eaten</div>
-          </div>
-          <div class="cal-stat">
-            <div class="cal-stat-num">${remain.toLocaleString()}</div>
-            <div class="cal-stat-label">Remaining</div>
-          </div>
-          <div class="cal-stat">
-            <div class="cal-stat-num">${DAILY_GOALS.calories.toLocaleString()}</div>
-            <div class="cal-stat-label">Goal</div>
-          </div>
+          <div class="cal-stat"><div class="cal-stat-num">${totals.calories.toLocaleString()}</div><div class="cal-stat-label">Eaten</div></div>
+          <div class="cal-stat"><div class="cal-stat-num">${remain.toLocaleString()}</div><div class="cal-stat-label">Remaining</div></div>
+          <div class="cal-stat"><div class="cal-stat-num">${goals.calories.toLocaleString()}</div><div class="cal-stat-label">Goal</div></div>
         </div>
       </div>
     </div>
-
     <div class="section" style="padding-top:24px">
       <div class="section-label">Macros</div>
       <div class="macro-grid">
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">Protein</div>
-            <div class="macro-val">${totals.protein}g / ${DAILY_GOALS.protein}g</div>
-          </div>
-          ${macroBar(proteinPct, '#000')}
-        </div>
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">Carbs</div>
-            <div class="macro-val">${totals.carbs}g / ${DAILY_GOALS.carbs}g</div>
-          </div>
-          ${macroBar(carbsPct, '#555')}
-        </div>
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">Fat</div>
-            <div class="macro-val">${totals.fat}g / ${DAILY_GOALS.fat}g</div>
-          </div>
-          ${macroBar(fatPct, '#aaa')}
-        </div>
+        <div class="macro-card"><div class="macro-header"><div class="macro-name">Protein</div><div class="macro-val">${totals.protein}g / ${goals.protein}g</div></div>${bar(Math.round((totals.protein/goals.protein)*100),'#000')}</div>
+        <div class="macro-card"><div class="macro-header"><div class="macro-name">Carbs</div><div class="macro-val">${totals.carbs}g / ${goals.carbs}g</div></div>${bar(Math.round((totals.carbs/goals.carbs)*100),'#555')}</div>
+        <div class="macro-card"><div class="macro-header"><div class="macro-name">Fat</div><div class="macro-val">${totals.fat}g / ${goals.fat}g</div></div>${bar(Math.round((totals.fat/goals.fat)*100),'#aaa')}</div>
       </div>
     </div>
-
     <div class="section" style="padding-top:24px">
       <div class="section-label">Today's log</div>
       <div class="log-list">${logHTML}</div>
     </div>
-
     <div class="section" style="padding-top:24px">
       <div class="section-label">Streak</div>
       <div class="streak-card">
-        <div>
-          <div class="streak-num">7</div>
-          <div class="streak-label">day streak</div>
-          <div class="streak-dots">${streakDots}</div>
-        </div>
+        <div><div class="streak-num">7</div><div class="streak-label">day streak</div><div class="streak-dots">${Array(7).fill('<div class="dot active"></div>').join('')}</div></div>
         <div class="streak-icon">🔥</div>
       </div>
     </div>
-
     <div class="section" style="padding-top:24px">
       <div class="section-label">Log a meal</div>
-      <div class="sms-cta">
-        <div class="sms-number">+1 (320) 431-8546</div>
-        <div class="sms-label">Text this number to log any meal instantly</div>
-      </div>
-    </div>
-
-  `;
+      <div class="sms-cta"><div class="sms-number">+1 (647) 424-4438</div><div class="sms-label">Text this number to log any meal instantly</div></div>
+    </div>`;
 }
 
 async function loadData() {
   const btn = document.getElementById('refresh-btn');
   btn.querySelector('svg').classList.add('spin');
-
   document.getElementById('greeting').textContent = getGreeting();
   document.getElementById('date-pill').textContent = formatDate();
 
+  const phone = getPhone();
+
+  if (!phone) {
+    document.getElementById('main-content').innerHTML = `<div class="no-phone"><div class="no-phone-icon">👋</div><div class="no-phone-title">Welcome to Macro</div><div class="no-phone-sub">Text the number below to get started. You'll receive your personal dashboard link after setup.</div><div class="no-phone-number">+1 (647) 424-4438</div></div>`;
+    btn.querySelector('svg').classList.remove('spin');
+    return;
+  }
+
   try {
-    const records = await fetchFoodLogs();
-    const totals = calcTotals(records);
-    renderDashboard(records, totals);
+    const formattedPhone = phoneWithPlus(phone);
+    const [userRecords, logRecords] = await Promise.all([
+      airtableFetch('Users', `{Phone} = "${formattedPhone}"`),
+      airtableFetch('Food Logs', `{User Phone} = "${formattedPhone}"`)
+    ]);
+
+    const user = userRecords[0];
+    const todayLogs = logRecords.filter(r => isToday(r.createdTime));
+    const name = user?.fields['Name']?.split(' ')[0] || '';
+
+    const goals = {
+      calories: user?.fields['Daily Calorie Target'] || 2000,
+      protein: user?.fields['Daily Protein Target'] || 150,
+      carbs: user?.fields['Daily Carb Target'] || 200,
+      fat: user?.fields['Daily Fat Target'] || 65
+    };
+
+    const totals = todayLogs.reduce((a, r) => ({
+      calories: a.calories + Number(r.fields['Calories'] || 0),
+      protein: a.protein + Number(r.fields['Protein (g)'] || 0),
+      carbs: a.carbs + Number(r.fields['Carbs (g)'] || 0),
+      fat: a.fat + Number(r.fields['Fat (g)'] || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+    render(todayLogs, totals, goals, name);
+
   } catch (e) {
-    document.getElementById('main-content').innerHTML = `
-      <div class="loading-state">
-        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
-        <div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div>
-        <div style="font-size:14px">Check your connection and try refreshing.</div>
-      </div>`;
+    document.getElementById('main-content').innerHTML = `<div class="loading-state"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div><div style="font-size:14px">Check your connection and try refreshing.</div></div>`;
   }
 
   btn.querySelector('svg').classList.remove('spin');
