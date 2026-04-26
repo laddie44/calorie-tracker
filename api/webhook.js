@@ -1,18 +1,18 @@
 // ============================================================
 // api/webhook.js — The brain of Macro
-// Receives every SMS from Twilio, handles onboarding + logging
+// Receives every SMS/MMS from Twilio, handles onboarding + logging
 // ============================================================
 
-const { supabase }      = require('../lib/supabase');
+const { supabase }        = require('../lib/supabase');
 const { calculateMacros } = require('../lib/macros');
-const { OpenAI }        = require('openai');
+const { OpenAI }          = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function generateToken(len = 8) {
-  const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; // no ambiguous chars (0/O, l/I)
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
   return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
@@ -39,11 +39,48 @@ async function getHistory(phone, limit = 16) {
     .eq('user_phone', phone)
     .order('created_at', { ascending: false })
     .limit(limit);
-  return (data || []).reverse(); // return in chronological order
+  return (data || []).reverse();
 }
 
 async function saveMessage(phone, role, content) {
   await supabase.from('conversation_history').insert({ user_phone: phone, role, content });
+}
+
+// Shared streak update — used by text and photo logging
+async function updateStreak(phone, user) {
+  const today     = todayToronto();
+  const yesterday = yesterdayToronto();
+  if (user.last_log_date !== today) {
+    const streak = user.last_log_date === yesterday ? (user.streak || 0) + 1 : 1;
+    await supabase.from('users').update({ streak, last_log_date: today }).eq('phone', phone);
+  }
+}
+
+// Shared food save — used by text and photo logging
+async function saveFoodLog(phone, log) {
+  await supabase.from('food_logs').insert({
+    user_phone:       phone,
+    food_description: String(log.description).slice(0, 200),
+    calories:         Math.round(Number(log.calories)),
+    protein_g:        Math.round(Number(log.protein_g) * 10) / 10,
+    carbs_g:          Math.round(Number(log.carbs_g)   * 10) / 10,
+    fat_g:            Math.round(Number(log.fat_g)     * 10) / 10
+  });
+}
+
+// Parse LOG:{...} from AI reply — returns object or null
+function parseLogLine(reply) {
+  const logIdx = reply.indexOf('LOG:');
+  if (logIdx === -1) return null;
+  try {
+    const jsonStart = reply.indexOf('{', logIdx);
+    const lineEnd   = reply.indexOf('\n', logIdx);
+    const jsonStr   = reply.slice(jsonStart, lineEnd !== -1 ? lineEnd : undefined);
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    console.error('LOG parse error:', e, '| reply:', reply);
+    return null;
+  }
 }
 
 // ── Onboarding (AI-driven) ────────────────────────────────────────────────────
@@ -97,7 +134,6 @@ async function handleOnboarding(phone, message, isNewUser) {
 
   const reply = completion.choices[0].message.content.trim();
 
-  // Check if AI has collected everything
   const profileIdx = reply.indexOf('PROFILE_COMPLETE:');
   if (profileIdx !== -1) {
     try {
@@ -105,18 +141,15 @@ async function handleOnboarding(phone, message, isNewUser) {
       const jsonEnd   = reply.lastIndexOf('}') + 1;
       const p = JSON.parse(reply.slice(jsonStart, jsonEnd));
 
-      // Validate all required fields exist
       const required = ['name', 'gender', 'goal', 'weight', 'height', 'age', 'activity_level', 'units'];
-      const missing = required.filter(k => p[k] === undefined || p[k] === null || p[k] === '');
+      const missing  = required.filter(k => p[k] === undefined || p[k] === null || p[k] === '');
       if (missing.length > 0) throw new Error(`Missing fields: ${missing.join(', ')}`);
 
-      // Calculate macros in code — no AI arithmetic
       const macros = calculateMacros({
         gender: p.gender, weight: p.weight, height: p.height,
         age: p.age, activityLevel: p.activity_level, goal: p.goal, units: p.units
       });
 
-      // Generate unique dashboard token
       let token;
       for (let i = 0; i < 10; i++) {
         const t = generateToken();
@@ -125,19 +158,15 @@ async function handleOnboarding(phone, message, isNewUser) {
         if (!existing) { token = t; break; }
       }
 
-      // Save completed profile
       await supabase.from('users').update({
-        name: p.name,
-        gender: p.gender,
-        goal: p.goal,
-        activity_level: p.activity_level,
-        units: p.units,
+        name: p.name, gender: p.gender, goal: p.goal,
+        activity_level: p.activity_level, units: p.units,
         daily_calorie_target: macros.calories,
         daily_protein_target: macros.protein,
         daily_carb_target:    macros.carbs,
         daily_fat_target:     macros.fat,
-        setup_status:  'complete',
-        setup_temp:    {},
+        setup_status:    'complete',
+        setup_temp:      {},
         dashboard_token: token
       }).eq('phone', phone);
 
@@ -145,7 +174,7 @@ async function handleOnboarding(phone, message, isNewUser) {
       const goalLabel  = goalLabels[p.goal] || p.goal;
       const dashUrl    = `https://calorie-tracker-chi-plum.vercel.app?u=${token}`;
 
-      const confirm = `You're all set, ${p.name}! 🎯\n\nYour ${goalLabel} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nText me any meal to start tracking!`;
+      const confirm = `You're all set, ${p.name}! 🎯\n\nYour ${goalLabel} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nText me any meal — or send a photo of your food!`;
       await saveMessage(phone, 'assistant', confirm);
       return confirm;
 
@@ -161,7 +190,94 @@ async function handleOnboarding(phone, message, isNewUser) {
   return reply;
 }
 
-// ── Food Logging (AI-driven) ──────────────────────────────────────────────────
+// ── Photo Meal Scanning ───────────────────────────────────────────────────────
+
+const PHOTO_PROMPT = `You are Macro, a nutrition tracking assistant analyzing a food photo sent via SMS.
+
+Identify everything visible and estimate total calories and macros for the whole meal.
+
+Guidelines:
+- Use visible portion sizes to estimate quantities
+- Consider ALL items in the image (sides, drinks, sauces)
+- Lean slightly toward overestimating — photos hide oil, butter, hidden calories
+- Restaurant meals: use known nutrition data when you can identify the dish/chain
+- If the image clearly contains no food, say so briefly — no LOG line
+
+Write one short sentence describing what you see, then on the next line output:
+LOG:{"description":"Short 1-3 word name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+
+If you cannot identify food in the image, just respond normally with no LOG line.`;
+
+async function handlePhotoLog(phone, body, user) {
+  const mediaUrl    = body.MediaUrl0;
+  const contentType = (body.MediaContentType0 || 'image/jpeg').toLowerCase();
+  const caption     = (body.Body || '').trim();
+
+  if (!contentType.startsWith('image/')) {
+    return "I can only scan food photos right now — send me a JPG or PNG of your meal!";
+  }
+
+  try {
+    // Fetch image from Twilio with Basic auth
+    const authHeader = 'Basic ' + Buffer.from(
+      `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+    ).toString('base64');
+
+    const imageRes = await fetch(mediaUrl, { headers: { Authorization: authHeader } });
+    if (!imageRes.ok) throw new Error(`Twilio media fetch failed: ${imageRes.status}`);
+
+    const imageBuffer = await imageRes.arrayBuffer();
+    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    const dataUrl     = `data:${contentType};base64,${base64Image}`;
+
+    const userContent = [
+      { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
+      {
+        type: 'text',
+        text: caption
+          ? `I ate this. Extra context: "${caption}". Estimate calories and macros.`
+          : 'Estimate the calories and macros for this meal.'
+      }
+    ];
+
+    // gpt-4o required for Vision — gpt-4o-mini cannot see images
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PHOTO_PROMPT },
+        { role: 'user',   content: userContent }
+      ],
+      max_tokens: 250,
+      temperature: 0.3
+    });
+
+    const reply = completion.choices[0].message.content.trim();
+    const log   = parseLogLine(reply);
+
+    if (log) {
+      await saveFoodLog(phone, log);
+      await updateStreak(phone, user);
+
+      const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
+      const confirm    = `📸 ${textBefore || log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
+
+      await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
+      await saveMessage(phone, 'assistant', confirm);
+      return confirm;
+    }
+
+    // AI couldn't identify food in the image
+    await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+
+  } catch (err) {
+    console.error('Photo log error:', err);
+    return "Couldn't scan that photo — try again, or just text me what you ate!";
+  }
+}
+
+// ── Food Logging (text, AI-driven) ───────────────────────────────────────────
 
 const FOOD_PROMPT = `You are Macro, a no-nonsense nutrition tracking assistant via SMS. Keep ALL replies SHORT.
 
@@ -170,24 +286,22 @@ When a user describes food they ate:
 - If too vague (unknown brand/portion/type) → ask ONE short clarifying question, no LOG line
 - If not food at all → respond helpfully and briefly, no LOG line
 
-LOG format (one line, valid JSON, numbers only — no strings for calories):
+LOG format (one line, valid JSON, numbers only):
 LOG:{"description":"Short 1-3 word name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
 Key guidelines:
 - Use known chain data for restaurant items (Big Mac = 550 cal, etc.)
-- Lean toward slight OVERESTIMATE for restaurant/fast food (they consistently underestimate)
+- Lean toward slight OVERESTIMATE for restaurant/fast food
 - Include drinks and sauces if mentioned
-- Alcohol: 7 cal/gram of ethanol — don't forget these
+- Alcohol: 7 cal/gram of ethanol
 - "Chips" alone is vague. "Lays original small bag" is specific.
-- Your confirmation sentence goes BEFORE the LOG line`;
+- Confirmation sentence goes BEFORE the LOG line`;
 
 async function handleFoodLog(phone, message, user) {
   const lower = message.toLowerCase().trim();
 
-  // ── Built-in commands (handled before AI) ──────────────────────────────────
-
   if (lower === 'help') {
-    return `Macro commands 📋\n\n• Text any food → log it\n• "stats" → today's progress\n• "delete last" → undo last entry\n• "help" → this list\n\nDashboard:\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `Macro commands 📋\n\n• Text any food → log it\n• Send a photo → scan it 📸\n• "stats" → today's progress\n• "delete last" → undo last entry\n• "help" → this list\n\nDashboard:\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
   }
 
   if (lower === 'stats') {
@@ -210,8 +324,9 @@ async function handleFoodLog(phone, message, user) {
     const left = Math.max(user.daily_calorie_target - t.cal, 0);
     const pct  = Math.round((t.cal / user.daily_calorie_target) * 100);
     const bar  = pct >= 90 && pct <= 110 ? '🎯' : pct < 90 ? '📉' : '🔴';
+    const streakLine = user.streak > 1 ? `\n🔥 ${user.streak} day streak` : '';
 
-    return `${bar} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining\n\n${Math.round(t.p)}g P · ${Math.round(t.c)}g C · ${Math.round(t.f)}g F\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `${bar} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining\n\n${Math.round(t.p)}g P · ${Math.round(t.c)}g C · ${Math.round(t.f)}g F${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
   }
 
   if (lower === 'delete last') {
@@ -228,9 +343,8 @@ async function handleFoodLog(phone, message, user) {
     return `Deleted: ${last.food_description} ✓`;
   }
 
-  // ── AI food logging ────────────────────────────────────────────────────────
-
-  const history = await getHistory(phone, 8); // last 8 messages for food context
+  // AI food logging
+  const history = await getHistory(phone, 8);
   await saveMessage(phone, 'user', message);
 
   const completion = await openai.chat.completions.create({
@@ -245,52 +359,21 @@ async function handleFoodLog(phone, message, user) {
   });
 
   const reply = completion.choices[0].message.content.trim();
+  const log   = parseLogLine(reply);
 
-  // Check for LOG command in response
-  const logIdx = reply.indexOf('LOG:');
-  if (logIdx !== -1) {
-    try {
-      const jsonStart = reply.indexOf('{', logIdx);
-      const jsonEnd   = reply.indexOf('\n', logIdx);
-      const jsonStr   = reply.slice(jsonStart, jsonEnd !== -1 ? jsonEnd : undefined);
-      const log = JSON.parse(jsonStr);
+  if (log) {
+    await saveFoodLog(phone, log);
+    await updateStreak(phone, user);
 
-      // Save to food_logs
-      await supabase.from('food_logs').insert({
-        user_phone:       phone,
-        food_description: String(log.description).slice(0, 200),
-        calories:         Math.round(Number(log.calories)),
-        protein_g:        Math.round(Number(log.protein_g) * 10) / 10,
-        carbs_g:          Math.round(Number(log.carbs_g)   * 10) / 10,
-        fat_g:            Math.round(Number(log.fat_g)     * 10) / 10
-      });
+    const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
+    const confirm = textBefore
+      ? `${textBefore}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`
+      : `✓ ${log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
 
-      // Update streak
-      const today     = todayToronto();
-      const yesterday = yesterdayToronto();
-      if (user.last_log_date !== today) {
-        const streak = user.last_log_date === yesterday ? (user.streak || 0) + 1 : 1;
-        await supabase.from('users')
-          .update({ streak, last_log_date: today })
-          .eq('phone', phone);
-      }
-
-      // Build clean confirmation (strip LOG: line from reply, use what's before it)
-      const textBefore = reply.slice(0, logIdx).trim();
-      const confirm = textBefore
-        ? `${textBefore}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`
-        : `✓ ${log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
-
-      await saveMessage(phone, 'assistant', confirm);
-      return confirm;
-
-    } catch (parseErr) {
-      console.error('LOG parse error:', parseErr, '| raw reply:', reply);
-      // Fall through to return raw reply
-    }
+    await saveMessage(phone, 'assistant', confirm);
+    return confirm;
   }
 
-  // No LOG found — clarifying question or non-food reply
   const cleanReply = reply.replace(/LOG:\{[^}]*\}/g, '').trim();
   await saveMessage(phone, 'assistant', cleanReply);
   return cleanReply;
@@ -304,13 +387,11 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/xml');
 
   try {
-    // Parse body — Vercel passes form-encoded body as object or string
     let body = req.body;
     if (typeof body === 'string') {
       body = Object.fromEntries(new URLSearchParams(body));
     }
     if (!body || !body.From) {
-      // Try reading raw body stream
       body = await new Promise((resolve) => {
         let raw = '';
         req.on('data', chunk => { raw += chunk; });
@@ -323,13 +404,6 @@ module.exports = async (req, res) => {
     const numMedia = parseInt(body.NumMedia || '0', 10);
 
     if (!phone) return res.status(400).send(twiml('Error: missing phone number'));
-
-    // MMS photo → polite holding message (Phase 2)
-    if (numMedia > 0 && !message) {
-      return res.send(twiml('Photo logging is coming soon! 📸 For now, text me what you ate and I\'ll log it.'));
-    }
-
-    if (!message) return res.status(200).send(twiml(''));
 
     // Get or create user
     let { data: user } = await supabase
@@ -345,7 +419,23 @@ module.exports = async (req, res) => {
       user = newUser;
     }
 
-    // Route to onboarding or food logging
+    // ── Route the request ────────────────────────────────────────────────────
+
+    // Photo/MMS received
+    if (numMedia > 0) {
+      if (user.setup_status !== 'complete') {
+        // During onboarding, ignore photos and continue conversation
+        const reply = await handleOnboarding(phone, message || 'hi', isNewUser);
+        return res.send(twiml(reply));
+      }
+      const photoReply = await handlePhotoLog(phone, body, user);
+      return res.send(twiml(photoReply));
+    }
+
+    // No content at all
+    if (!message) return res.status(200).send(twiml(''));
+
+    // Text message
     const reply = user.setup_status !== 'complete'
       ? await handleOnboarding(phone, message, isNewUser)
       : await handleFoodLog(phone, message, user);
