@@ -101,13 +101,11 @@
   .sms-label { font-size: 13px; color: var(--text2); }
   .loading-state { padding: 60px 24px; text-align: center; color: var(--text2); font-size: 14px; }
   .spinner { width: 24px; height: 24px; border: 2px solid var(--bg3); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  .no-phone { padding: 60px 24px; text-align: center; }
-  .no-phone-icon { font-size: 48px; margin-bottom: 16px; }
-  .no-phone-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
-  .no-phone-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
-  .no-phone-number { font-size: 22px; font-weight: 700; margin-top: 20px; }
-
-  /* Toast notification */
+  .no-token { padding: 60px 24px; text-align: center; }
+  .no-token-icon { font-size: 48px; margin-bottom: 16px; }
+  .no-token-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .no-token-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .no-token-number { font-size: 22px; font-weight: 700; margin-top: 20px; }
   .toast {
     position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--text); color: #fff; padding: 12px 20px; border-radius: 100px;
@@ -140,20 +138,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const TOKEN = 'patEiyxoH237fBgX6.a451d770b4ba97c24a7e5f949c1ab7fa4a09e162f7f1906f3808a80d7d2c4f76';
-const BASE = 'app6vFHfJflNKS7RN';
-
-let currentRecords = [];
-let currentTotals = {};
-let currentGoals = {};
-
-function getPhone() {
-  const p = new URLSearchParams(window.location.search).get('phone') || '';
-  return p.replace(/\D/g, '');
-}
-
-function phoneWithPlus(p) {
-  return p.startsWith('+') ? p : '+' + p;
+// ── Get the user token from URL (?u=TOKEN) ────────────────────────────────────
+function getToken() {
+  return new URLSearchParams(window.location.search).get('u') || '';
 }
 
 function getGreeting() {
@@ -165,12 +152,6 @@ function formatDate() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-function isToday(t) {
-  if (!t) return false;
-  const n = new Date(), d = new Date(t);
-  return n.getFullYear() === d.getFullYear() && n.getMonth() === d.getMonth() && n.getDate() === d.getDate();
-}
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -178,86 +159,121 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-async function airtableFetch(table, formula) {
-  const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?filterByFormula=${encodeURIComponent(formula)}&pageSize=100`;
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
-  if (!r.ok) throw new Error('Airtable error ' + r.status);
-  return (await r.json()).records;
-}
-
-async function deleteRecord(recordId) {
-  const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent('Food Logs')}/${recordId}`;
-  const r = await fetch(url, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${TOKEN}` }
-  });
-  if (!r.ok) throw new Error('Delete failed');
-}
-
-async function handleDelete(recordId, itemEl) {
+// ── Delete a log entry ────────────────────────────────────────────────────────
+async function handleDelete(id, itemEl) {
   if (!confirm('Delete this entry?')) return;
   itemEl.classList.add('deleting');
   try {
-    await deleteRecord(recordId);
+    const token = getToken();
+    const res = await fetch(`/api/delete-log?id=${encodeURIComponent(id)}&u=${encodeURIComponent(token)}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Delete failed');
     itemEl.remove();
     showToast('Entry deleted ✓');
-    loadData();
+    loadData(); // refresh totals
   } catch (e) {
     itemEl.classList.remove('deleting');
     showToast('Could not delete — try again');
   }
 }
 
+// ── SVG ring ─────────────────────────────────────────────────────────────────
 function ring(pct) {
   const r = 40, c = 2 * Math.PI * r, d = c * Math.min(pct / 100, 1);
-  return `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-dasharray="${d} ${c-d}" stroke-linecap="round"/></svg>`;
+  return `<svg width="96" height="96" viewBox="0 0 96 96">
+    <circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/>
+    <circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8"
+      stroke-dasharray="${d} ${c - d}" stroke-linecap="round"/>
+  </svg>`;
 }
 
 function bar(pct, color) {
-  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
+  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct, 100)}%;background:${color}"></div></div>`;
 }
 
 function trashIcon() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>`;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+    <path d="M10 11v6M14 11v6"></path>
+    <path d="M9 6V4h6v2"></path>
+  </svg>`;
 }
 
-function render(records, totals, goals, name) {
-  const calPct = Math.round((totals.calories / goals.calories) * 100);
-  const remain = Math.max(goals.calories - totals.calories, 0);
+// ── Render dashboard ──────────────────────────────────────────────────────────
+function render(data) {
+  const { user, logs } = data;
 
-  const logHTML = records.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🍽</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals to the number below and they'll appear here.</div></div>`
-    : records.map(r => `
-        <div class="log-item" id="record-${r.id}">
+  const totals = logs.reduce((a, l) => ({
+    calories: a.calories + (l.calories || 0),
+    protein:  a.protein  + (l.protein_g || 0),
+    carbs:    a.carbs    + (l.carbs_g   || 0),
+    fat:      a.fat      + (l.fat_g     || 0)
+  }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+  const goals = {
+    calories: user.dailyCalorieTarget,
+    protein:  user.dailyProteinTarget,
+    carbs:    user.dailyCarbTarget,
+    fat:      user.dailyFatTarget
+  };
+
+  const calPct   = Math.round((totals.calories / goals.calories) * 100);
+  const remain   = Math.max(goals.calories - totals.calories, 0);
+
+  const logHTML = logs.length === 0
+    ? `<div class="empty-state">
+        <div class="empty-icon">🍽</div>
+        <div class="empty-title">Nothing logged yet</div>
+        <div class="empty-sub">Text your meals to the number below and they'll appear here.</div>
+       </div>`
+    : logs.map(l => `
+        <div class="log-item" id="log-${l.id}">
           <div class="log-left">
-            <div class="log-food">${r.fields['Food Description'] || 'Food item'}</div>
-            <div class="log-macros">${r.fields['Protein (g)'] || 0}g P · ${r.fields['Carbs (g)'] || 0}g C · ${r.fields['Fat (g)'] || 0}g F</div>
+            <div class="log-food">${l.food_description || 'Food item'}</div>
+            <div class="log-macros">${Math.round(l.protein_g || 0)}g P · ${Math.round(l.carbs_g || 0)}g C · ${Math.round(l.fat_g || 0)}g F</div>
           </div>
           <div class="log-right">
-            <div class="log-cal">${r.fields['Calories'] || 0}<span class="log-cal-unit"> cal</span></div>
-            <button class="delete-btn" onclick="handleDelete('${r.id}', document.getElementById('record-${r.id}'))" aria-label="Delete entry">
+            <div class="log-cal">${l.calories || 0}<span class="log-cal-unit"> cal</span></div>
+            <button class="delete-btn" onclick="handleDelete('${l.id}', document.getElementById('log-${l.id}'))" aria-label="Delete entry">
               ${trashIcon()}
             </button>
           </div>
         </div>`).join('');
 
-  document.getElementById('username').textContent = name || 'Macro';
+  document.getElementById('username').textContent = user.name || 'Macro';
   document.getElementById('main-content').innerHTML = `
     <div class="section">
       <div class="calorie-card">
         <div class="calorie-top">
-          <div class="ring-wrap">${ring(calPct)}<div class="ring-center"><div class="ring-pct">${calPct}%</div><div class="ring-sub">of goal</div></div></div>
+          <div class="ring-wrap">
+            ${ring(calPct)}
+            <div class="ring-center">
+              <div class="ring-pct">${calPct}%</div>
+              <div class="ring-sub">of goal</div>
+            </div>
+          </div>
           <div class="cal-info">
             <div class="cal-label">Calories remaining</div>
             <div class="cal-remain">${remain.toLocaleString()}<span class="cal-unit">cal</span></div>
-            <div class="cal-meta">${totals.calories.toLocaleString()} eaten · ${goals.calories.toLocaleString()} goal</div>
+            <div class="cal-meta">${Math.round(totals.calories).toLocaleString()} eaten · ${goals.calories.toLocaleString()} goal</div>
           </div>
         </div>
         <div class="cal-divider"></div>
         <div class="cal-stats">
-          <div class="cal-stat"><div class="cal-stat-num">${totals.calories.toLocaleString()}</div><div class="cal-stat-label">Eaten</div></div>
-          <div class="cal-stat"><div class="cal-stat-num">${remain.toLocaleString()}</div><div class="cal-stat-label">Remaining</div></div>
-          <div class="cal-stat"><div class="cal-stat-num">${goals.calories.toLocaleString()}</div><div class="cal-stat-label">Goal</div></div>
+          <div class="cal-stat">
+            <div class="cal-stat-num">${Math.round(totals.calories).toLocaleString()}</div>
+            <div class="cal-stat-label">Eaten</div>
+          </div>
+          <div class="cal-stat">
+            <div class="cal-stat-num">${remain.toLocaleString()}</div>
+            <div class="cal-stat-label">Remaining</div>
+          </div>
+          <div class="cal-stat">
+            <div class="cal-stat-num">${goals.calories.toLocaleString()}</div>
+            <div class="cal-stat-label">Goal</div>
+          </div>
         </div>
       </div>
     </div>
@@ -265,9 +281,27 @@ function render(records, totals, goals, name) {
     <div class="section" style="padding-top:24px">
       <div class="section-label">Macros</div>
       <div class="macro-grid">
-        <div class="macro-card"><div class="macro-header"><div class="macro-name">Protein</div><div class="macro-val">${totals.protein}g / ${goals.protein}g</div></div>${bar(Math.round((totals.protein/goals.protein)*100),'#000')}</div>
-        <div class="macro-card"><div class="macro-header"><div class="macro-name">Carbs</div><div class="macro-val">${totals.carbs}g / ${goals.carbs}g</div></div>${bar(Math.round((totals.carbs/goals.carbs)*100),'#555')}</div>
-        <div class="macro-card"><div class="macro-header"><div class="macro-name">Fat</div><div class="macro-val">${totals.fat}g / ${goals.fat}g</div></div>${bar(Math.round((totals.fat/goals.fat)*100),'#aaa')}</div>
+        <div class="macro-card">
+          <div class="macro-header">
+            <div class="macro-name">Protein</div>
+            <div class="macro-val">${Math.round(totals.protein)}g / ${goals.protein}g</div>
+          </div>
+          ${bar(Math.round((totals.protein / goals.protein) * 100), '#000')}
+        </div>
+        <div class="macro-card">
+          <div class="macro-header">
+            <div class="macro-name">Carbs</div>
+            <div class="macro-val">${Math.round(totals.carbs)}g / ${goals.carbs}g</div>
+          </div>
+          ${bar(Math.round((totals.carbs / goals.carbs) * 100), '#555')}
+        </div>
+        <div class="macro-card">
+          <div class="macro-header">
+            <div class="macro-name">Fat</div>
+            <div class="macro-val">${Math.round(totals.fat)}g / ${goals.fat}g</div>
+          </div>
+          ${bar(Math.round((totals.fat / goals.fat) * 100), '#aaa')}
+        </div>
       </div>
     </div>
 
@@ -278,56 +312,52 @@ function render(records, totals, goals, name) {
 
     <div class="section" style="padding-top:24px">
       <div class="section-label">Log a meal</div>
-      <div class="sms-cta"><div class="sms-number">+1 (647) 424-4438</div><div class="sms-label">Text this number to log any meal instantly</div></div>
+      <div class="sms-cta">
+        <div class="sms-number">+1 (647) 424-4438</div>
+        <div class="sms-label">Text this number to log any meal instantly</div>
+      </div>
     </div>`;
 }
 
+// ── Load data ─────────────────────────────────────────────────────────────────
 async function loadData() {
-  const btn = document.getElementById('refresh-btn');
-  btn.querySelector('svg').classList.add('spin');
+  const btn   = document.getElementById('refresh-btn');
+  const svgEl = btn.querySelector('svg');
+  svgEl.classList.add('spin');
+
   document.getElementById('greeting').textContent = getGreeting();
   document.getElementById('date-pill').textContent = formatDate();
 
-  const phone = getPhone();
+  const token = getToken();
 
-  if (!phone) {
-    document.getElementById('main-content').innerHTML = `<div class="no-phone"><div class="no-phone-icon">👋</div><div class="no-phone-title">Welcome to Macro</div><div class="no-phone-sub">Text the number below to get started. You'll receive your personal dashboard link after setup.</div><div class="no-phone-number">+1 (647) 424-4438</div></div>`;
-    btn.querySelector('svg').classList.remove('spin');
+  if (!token) {
+    document.getElementById('main-content').innerHTML = `
+      <div class="no-token">
+        <div class="no-token-icon">👋</div>
+        <div class="no-token-title">Welcome to Macro</div>
+        <div class="no-token-sub">Text the number below to get started. You'll receive your personal dashboard link after setup.</div>
+        <div class="no-token-number">+1 (647) 424-4438</div>
+      </div>`;
+    svgEl.classList.remove('spin');
     return;
   }
 
   try {
-    const formattedPhone = phoneWithPlus(phone);
-    const [userRecords, logRecords] = await Promise.all([
-      airtableFetch('Users', `{Phone} = "${formattedPhone}"`),
-      airtableFetch('Food Logs', `{User Phone} = "${formattedPhone}"`)
-    ]);
-
-    const user = userRecords[0];
-    const todayLogs = logRecords.filter(r => isToday(r.createdTime));
-    const name = user?.fields['Name']?.split(' ')[0] || '';
-
-    const goals = {
-      calories: user?.fields['Daily Calorie Target'] || 2000,
-      protein: user?.fields['Daily Protein Target'] || 150,
-      carbs: user?.fields['Daily Carb Target'] || 200,
-      fat: user?.fields['Daily Fat Target'] || 65
-    };
-
-    const totals = todayLogs.reduce((a, r) => ({
-      calories: a.calories + Number(r.fields['Calories'] || 0),
-      protein: a.protein + Number(r.fields['Protein (g)'] || 0),
-      carbs: a.carbs + Number(r.fields['Carbs (g)'] || 0),
-      fat: a.fat + Number(r.fields['Fat (g)'] || 0)
-    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
-
-    render(todayLogs, totals, goals, name);
-
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = `<div class="loading-state"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div><div style="font-size:14px">Check your connection and try refreshing.</div></div>`;
+    const res = await fetch(`/api/dashboard?u=${encodeURIComponent(token)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    console.error('Load error:', e);
+    document.getElementById('main-content').innerHTML = `
+      <div class="loading-state">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div>
+        <div style="font-size:14px">Check your connection and try refreshing.</div>
+      </div>`;
   }
 
-  btn.querySelector('svg').classList.remove('spin');
+  svgEl.classList.remove('spin');
 }
 
 loadData();
