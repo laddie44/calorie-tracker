@@ -69,25 +69,56 @@ async function saveFoodLog(phone, log) {
   return data;
 }
 
-// Robust LOG parser — handles AI formatting variations
+// Robust LOG parser — primary parser + fallback for conversational macro extraction
 function parseLogLine(reply) {
+  // ── Primary: look for LOG:{...} ────────────────────────────────────────────
   const logIdx = reply.indexOf('LOG:');
-  if (logIdx === -1) return null;
-  try {
-    const jsonStart = reply.indexOf('{', logIdx);
-    if (jsonStart === -1) return null;
-    // Find matching closing brace (handles multi-line JSON)
-    let depth = 0, jsonEnd = -1;
-    for (let i = jsonStart; i < reply.length; i++) {
-      if (reply[i] === '{') depth++;
-      if (reply[i] === '}') { depth--; if (depth === 0) { jsonEnd = i + 1; break; } }
+  if (logIdx !== -1) {
+    try {
+      const jsonStart = reply.indexOf('{', logIdx);
+      if (jsonStart !== -1) {
+        let depth = 0, jsonEnd = -1;
+        for (let i = jsonStart; i < reply.length; i++) {
+          if (reply[i] === '{') depth++;
+          if (reply[i] === '}') { depth--; if (depth === 0) { jsonEnd = i + 1; break; } }
+        }
+        if (jsonEnd !== -1) {
+          const parsed = JSON.parse(reply.slice(jsonStart, jsonEnd));
+          // Validate it has the required fields
+          if (parsed.calories && parsed.protein_g !== undefined) return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('LOG parse error:', e);
     }
-    if (jsonEnd === -1) return null;
-    return JSON.parse(reply.slice(jsonStart, jsonEnd));
-  } catch (e) {
-    console.error('LOG parse error:', e, '| reply:', reply);
-    return null;
   }
+
+  // ── Fallback: extract numbers from conversational format ──────────────────
+  // Catches "350 cal · 30g P · 50g C · 5g F" style responses
+  const calMatch  = reply.match(/(\d+)\s*cal/i);
+  const protMatch = reply.match(/(\d+(?:\.\d+)?)\s*g\s*P(?:rotein)?/i);
+  const carbMatch = reply.match(/(\d+(?:\.\d+)?)\s*g\s*C(?:arbs?)?/i);
+  const fatMatch  = reply.match(/(\d+(?:\.\d+)?)\s*g\s*F(?:at)?/i);
+
+  if (calMatch && protMatch && carbMatch && fatMatch) {
+    // Extract a short food description from the reply
+    // Look for common patterns like "Logged your X" or use first meaningful line
+    // Pull description from first line of reply as best guess
+    let description = 'Food item';
+    const firstLine = reply.split('\n')[0].replace(/logged|your|log|thanks|!/gi, '').trim();
+    if (firstLine.length > 3 && firstLine.length < 80) description = firstLine;
+
+    console.log('Fallback parser rescued log from conversational response');
+    return {
+      description,
+      calories:  parseFloat(calMatch[1]),
+      protein_g: parseFloat(protMatch[1]),
+      carbs_g:   parseFloat(carbMatch[1]),
+      fat_g:     parseFloat(fatMatch[1])
+    };
+  }
+
+  return null;
 }
 
 // ── Onboarding (AI-driven) ────────────────────────────────────────────────────
@@ -494,23 +525,41 @@ async function handleUpdateGoals(phone, message, user) {
 
 // ── Food Logging (text, AI-driven) ───────────────────────────────────────────
 
-const FOOD_PROMPT = `You are Macro, a nutrition tracking assistant via SMS. Keep ALL replies SHORT.
+const FOOD_PROMPT = `You are Macro, a nutrition tracking assistant via SMS.
 
-When a user describes food they ate:
-- If specific enough → output a LOG line + one short confirmation sentence BEFORE it
-- If too vague → ask ONE short clarifying question, no LOG line yet
-- If not food → respond briefly, no LOG line
+EVERY response where food is identified MUST end with a LOG line. No exceptions.
 
-LOG format (single line, valid JSON):
+RESPONSE FORMAT — always in this exact order:
+1. One short confirmation sentence (e.g. "Logged your shake!")
+2. The LOG line on its own line — REQUIRED for any food
+
+LOG line format — copy this exactly, replace values only:
 LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
-Guidelines:
+CRITICAL RULES for the LOG line:
+- It MUST start with LOG: at the beginning of the line
+- It MUST be valid JSON — no trailing text after the closing }
+- Numbers only — no units inside the JSON
+- Always include all 4 fields: calories, protein_g, carbs_g, fat_g
+- The LOG line is what saves food to the database — if you skip it, nothing is saved
+
+When to include LOG line: whenever the user describes any food or drink they consumed
+When to NOT include LOG line: only if message contains zero food (pure questions, commands)
+When to ask a clarifying question: only if you genuinely cannot estimate (truly unknown portion of unknown food)
+
+Nutrition guidelines:
 - Use known chain data for restaurant items (Big Mac = 550 cal, etc.)
 - Slightly overestimate restaurant/fast food — they always underestimate
-- Include drinks and sauces if mentioned
-- Alcohol: 7 cal/gram of pure ethanol
-- When user answers a clarifying question from earlier in the conversation, log it — don't ask again
-- Confirmation sentence goes BEFORE the LOG line, never after`;
+- Include all components: drinks, sauces, condiments, oils
+- Alcohol: 7 cal/gram of ethanol
+- When user answers a clarifying question, log it immediately — do not ask again
+
+Example of a CORRECT response:
+Logged your protein shake! 🥤
+LOG:{"description":"Protein shake","calories":340,"protein_g":31.0,"carbs_g":38.0,"fat_g":5.0}
+
+Example of a WRONG response (never do this):
+Thanks! Here's your log: 340 cal · 31g P · 38g C · 5g F`;
 
 async function handleFoodLog(phone, message, user) {
   const lower = message.toLowerCase().trim();
