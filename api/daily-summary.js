@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     // Get all fully onboarded users
     const { data: users } = await supabase
       .from('users')
-      .select('phone,name,daily_calorie_target,daily_protein_target,dashboard_token,streak')
+      .select('phone,name,daily_calorie_target,daily_protein_target,dashboard_token,streak,tracked_macros')
       .eq('setup_status', 'complete');
 
     if (!users || users.length === 0) return res.json({ sent: 0, total: 0 });
@@ -62,12 +62,21 @@ module.exports = async (req, res) => {
           { cal: 0, p: 0, c: 0, f: 0 }
         );
 
-        const pct  = Math.round((t.cal / user.daily_calorie_target) * 100);
-        const left = Math.max(user.daily_calorie_target - t.cal, 0);
-        const emoji = pct >= 90 && pct <= 110 ? '🎯' : pct < 80 ? '📉' : '📈';
+        const pct      = Math.round((t.cal / user.daily_calorie_target) * 100);
+        const left     = Math.max(user.daily_calorie_target - t.cal, 0);
+        const emoji    = pct >= 90 && pct <= 110 ? '🎯' : pct < 80 ? '📉' : '📈';
         const streakLine = user.streak > 1 ? `\n🔥 ${user.streak} day streak!` : '';
 
-        const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${Math.round(t.p)}g P · ${Math.round(t.c)}g C · ${Math.round(t.f)}g F\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+        // Respect each user's macro tracking preferences
+        const tracked  = user.tracked_macros || ['protein', 'carbs', 'fat'];
+        const macroParts = [
+          tracked.includes('protein') ? `${Math.round(t.p)}g P` : null,
+          tracked.includes('carbs')   ? `${Math.round(t.c)}g C` : null,
+          tracked.includes('fat')     ? `${Math.round(t.f)}g F` : null
+        ].filter(Boolean).join(' · ');
+        const macroLine = macroParts ? `\n${macroParts}` : '';
+
+        const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)${macroLine}\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
 
         await client.messages.create({ body: msg, from: FROM_NUMBER, to: user.phone });
         sent++;
