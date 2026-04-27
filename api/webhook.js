@@ -518,7 +518,22 @@ async function handleFoodLog(phone, message, user) {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Macro commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "stats" → today's totals\n• "set macros" → choose what to track\n• "update goals" → recalculate your targets\n• "help" → this list\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `Macro commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your current goals\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate your targets\n• "help" → this list\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+  }
+
+  if (lower === 'my targets' || lower === 'my goals' || lower === 'targets' || lower === 'my macros') {
+    const goalLabels = { lose: 'Fat loss', gain: 'Muscle gain', maintain: 'Maintenance', recomp: 'Body recomp' };
+    const tracked    = user.tracked_macros || ['protein', 'carbs', 'fat'];
+    const macroLines = [
+      tracked.includes('protein') ? `• ${user.daily_protein_target}g protein` : null,
+      tracked.includes('carbs')   ? `• ${user.daily_carb_target}g carbs`     : null,
+      tracked.includes('fat')     ? `• ${user.daily_fat_target}g fat`        : null
+    ].filter(Boolean).join('\n');
+
+    const reply = `📊 Your current targets:\n\n• ${user.daily_calorie_target} cal/day${macroLines ? '\n' + macroLines : ''}\n\nGoal: ${goalLabels[user.goal] || user.goal}\n\nText "update goals" to recalculate.`;
+    await saveMessage(phone, 'user',      message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
   }
 
   if (lower === 'update goals' || lower === 'update my goals' || lower === 'change goals') {
