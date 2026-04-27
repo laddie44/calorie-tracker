@@ -525,41 +525,132 @@ async function handleUpdateGoals(phone, message, user) {
 
 // ── Food Logging (text, AI-driven) ───────────────────────────────────────────
 
-const FOOD_PROMPT = `You are Macro, a nutrition tracking assistant via SMS.
+// ── Nutrition anchor table (verified values for common foods) ─────────────────
+const NUTRITION_ANCHORS = `
+VERIFIED NUTRITION DATA — use these exact values, do not estimate:
 
-EVERY response where food is identified MUST end with a LOG line. No exceptions.
+EGGS & DAIRY:
+- 1 large egg: 70 cal, 6g P, 0.5g C, 5g F
+- 1 cup whole milk: 150 cal, 8g P, 12g C, 8g F
+- 1 cup 2% milk: 122 cal, 8g P, 12g C, 5g F
+- 1 cup skim milk: 83 cal, 8g P, 12g C, 0.2g F
+- 1 cup Greek yogurt plain 2%: 150 cal, 17g P, 8g C, 4g F
+- 1 oz cheddar cheese: 115 cal, 7g P, 0.4g C, 9g F
+- 1 tbsp butter: 102 cal, 0.1g P, 0g C, 12g F
 
-RESPONSE FORMAT — always in this exact order:
-1. One short confirmation sentence (e.g. "Logged your shake!")
-2. The LOG line on its own line — REQUIRED for any food
+PROTEINS:
+- 100g chicken breast cooked: 165 cal, 31g P, 0g C, 3.6g F
+- 100g ground beef 80/20 cooked: 254 cal, 26g P, 0g C, 17g F
+- 100g salmon cooked: 208 cal, 20g P, 0g C, 13g F
+- 100g tuna canned in water: 116 cal, 25g P, 0g C, 1g F
+- 100g shrimp cooked: 99 cal, 24g P, 0g C, 0.3g F
+- 1 slice bacon cooked: 43 cal, 3g P, 0.1g C, 3.3g F
 
-LOG line format — copy this exactly, replace values only:
+GRAINS & CARBS:
+- 1 cup cooked white rice: 206 cal, 4.3g P, 45g C, 0.4g F
+- 1 cup cooked brown rice: 216 cal, 5g P, 45g C, 1.8g F
+- 1 cup cooked oats: 154 cal, 5.3g P, 27g C, 2.6g F
+- 1 slice whole wheat bread: 81 cal, 4g P, 15g C, 1.1g F
+- 1 slice white bread: 79 cal, 2.7g P, 15g C, 1g F
+- 1 medium flour tortilla 10inch: 218 cal, 5.7g P, 36g C, 5.6g F
+- 1 cup cooked pasta: 220 cal, 8g P, 43g C, 1.3g F
+- 1 medium baked potato: 161 cal, 4.3g P, 37g C, 0.2g F
+- 1 cup cooked quinoa: 222 cal, 8g P, 39g C, 3.6g F
+
+FRUITS & VEGETABLES:
+- 1 medium banana: 105 cal, 1.3g P, 27g C, 0.4g F
+- 1 medium apple: 95 cal, 0.5g P, 25g C, 0.3g F
+- 1 cup blueberries: 84 cal, 1.1g P, 21g C, 0.5g F
+- 1 cup strawberries: 49 cal, 1g P, 12g C, 0.5g F
+- 1 medium orange: 62 cal, 1.2g P, 15g C, 0.2g F
+- 1 cup broccoli cooked: 55 cal, 3.7g P, 11g C, 0.6g F
+- 1 cup spinach raw: 7 cal, 0.9g P, 1.1g C, 0.1g F
+- 1 medium avocado: 234 cal, 2.9g P, 12g C, 21g F
+- 1 tbsp chili oil: 120 cal, 0g P, 0g C, 14g F
+
+FATS & NUTS:
+- 1 tbsp olive oil: 119 cal, 0g P, 0g C, 14g F
+- 1 tbsp peanut butter: 94 cal, 4g P, 3.1g C, 8g F
+- 1 tbsp almond butter: 98 cal, 3.4g P, 3g C, 9g F
+- 1 oz almonds: 164 cal, 6g P, 6g C, 14g F
+
+WHEY PROTEIN per 30g scoop:
+- Generic whey isolate: 110 cal, 25g P, 2g C, 1g F
+- Generic whey concentrate: 130 cal, 24g P, 5g C, 2.5g F
+
+MAJOR CHAINS:
+McDonald's: Big Mac 550/25P/45C/30F, McDouble 400/22P/34C/20F, Large fries 490/6P/66C/23F, Medium fries 320/4P/44C/15F, 10pc McNuggets 440/27P/28C/27F
+Chick-fil-A: Spicy Deluxe Sandwich 570/37P/52C/24F, Classic Sandwich 470/29P/49C/18F, Medium waffle fries 400/5P/50C/19F, Grilled Sandwich 370/37P/40C/7F
+Subway 6-inch: Turkey Breast 280/18P/45C/4.5F, Italian BMT 410/20P/45C/17F
+Starbucks: Grande Latte 2% 190/13P/19C/7F, Grande Caramel Macchiato 250/10P/34C/7F
+Tim Hortons: Medium Double Double 230/3P/20C/14F, Everything Bagel 270/10P/52C/2F
+Olive Garden dinner: Fettuccine Alfredo 1220/36P/97C/75F, Chicken Parm 1060/67P/79C/46F`;
+
+// ── Prompt for web-search path (restaurant or branded items) ──────────────────
+const FOOD_PROMPT_SEARCH = `You are Macro, a nutrition tracking assistant via SMS.
+
+The user described food they ate. Use your web search tool RIGHT NOW to find the exact nutrition data — check the restaurant website, brand nutrition page, or USDA database. Use real verified numbers, not estimates.
+
+RESPONSE FORMAT (always in this order):
+1. Short confirmation sentence with the source you found (use emoji 🔍 to signal looked up)
+2. LOG line on its own line
+
+LOG:{"description":"Item name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+
+RULES:
+- LOG line MUST start with LOG: at the beginning of a line
+- Valid JSON — no trailing text after the closing }
+- Numbers only inside the JSON, all 4 fields required
+- Sum ALL items mentioned into ONE log line
+- Include sides, drinks, sauces if mentioned
+- The LOG line is machine-parsed and saves to the database — format is critical`;
+
+// ── Prompt for anchor path (simple whole foods) ───────────────────────────────
+const FOOD_PROMPT_ANCHOR = `You are Macro, a nutrition tracking assistant via SMS.
+
+Use this verified nutrition data as ground truth:
+
+${NUTRITION_ANCHORS}
+
+For items NOT in the table: estimate using careful nutritional knowledge. Use ~ in your reply and state what portion you assumed.
+
+RESPONSE FORMAT (always in this order):
+1. Short confirmation sentence
+2. LOG line on its own line
+
 LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
-CRITICAL RULES for the LOG line:
-- It MUST start with LOG: at the beginning of the line
-- It MUST be valid JSON — no trailing text after the closing }
-- Numbers only — no units inside the JSON
-- Always include all 4 fields: calories, protein_g, carbs_g, fat_g
-- The LOG line is what saves food to the database — if you skip it, nothing is saved
-
-When to include LOG line: whenever the user describes any food or drink they consumed
-When to NOT include LOG line: only if message contains zero food (pure questions, commands)
-When to ask a clarifying question: only if you genuinely cannot estimate (truly unknown portion of unknown food)
-
-Nutrition guidelines:
-- Use known chain data for restaurant items (Big Mac = 550 cal, etc.)
-- Slightly overestimate restaurant/fast food — they always underestimate
-- Include all components: drinks, sauces, condiments, oils
+RULES:
+- LOG line MUST start with LOG: at the beginning of a line
+- Valid JSON — no trailing text after the closing }
+- Numbers only inside the JSON, all 4 fields required
+- Sum ALL items mentioned into ONE log line
+- Include sauces, drinks, condiments, oils
 - Alcohol: 7 cal/gram of ethanol
-- When user answers a clarifying question, log it immediately — do not ask again
+- The LOG line saves food to the database — never skip it
 
-Example of a CORRECT response:
-Logged your protein shake! 🥤
-LOG:{"description":"Protein shake","calories":340,"protein_g":31.0,"carbs_g":38.0,"fat_g":5.0}
+Correct example:
+Logged 2 eggs and toast!
+LOG:{"description":"2 eggs + wheat toast","calories":221,"protein_g":16.0,"carbs_g":15.5,"fat_g":11.1}
 
-Example of a WRONG response (never do this):
-Thanks! Here's your log: 340 cal · 31g P · 38g C · 5g F`;
+Correct example (estimate):
+~Logged your pasta (assumed 2 cups cooked + marinara)
+LOG:{"description":"Pasta marinara","calories":520,"protein_g":14.0,"carbs_g":89.0,"fat_g":9.0}`;
+
+// ── Detect if message needs a real-time web lookup ────────────────────────────
+const SEARCH_PATTERNS = [
+  /chick.?fil.?a|mcdonald|burger king|wendy|subway|starbucks|tim horton|olive garden|chipotle|taco bell|pizza hut|domino|kfc|popeyes|five guys|shake shack|panera|dunkin|dairy queen|a&w|harvey|swiss chalet|boston pizza|montana|kelsey|east side mario|nandos|red lobster|applebee|ihop|denny|outback|cheesecake factory/i,
+  /from\s+[A-Z][a-zA-Z]{2,}/,
+  /premier protein|quest bar|kind bar|clif bar|rxbar|orgain|fairlife|oikos|chobani|siggi|activia|muscle milk|dymatize|optimum nutrition|gold standard|isopure|vega|garden of life|naked juice|bai|celsius|reign|monster|red bull|gatorade/i,
+  /combo|meal deal|value meal|#\d+\s+meal|number\s+\d+\s+meal/i,
+];
+
+function needsWebSearch(text) {
+  return SEARCH_PATTERNS.some(p => p.test(text));
+}
+
+
+
 
 async function handleFoodLog(phone, message, user) {
   const lower = message.toLowerCase().trim();
@@ -653,24 +744,53 @@ async function handleFoodLog(phone, message, user) {
     }
   }
 
-  // ── AI food logging ────────────────────────────────────────────────────────
+  // ── AI food logging — smart dual path ───────────────────────────────────────
 
   const history = await getHistory(phone, 10);
   await saveMessage(phone, 'user', message);
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: FOOD_PROMPT },
-      ...history.map(h => ({ role: h.role, content: h.content })),
-      { role: 'user', content: message }
-    ],
-    max_tokens: 200,
-    temperature: 0.3
-  });
+  let reply;
+  let useSearch = needsWebSearch(message);
 
-  const reply = completion.choices[0].message.content.trim();
-  const log   = parseLogLine(reply);
+  if (useSearch) {
+    // ── Web search path: restaurant chains, branded products ────────────────
+    try {
+      console.log('Using web search for:', message.slice(0, 60));
+      const response = await openai.responses.create({
+        model: 'gpt-4o',
+        tools: [{ type: 'web_search_preview' }],
+        instructions: FOOD_PROMPT_SEARCH,
+        input: [
+          // Include recent conversation context
+          ...history.slice(-6).map(h => ({ role: h.role, content: h.content })),
+          { role: 'user', content: message }
+        ],
+      });
+      reply = response.output_text || '';
+      console.log('Web search reply received, length:', reply.length);
+    } catch (searchErr) {
+      console.error('Web search failed, falling back to anchor path:', searchErr.message);
+      // Fall through to anchor path below
+      useSearch = false;
+    }
+  }
+
+  if (!useSearch || !reply) {
+    // ── Anchor path: whole foods, simple items, fallback ────────────────────
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: FOOD_PROMPT_ANCHOR },
+        ...history.map(h => ({ role: h.role, content: h.content })),
+        { role: 'user', content: message }
+      ],
+      max_tokens: 300,
+      temperature: 0.2
+    });
+    reply = completion.choices[0].message.content.trim();
+  }
+
+  const log = parseLogLine(reply);
 
   if (log) {
     await saveFoodLog(phone, log);
@@ -693,6 +813,7 @@ async function handleFoodLog(phone, message, user) {
     return confirm;
   }
 
+  // No food identified — clarifying question or non-food reply
   const cleanReply = reply.replace(/LOG:\{[\s\S]*?\}/g, '').trim();
   await saveMessage(phone, 'assistant', cleanReply);
   return cleanReply;
