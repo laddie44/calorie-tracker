@@ -391,6 +391,107 @@ async function handleSetMacros(phone, message, user) {
   return confirm;
 }
 
+// ── Update Goals (AI-driven, re-collects stats only) ─────────────────────────
+
+const UPDATE_GOALS_PROMPT = `You are Macro, helping an existing user update their nutrition targets via SMS.
+
+You already know their name and gender — DO NOT ask for those again.
+You need to re-collect these 5 values through friendly conversation:
+
+1. goal          — "lose" (fat loss), "gain" (muscle gain), "maintain", or "recomp"
+2. weight        — number in their existing units (already stored, use them)
+3. height        — number in their existing units (they may not have changed this, but ask)
+4. age           — a number
+5. activity_level — "1" sedentary, "2" lightly active, "3" moderately active, "4" very active
+
+RULES:
+- Keep it SHORT and friendly. They're already set up — this should feel quick
+- Tell them upfront you just need a few quick numbers to recalculate their targets
+- Ask ONE thing at a time
+- For goal, give brief numbered options
+- For activity, list all 4 options with brief examples
+- Validate gently if anything seems impossible
+
+The user's existing units are provided in the system context.
+
+When ALL 5 are confirmed, output EXACTLY this on its own line (nothing after):
+GOALS_UPDATED:{"goal":"lose|gain|maintain|recomp","weight":NUMBER,"height":NUMBER,"age":NUMBER,"activity_level":"1|2|3|4"}`;
+
+async function handleUpdateGoals(phone, message, user) {
+  const history = await getHistory(phone, 20);
+  await saveMessage(phone, 'user', message);
+
+  const unitsLabel = user.units === 'imperial' ? 'lbs and inches' : 'kg and cm';
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: UPDATE_GOALS_PROMPT },
+      { role: 'system', content: `User's existing units: ${unitsLabel}. Their name is ${user.name}. Start by telling them you'll recalculate their targets with a few quick questions.` },
+      ...history.map(h => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message }
+    ],
+    max_tokens: 350,
+    temperature: 0.7
+  });
+
+  const reply = completion.choices[0].message.content.trim();
+
+  // Check if AI has collected all 5 values
+  const doneIdx = reply.indexOf('GOALS_UPDATED:');
+  if (doneIdx !== -1) {
+    try {
+      const jsonStart = reply.indexOf('{', doneIdx);
+      const jsonEnd   = reply.lastIndexOf('}') + 1;
+      const p = JSON.parse(reply.slice(jsonStart, jsonEnd));
+
+      const required = ['goal', 'weight', 'height', 'age', 'activity_level'];
+      const missing  = required.filter(k => p[k] === undefined || p[k] === null || p[k] === '');
+      if (missing.length > 0) throw new Error(`Missing: ${missing.join(', ')}`);
+
+      // Calculate new macros in code using existing gender + units
+      const macros = calculateMacros({
+        gender:        user.gender,
+        weight:        p.weight,
+        height:        p.height,
+        age:           p.age,
+        activityLevel: p.activity_level,
+        goal:          p.goal,
+        units:         user.units
+      });
+
+      // Save updated profile — keep name, gender, units, token untouched
+      await supabase.from('users').update({
+        goal:                 p.goal,
+        activity_level:       p.activity_level,
+        daily_calorie_target: macros.calories,
+        daily_protein_target: macros.protein,
+        daily_carb_target:    macros.carbs,
+        daily_fat_target:     macros.fat,
+        setup_status:         'complete',
+        setup_temp:           {}
+      }).eq('phone', phone);
+
+      const goalLabels = { lose: 'fat loss', gain: 'muscle gain', maintain: 'maintenance', recomp: 'body recomp' };
+      const confirm = `Done, ${user.name}! 🎯 New targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nDashboard updated automatically.`;
+
+      await saveMessage(phone, 'assistant', confirm);
+      return confirm;
+
+    } catch (e) {
+      console.error('Goals update error:', e);
+      // Reset status so they're not stuck
+      await supabase.from('users').update({ setup_status: 'complete', setup_temp: {} }).eq('phone', phone);
+      const err = "Something went wrong — your old targets are still active. Try texting \"update goals\" again.";
+      await saveMessage(phone, 'assistant', err);
+      return err;
+    }
+  }
+
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
 // ── Food Logging (text, AI-driven) ───────────────────────────────────────────
 
 const FOOD_PROMPT = `You are Macro, a nutrition tracking assistant via SMS. Keep ALL replies SHORT.
@@ -417,9 +518,14 @@ async function handleFoodLog(phone, message, user) {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Macro commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "stats" → today's totals\n• "set macros" → choose what to track\n• "help" → this list\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `Macro commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "stats" → today's totals\n• "set macros" → choose what to track\n• "update goals" → recalculate your targets\n• "help" → this list\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
   }
 
+  if (lower === 'update goals' || lower === 'update my goals' || lower === 'change goals') {
+    await supabase.from('users').update({ setup_status: 'updating_goals', setup_temp: {} }).eq('phone', phone);
+    const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', phone).maybeSingle();
+    return handleUpdateGoals(phone, message, updatedUser || user);
+  }
   if (lower === 'stats') {
     const today = todayToronto();
     const { data: recentLogs } = await supabase
@@ -578,10 +684,15 @@ module.exports = async (req, res) => {
 
     if (!message) return res.status(200).send(twiml(''));
 
-    // Text message
-    const reply = user.setup_status !== 'complete'
-      ? await handleOnboarding(phone, message, isNewUser)
-      : await handleFoodLog(phone, message, user);
+    // Text message — route based on status
+    let reply;
+    if (user.setup_status === 'updating_goals') {
+      reply = await handleUpdateGoals(phone, message, user);
+    } else if (user.setup_status !== 'complete') {
+      reply = await handleOnboarding(phone, message, isNewUser);
+    } else {
+      reply = await handleFoodLog(phone, message, user);
+    }
 
     return res.send(twiml(reply));
 
