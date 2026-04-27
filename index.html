@@ -14,38 +14,20 @@
     --text: #000000; --text2: #6e6e73; --text3: #aeaeb2;
     --border: rgba(0,0,0,0.08); --radius: 18px;
   }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    background: var(--bg); color: var(--text);
-    min-height: 100vh; max-width: 430px; margin: 0 auto; overflow-x: hidden;
-  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; overflow-x: hidden; }
   .safe-top { height: env(safe-area-inset-top, 44px); background: var(--bg); }
-  header {
-    padding: 12px 24px 20px; background: var(--bg);
-    position: sticky; top: 0; z-index: 100;
-    border-bottom: 0.5px solid var(--border);
-  }
+  header { padding: 12px 24px 20px; background: var(--bg); position: sticky; top: 0; z-index: 100; border-bottom: 0.5px solid var(--border); }
   .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
   .greeting { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
   .name { font-size: 28px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; }
-  .date-pill {
-    margin-top: 10px; display: inline-block; background: var(--bg2);
-    border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2);
-  }
-  .refresh-btn {
-    width: 36px; height: 36px; border-radius: 50%; background: var(--bg2);
-    border: none; cursor: pointer; display: flex; align-items: center;
-    justify-content: center; margin-top: 4px;
-  }
+  .date-pill { margin-top: 10px; display: inline-block; background: var(--bg2); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
+  .refresh-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--bg2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
   .refresh-btn svg { width: 16px; height: 16px; color: var(--text2); }
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   main { padding: 0 0 40px; }
   .section { padding: 24px 24px 0; }
-  .section-label {
-    font-size: 11px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px;
-  }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
   .calorie-card { background: var(--text); border-radius: var(--radius); padding: 24px; color: #fff; }
   .calorie-top { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
   .ring-wrap { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
@@ -71,27 +53,36 @@
   .macro-bar-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
   .macro-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
   .log-list { background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
-  .log-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 16px; border-bottom: 0.5px solid var(--border);
-    transition: opacity 0.3s;
-  }
+  .log-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid var(--border); transition: opacity 0.3s; }
   .log-item:last-child { border-bottom: none; }
   .log-item.deleting { opacity: 0.3; pointer-events: none; }
   .log-left { flex: 1; min-width: 0; }
   .log-food { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .log-macros { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .log-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: 12px; }
+  .log-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 12px; }
   .log-cal { font-size: 15px; font-weight: 600; }
   .log-cal-unit { font-size: 11px; font-weight: 400; color: var(--text3); }
-  .delete-btn {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: transparent; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text3); transition: all 0.15s; flex-shrink: 0;
-  }
-  .delete-btn:active { background: #ffe5e5; color: #ff3b30; }
-  .delete-btn svg { width: 14px; height: 14px; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text3); transition: all 0.15s; flex-shrink: 0; }
+  .icon-btn:active { background: var(--bg3); }
+  .icon-btn.delete:active { background: #ffe5e5; color: #ff3b30; }
+  .icon-btn.edit:active { background: #e5f0ff; color: #007aff; }
+  .icon-btn svg { width: 14px; height: 14px; }
+  /* Edit modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--bg); border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 430px; margin: 0 auto; transform: translateY(20px); transition: transform 0.25s; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+  .modal-field { margin-bottom: 12px; }
+  .modal-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .modal-input { width: 100%; font-size: 15px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); color: var(--text); font-family: inherit; }
+  .modal-input:focus { outline: none; border-color: #000; }
+  .modal-row { display: flex; gap: 8px; }
+  .modal-row .modal-field { flex: 1; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; }
+  .modal-btn.cancel { background: var(--bg2); color: var(--text); }
+  .modal-btn.save { background: var(--text); color: #fff; }
   .empty-state { padding: 40px 24px; text-align: center; }
   .empty-icon { font-size: 32px; margin-bottom: 12px; }
   .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
@@ -106,12 +97,7 @@
   .no-token-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
   .no-token-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
   .no-token-number { font-size: 22px; font-weight: 700; margin-top: 20px; }
-  .toast {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--text); color: #fff; padding: 12px 20px; border-radius: 100px;
-    font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 999;
-    white-space: nowrap;
-  }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
@@ -124,10 +110,7 @@
       <div class="name" id="username">Macro</div>
     </div>
     <button class="refresh-btn" onclick="loadData()" id="refresh-btn" aria-label="Refresh">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="23 4 23 10 17 10"></polyline>
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
     </button>
   </div>
   <div class="date-pill" id="date-pill">Today</div>
@@ -135,23 +118,55 @@
 <main id="main-content">
   <div class="loading-state"><div class="spinner"></div>Loading your day...</div>
 </main>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="edit-overlay" onclick="closeEdit(event)">
+  <div class="modal">
+    <div class="modal-title">Edit entry</div>
+    <div class="modal-field">
+      <div class="modal-label">Food name</div>
+      <input class="modal-input" id="edit-name" type="text" />
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <div class="modal-label">Calories</div>
+        <input class="modal-input" id="edit-cal" type="number" inputmode="numeric" />
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Protein (g)</div>
+        <input class="modal-input" id="edit-prot" type="number" inputmode="decimal" />
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <div class="modal-label">Carbs (g)</div>
+        <input class="modal-input" id="edit-carbs" type="number" inputmode="decimal" />
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Fat (g)</div>
+        <input class="modal-input" id="edit-fat" type="number" inputmode="decimal" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeEdit()">Cancel</button>
+      <button class="modal-btn save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Get the user token from URL (?u=TOKEN) ────────────────────────────────────
-function getToken() {
-  return new URLSearchParams(window.location.search).get('u') || '';
-}
+let currentEditId = null;
+const token = new URLSearchParams(window.location.search).get('u') || '';
 
 function getGreeting() {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
-
 function formatDate() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -159,86 +174,132 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ── Delete a log entry ────────────────────────────────────────────────────────
+// ── Edit modal ────────────────────────────────────────────────────────────────
+function openEdit(log) {
+  currentEditId = log.id;
+  document.getElementById('edit-name').value  = log.food_description || '';
+  document.getElementById('edit-cal').value   = log.calories  || 0;
+  document.getElementById('edit-prot').value  = log.protein_g || 0;
+  document.getElementById('edit-carbs').value = log.carbs_g   || 0;
+  document.getElementById('edit-fat').value   = log.fat_g     || 0;
+  document.getElementById('edit-overlay').classList.add('open');
+}
+function closeEdit(e) {
+  if (e && e.target !== document.getElementById('edit-overlay')) return;
+  document.getElementById('edit-overlay').classList.remove('open');
+  currentEditId = null;
+}
+async function saveEdit() {
+  if (!currentEditId) return;
+  try {
+    const res = await fetch(`/api/dashboard?u=${encodeURIComponent(token)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id:               currentEditId,
+        food_description: document.getElementById('edit-name').value,
+        calories:         parseFloat(document.getElementById('edit-cal').value),
+        protein_g:        parseFloat(document.getElementById('edit-prot').value),
+        carbs_g:          parseFloat(document.getElementById('edit-carbs').value),
+        fat_g:            parseFloat(document.getElementById('edit-fat').value)
+      })
+    });
+    if (!res.ok) throw new Error('Save failed');
+    document.getElementById('edit-overlay').classList.remove('open');
+    showToast('Entry updated ✓');
+    loadData();
+  } catch (e) {
+    showToast('Could not save — try again');
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
 async function handleDelete(id, itemEl) {
   if (!confirm('Delete this entry?')) return;
   itemEl.classList.add('deleting');
   try {
-    const token = getToken();
-    const res = await fetch(`/api/delete-log?id=${encodeURIComponent(id)}&u=${encodeURIComponent(token)}`, {
-      method: 'DELETE'
-    });
+    const res = await fetch(`/api/delete-log?id=${encodeURIComponent(id)}&u=${encodeURIComponent(token)}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Delete failed');
     itemEl.remove();
     showToast('Entry deleted ✓');
-    loadData(); // refresh totals
+    loadData();
   } catch (e) {
     itemEl.classList.remove('deleting');
     showToast('Could not delete — try again');
   }
 }
 
-// ── SVG ring ─────────────────────────────────────────────────────────────────
+// ── SVG ring ──────────────────────────────────────────────────────────────────
 function ring(pct) {
   const r = 40, c = 2 * Math.PI * r, d = c * Math.min(pct / 100, 1);
-  return `<svg width="96" height="96" viewBox="0 0 96 96">
-    <circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/>
-    <circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8"
-      stroke-dasharray="${d} ${c - d}" stroke-linecap="round"/>
-  </svg>`;
+  return `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-dasharray="${d} ${c-d}" stroke-linecap="round"/></svg>`;
 }
-
 function bar(pct, color) {
-  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct, 100)}%;background:${color}"></div></div>`;
+  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
 }
-
 function trashIcon() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
-    <path d="M10 11v6M14 11v6"></path>
-    <path d="M9 6V4h6v2"></path>
-  </svg>`;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>`;
+}
+function editIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 }
 
-// ── Render dashboard ──────────────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────────────────
 function render(data) {
   const { user, logs } = data;
+  const tracked = user.trackedMacros || ['protein', 'carbs', 'fat'];
 
   const totals = logs.reduce((a, l) => ({
-    calories: a.calories + (l.calories || 0),
+    calories: a.calories + (l.calories  || 0),
     protein:  a.protein  + (l.protein_g || 0),
     carbs:    a.carbs    + (l.carbs_g   || 0),
     fat:      a.fat      + (l.fat_g     || 0)
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
-  const goals = {
-    calories: user.dailyCalorieTarget,
-    protein:  user.dailyProteinTarget,
-    carbs:    user.dailyCarbTarget,
-    fat:      user.dailyFatTarget
-  };
+  const goals  = { calories: user.dailyCalorieTarget, protein: user.dailyProteinTarget, carbs: user.dailyCarbTarget, fat: user.dailyFatTarget };
+  const calPct = Math.round((totals.calories / goals.calories) * 100);
+  const remain = Math.max(goals.calories - totals.calories, 0);
 
-  const calPct   = Math.round((totals.calories / goals.calories) * 100);
-  const remain   = Math.max(goals.calories - totals.calories, 0);
+  // Macro bars — only show tracked ones
+  const macroDefs = [
+    { key: 'protein', label: 'Protein', val: totals.protein, goal: goals.protein, color: '#000' },
+    { key: 'carbs',   label: 'Carbs',   val: totals.carbs,   goal: goals.carbs,   color: '#555' },
+    { key: 'fat',     label: 'Fat',     val: totals.fat,     goal: goals.fat,     color: '#aaa' }
+  ].filter(m => tracked.includes(m.key));
+
+  const macroHTML = macroDefs.length === 0
+    ? '<div style="color:var(--text2);font-size:13px;padding:4px 0">Tracking calories only. Text "set macros" to change.</div>'
+    : macroDefs.map(m => `
+        <div class="macro-card">
+          <div class="macro-header">
+            <div class="macro-name">${m.label}</div>
+            <div class="macro-val">${Math.round(m.val)}g / ${m.goal}g</div>
+          </div>
+          ${bar(Math.round((m.val / m.goal) * 100), m.color)}
+        </div>`).join('');
+
+  // Build log macro line based on tracked prefs
+  function logMacroLine(l) {
+    const parts = [
+      tracked.includes('protein') ? `${Math.round(l.protein_g || 0)}g P` : null,
+      tracked.includes('carbs')   ? `${Math.round(l.carbs_g   || 0)}g C` : null,
+      tracked.includes('fat')     ? `${Math.round(l.fat_g     || 0)}g F` : null
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }
 
   const logHTML = logs.length === 0
-    ? `<div class="empty-state">
-        <div class="empty-icon">🍽</div>
-        <div class="empty-title">Nothing logged yet</div>
-        <div class="empty-sub">Text your meals to the number below and they'll appear here.</div>
-       </div>`
+    ? `<div class="empty-state"><div class="empty-icon">🍽</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals to the number below and they'll appear here.</div></div>`
     : logs.map(l => `
         <div class="log-item" id="log-${l.id}">
           <div class="log-left">
             <div class="log-food">${l.food_description || 'Food item'}</div>
-            <div class="log-macros">${Math.round(l.protein_g || 0)}g P · ${Math.round(l.carbs_g || 0)}g C · ${Math.round(l.fat_g || 0)}g F</div>
+            <div class="log-macros">${logMacroLine(l)}</div>
           </div>
           <div class="log-right">
             <div class="log-cal">${l.calories || 0}<span class="log-cal-unit"> cal</span></div>
-            <button class="delete-btn" onclick="handleDelete('${l.id}', document.getElementById('log-${l.id}'))" aria-label="Delete entry">
-              ${trashIcon()}
-            </button>
+            <button class="icon-btn edit" onclick='openEdit(${JSON.stringify(l)})' aria-label="Edit entry">${editIcon()}</button>
+            <button class="icon-btn delete" onclick="handleDelete('${l.id}', document.getElementById('log-${l.id}'))" aria-label="Delete entry">${trashIcon()}</button>
           </div>
         </div>`).join('');
 
@@ -247,13 +308,7 @@ function render(data) {
     <div class="section">
       <div class="calorie-card">
         <div class="calorie-top">
-          <div class="ring-wrap">
-            ${ring(calPct)}
-            <div class="ring-center">
-              <div class="ring-pct">${calPct}%</div>
-              <div class="ring-sub">of goal</div>
-            </div>
-          </div>
+          <div class="ring-wrap">${ring(calPct)}<div class="ring-center"><div class="ring-pct">${calPct}%</div><div class="ring-sub">of goal</div></div></div>
           <div class="cal-info">
             <div class="cal-label">Calories remaining</div>
             <div class="cal-remain">${remain.toLocaleString()}<span class="cal-unit">cal</span></div>
@@ -262,102 +317,49 @@ function render(data) {
         </div>
         <div class="cal-divider"></div>
         <div class="cal-stats">
-          <div class="cal-stat">
-            <div class="cal-stat-num">${Math.round(totals.calories).toLocaleString()}</div>
-            <div class="cal-stat-label">Eaten</div>
-          </div>
-          <div class="cal-stat">
-            <div class="cal-stat-num">${remain.toLocaleString()}</div>
-            <div class="cal-stat-label">Remaining</div>
-          </div>
-          <div class="cal-stat">
-            <div class="cal-stat-num">${goals.calories.toLocaleString()}</div>
-            <div class="cal-stat-label">Goal</div>
-          </div>
+          <div class="cal-stat"><div class="cal-stat-num">${Math.round(totals.calories).toLocaleString()}</div><div class="cal-stat-label">Eaten</div></div>
+          <div class="cal-stat"><div class="cal-stat-num">${remain.toLocaleString()}</div><div class="cal-stat-label">Remaining</div></div>
+          <div class="cal-stat"><div class="cal-stat-num">${goals.calories.toLocaleString()}</div><div class="cal-stat-label">Goal</div></div>
         </div>
       </div>
     </div>
-
+    ${macroDefs.length > 0 || tracked.length === 0 ? `
     <div class="section" style="padding-top:24px">
       <div class="section-label">Macros</div>
-      <div class="macro-grid">
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">Protein</div>
-            <div class="macro-val">${Math.round(totals.protein)}g / ${goals.protein}g</div>
-          </div>
-          ${bar(Math.round((totals.protein / goals.protein) * 100), '#000')}
-        </div>
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">Carbs</div>
-            <div class="macro-val">${Math.round(totals.carbs)}g / ${goals.carbs}g</div>
-          </div>
-          ${bar(Math.round((totals.carbs / goals.carbs) * 100), '#555')}
-        </div>
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">Fat</div>
-            <div class="macro-val">${Math.round(totals.fat)}g / ${goals.fat}g</div>
-          </div>
-          ${bar(Math.round((totals.fat / goals.fat) * 100), '#aaa')}
-        </div>
-      </div>
-    </div>
-
+      <div class="macro-grid">${macroHTML}</div>
+    </div>` : ''}
     <div class="section" style="padding-top:24px">
       <div class="section-label">Today's log</div>
       <div class="log-list">${logHTML}</div>
     </div>
-
     <div class="section" style="padding-top:24px">
       <div class="section-label">Log a meal</div>
-      <div class="sms-cta">
-        <div class="sms-number">+1 (647) 424-4438</div>
-        <div class="sms-label">Text this number to log any meal instantly</div>
-      </div>
+      <div class="sms-cta"><div class="sms-number">+1 (647) 424-4438</div><div class="sms-label">Text or send a photo to log instantly</div></div>
     </div>`;
 }
 
-// ── Load data ─────────────────────────────────────────────────────────────────
+// ── Load ──────────────────────────────────────────────────────────────────────
 async function loadData() {
-  const btn   = document.getElementById('refresh-btn');
-  const svgEl = btn.querySelector('svg');
-  svgEl.classList.add('spin');
-
+  const btn = document.getElementById('refresh-btn');
+  btn.querySelector('svg').classList.add('spin');
   document.getElementById('greeting').textContent = getGreeting();
   document.getElementById('date-pill').textContent = formatDate();
 
-  const token = getToken();
-
   if (!token) {
-    document.getElementById('main-content').innerHTML = `
-      <div class="no-token">
-        <div class="no-token-icon">👋</div>
-        <div class="no-token-title">Welcome to Macro</div>
-        <div class="no-token-sub">Text the number below to get started. You'll receive your personal dashboard link after setup.</div>
-        <div class="no-token-number">+1 (647) 424-4438</div>
-      </div>`;
-    svgEl.classList.remove('spin');
+    document.getElementById('main-content').innerHTML = `<div class="no-token"><div class="no-token-icon">👋</div><div class="no-token-title">Welcome to Macro</div><div class="no-token-sub">Text the number below to get started. You'll receive your personal dashboard link after setup.</div><div class="no-token-number">+1 (647) 424-4438</div></div>`;
+    btn.querySelector('svg').classList.remove('spin');
     return;
   }
 
   try {
     const res = await fetch(`/api/dashboard?u=${encodeURIComponent(token)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    render(data);
+    render(await res.json());
   } catch (e) {
-    console.error('Load error:', e);
-    document.getElementById('main-content').innerHTML = `
-      <div class="loading-state">
-        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
-        <div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div>
-        <div style="font-size:14px">Check your connection and try refreshing.</div>
-      </div>`;
+    document.getElementById('main-content').innerHTML = `<div class="loading-state"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div><div style="font-size:14px">Check your connection and try refreshing.</div></div>`;
   }
 
-  svgEl.classList.remove('spin');
+  btn.querySelector('svg').classList.remove('spin');
 }
 
 loadData();
