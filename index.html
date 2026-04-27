@@ -6,150 +6,328 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="/manifest.json">
 <title>Macro</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f7; --bg3: #ebebed;
-    --text: #000000; --text2: #6e6e73; --text3: #aeaeb2;
-    --border: rgba(0,0,0,0.08); --radius: 18px;
-  }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; overflow-x: hidden; }
-  .safe-top { height: env(safe-area-inset-top, 44px); background: var(--bg); }
-  header { padding: 12px 24px 20px; background: var(--bg); position: sticky; top: 0; z-index: 100; border-bottom: 0.5px solid var(--border); }
-  .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  .greeting { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
-  .name { font-size: 28px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; }
-  .date-pill { margin-top: 10px; display: inline-block; background: var(--bg2); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
-  .refresh-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--bg2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
-  .refresh-btn svg { width: 16px; height: 16px; color: var(--text2); }
-  .spin { animation: spin 1s linear infinite; }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  main { padding: 0 0 40px; }
-  .section { padding: 24px 24px 0; }
-  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
-  .calorie-card { background: var(--text); border-radius: var(--radius); padding: 24px; color: #fff; }
-  .calorie-top { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
-  .ring-wrap { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
-  .ring-wrap svg { transform: rotate(-90deg); }
-  .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
-  .ring-pct { font-size: 20px; font-weight: 700; color: #fff; line-height: 1; }
-  .ring-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
-  .cal-info { flex: 1; }
-  .cal-label { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 4px; }
-  .cal-remain { font-size: 36px; font-weight: 700; color: #fff; line-height: 1; letter-spacing: -1.5px; }
-  .cal-unit { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.6); margin-left: 2px; }
-  .cal-meta { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 6px; }
-  .cal-divider { height: 0.5px; background: rgba(255,255,255,0.12); margin-bottom: 16px; }
-  .cal-stats { display: flex; justify-content: space-between; }
-  .cal-stat { text-align: center; }
-  .cal-stat-num { font-size: 18px; font-weight: 600; color: #fff; }
-  .cal-stat-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
-  .macro-grid { display: flex; flex-direction: column; gap: 12px; }
-  .macro-card { background: var(--bg2); border-radius: 14px; padding: 16px; }
-  .macro-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-  .macro-name { font-size: 14px; font-weight: 500; }
-  .macro-val { font-size: 13px; color: var(--text2); }
-  .macro-bar-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .macro-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
-  .log-list { background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
-  .log-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid var(--border); transition: opacity 0.3s; }
-  .log-item:last-child { border-bottom: none; }
-  .log-item.deleting { opacity: 0.3; pointer-events: none; }
-  .log-left { flex: 1; min-width: 0; }
-  .log-food { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .log-macros { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .log-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 12px; }
-  .log-cal { font-size: 15px; font-weight: 600; }
-  .log-cal-unit { font-size: 11px; font-weight: 400; color: var(--text3); }
-  .icon-btn { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text3); transition: all 0.15s; flex-shrink: 0; }
-  .icon-btn:active { background: var(--bg3); }
-  .icon-btn.delete:active { background: #ffe5e5; color: #ff3b30; }
-  .icon-btn.edit:active { background: #e5f0ff; color: #007aff; }
-  .icon-btn svg { width: 14px; height: 14px; }
-  /* Edit modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal { background: var(--bg); border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 430px; margin: 0 auto; transform: translateY(20px); transition: transform 0.25s; }
-  .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
-  .modal-field { margin-bottom: 12px; }
-  .modal-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-  .modal-input { width: 100%; font-size: 15px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); color: var(--text); font-family: inherit; }
-  .modal-input:focus { outline: none; border-color: #000; }
-  .modal-row { display: flex; gap: 8px; }
-  .modal-row .modal-field { flex: 1; }
-  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
-  .modal-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; }
-  .modal-btn.cancel { background: var(--bg2); color: var(--text); }
-  .modal-btn.save { background: var(--text); color: #fff; }
-  .empty-state { padding: 40px 24px; text-align: center; }
-  .empty-icon { font-size: 32px; margin-bottom: 12px; }
-  .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-  .empty-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
-  .sms-cta { background: var(--bg2); border-radius: var(--radius); padding: 20px; text-align: center; }
-  .sms-number { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
-  .sms-label { font-size: 13px; color: var(--text2); }
-  .loading-state { padding: 60px 24px; text-align: center; color: var(--text2); font-size: 14px; }
-  .spinner { width: 24px; height: 24px; border: 2px solid var(--bg3); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  .no-token { padding: 60px 24px; text-align: center; }
-  .no-token-icon { font-size: 48px; margin-bottom: 16px; }
-  .no-token-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
-  .no-token-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
-  .no-token-number { font-size: 22px; font-weight: 700; margin-top: 20px; }
-  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 12px 20px; border-radius: 100px; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:     #ffffff;
+  --bg2:    #f5f5f7;
+  --bg3:    #e8e8ed;
+  --text:   #000000;
+  --text2:  #6e6e73;
+  --text3:  #aeaeb2;
+  --border: rgba(0,0,0,0.07);
+  --radius: 20px;
+  --r-sm:   14px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { from { background-position: -400px 0; } to { background-position: 400px 0; } }
+@keyframes fillBar { from { width: 0; } }
+@keyframes growBar { from { height: 0; } }
+
+.fade-up { opacity: 0; animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+.d1 { animation-delay: 0.05s; }
+.d2 { animation-delay: 0.12s; }
+.d3 { animation-delay: 0.19s; }
+.d4 { animation-delay: 0.26s; }
+.d5 { animation-delay: 0.33s; }
+.d6 { animation-delay: 0.40s; }
+
+/* ── Safe area & header ───────────────────────────────────────────────────── */
+.safe-top { height: env(safe-area-inset-top, 44px); background: var(--bg); }
+
+header {
+  padding: 10px 22px 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 0.5px solid var(--border);
+}
+.header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.header-left {}
+.greeting  { font-size: 12px; color: var(--text2); margin-bottom: 1px; font-weight: 400; letter-spacing: 0.1px; }
+.user-name { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; }
+.header-right { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+
+.date-pill {
+  background: var(--bg2); border-radius: 20px;
+  padding: 5px 11px; font-size: 11px; color: var(--text2); font-weight: 400;
+}
+
+.refresh-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg2); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.refresh-btn:active { background: var(--bg3); }
+.refresh-btn svg { width: 14px; height: 14px; color: var(--text2); }
+.spinning { animation: spin 0.9s linear infinite; }
+
+/* ── Main layout ──────────────────────────────────────────────────────────── */
+main { padding: 20px 0 60px; }
+.section { padding: 0 20px; margin-bottom: 12px; }
+.section-label {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.7px;
+  margin-bottom: 10px; margin-left: 2px;
+}
+
+/* ── Calorie card (hero) ──────────────────────────────────────────────────── */
+.cal-card {
+  background: var(--text); border-radius: var(--radius);
+  padding: 22px; color: #fff; overflow: hidden; position: relative;
+}
+.cal-top { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+.ring-wrap { position: relative; width: 92px; height: 92px; flex-shrink: 0; }
+.ring-wrap svg { transform: rotate(-90deg); display: block; }
+.ring-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); text-align: center;
+}
+.ring-pct  { font-size: 19px; font-weight: 700; color: #fff; line-height: 1; }
+.ring-sub  { font-size: 9px; color: rgba(255,255,255,0.45); margin-top: 2px; letter-spacing: 0.2px; }
+.cal-info  { flex: 1; }
+.cal-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 3px; }
+.cal-num   { font-size: 38px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: #fff; }
+.cal-unit  { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.5); margin-left: 2px; letter-spacing: 0; }
+.cal-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 5px; }
+.cal-divider { height: 0.5px; background: rgba(255,255,255,0.1); margin-bottom: 14px; }
+.cal-stats { display: flex; justify-content: space-around; }
+.cal-stat  { text-align: center; }
+.cal-stat-num   { font-size: 17px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
+.cal-stat-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* ── Streak + Goal row ────────────────────────────────────────────────────── */
+.pill-row { display: flex; gap: 10px; }
+.info-pill {
+  flex: 1; background: var(--bg2); border-radius: var(--r-sm);
+  padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+}
+.pill-icon { font-size: 22px; line-height: 1; }
+.pill-text {}
+.pill-val   { font-size: 17px; font-weight: 700; letter-spacing: -0.5px; }
+.pill-label { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+/* ── Weekly chart ─────────────────────────────────────────────────────────── */
+.chart-card {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 18px 16px 14px;
+}
+.chart-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+.chart-title  { font-size: 14px; font-weight: 600; }
+.chart-avg    { font-size: 12px; color: var(--text2); }
+.chart-bars   { display: flex; gap: 6px; align-items: flex-end; height: 80px; }
+.chart-col    { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bar-wrap     { flex: 1; width: 100%; display: flex; align-items: flex-end; position: relative; }
+.bar-bg       { position: absolute; inset: 0; background: var(--bg3); border-radius: 5px; }
+.bar-fill     {
+  width: 100%; border-radius: 5px; position: relative; z-index: 1;
+  min-height: 3px;
+  animation: growBar 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+.bar-fill.today { background: var(--text); }
+.bar-fill.past  { background: var(--text3); }
+.bar-fill.over  { background: #ff3b30; }
+.goal-line {
+  position: absolute; left: -2px; right: -2px; height: 1.5px;
+  background: rgba(0,0,0,0.18); border-radius: 1px; z-index: 2;
+}
+.bar-day  { font-size: 10px; color: var(--text3); font-weight: 400; }
+.bar-day.today { color: var(--text); font-weight: 600; }
+.bar-cal  { font-size: 9px; color: var(--text2); font-weight: 500; display: none; }
+
+/* ── Macro bars ───────────────────────────────────────────────────────────── */
+.macro-list { display: flex; flex-direction: column; gap: 2px; background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
+.macro-row  { padding: 13px 16px; border-bottom: 0.5px solid var(--border); }
+.macro-row:last-child { border-bottom: none; }
+.macro-top  { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.macro-name { font-size: 14px; font-weight: 500; }
+.macro-nums { font-size: 13px; color: var(--text2); }
+.macro-bar-bg   { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.macro-bar-fill {
+  height: 100%; border-radius: 3px;
+  animation: fillBar 0.7s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── Log list ─────────────────────────────────────────────────────────────── */
+.log-list { background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
+.log-item {
+  display: flex; align-items: center; padding: 13px 14px;
+  border-bottom: 0.5px solid var(--border); transition: opacity 0.25s;
+  gap: 10px;
+}
+.log-item:last-child { border-bottom: none; }
+.log-item.removing  { opacity: 0.25; pointer-events: none; }
+.log-food-wrap { flex: 1; min-width: 0; }
+.log-food-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-food-macros { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.log-cal-wrap { text-align: right; flex-shrink: 0; }
+.log-cal-num  { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.log-cal-lbl  { font-size: 10px; color: var(--text3); }
+.log-actions  { display: flex; gap: 2px; flex-shrink: 0; }
+.act-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3); transition: background 0.12s, color 0.12s;
+}
+.act-btn svg { width: 13px; height: 13px; pointer-events: none; }
+.act-btn.edit:active   { background: #e8f0ff; color: #007aff; }
+.act-btn.trash:active  { background: #ffe5e5; color: #ff3b30; }
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.empty {
+  padding: 36px 20px; text-align: center;
+  background: var(--bg2); border-radius: var(--radius);
+}
+.empty-emoji { font-size: 30px; margin-bottom: 10px; }
+.empty-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+.empty-sub   { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+/* ── SMS CTA ──────────────────────────────────────────────────────────────── */
+.sms-card {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 18px; display: flex; align-items: center; gap: 14px;
+}
+.sms-icon { font-size: 28px; flex-shrink: 0; }
+.sms-text {}
+.sms-num  { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
+.sms-lbl  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ── Edit modal ───────────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0); pointer-events: none;
+  transition: background 0.2s;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.overlay.open { background: rgba(0,0,0,0.35); pointer-events: all; }
+.sheet {
+  background: var(--bg); border-radius: 22px 22px 0 0;
+  padding: 0 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  width: 100%; max-width: 430px;
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.overlay.open .sheet { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 12px auto 18px; }
+.sheet-title  { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.field        { margin-bottom: 12px; }
+.field label  { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.field input  {
+  width: 100%; padding: 11px 13px; border-radius: 11px;
+  border: 1.5px solid var(--border); background: var(--bg2);
+  font-size: 15px; color: var(--text); font-family: inherit;
+  transition: border-color 0.15s;
+}
+.field input:focus { outline: none; border-color: #000; background: #fff; }
+.field-row  { display: flex; gap: 8px; }
+.field-row .field { flex: 1; }
+.sheet-actions { display: flex; gap: 8px; margin-top: 16px; }
+.sheet-btn {
+  flex: 1; padding: 13px; border-radius: 13px; border: none;
+  font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit;
+  transition: opacity 0.15s;
+}
+.sheet-btn:active { opacity: 0.7; }
+.sheet-btn.cancel { background: var(--bg2); color: var(--text); }
+.sheet-btn.save   { background: var(--text); color: #fff; }
+
+/* ── States ───────────────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 10px;
+}
+.load-wrap  { padding: 60px 20px; text-align: center; color: var(--text2); font-size: 14px; }
+.spinner    { width: 22px; height: 22px; border: 2px solid var(--bg3); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 14px; }
+.err-wrap   { padding: 60px 20px; text-align: center; }
+.err-emoji  { font-size: 36px; margin-bottom: 12px; }
+.err-title  { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.err-sub    { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+/* ── Welcome (no token) ───────────────────────────────────────────────────── */
+.welcome    { padding: 60px 24px; text-align: center; }
+.wel-icon   { font-size: 52px; margin-bottom: 16px; }
+.wel-title  { font-size: 24px; font-weight: 700; letter-spacing: -0.8px; margin-bottom: 8px; }
+.wel-sub    { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 260px; margin: 0 auto; }
+.wel-num    { font-size: 22px; font-weight: 700; margin-top: 20px; letter-spacing: -0.5px; }
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--text); color: #fff;
+  padding: 11px 18px; border-radius: 100px;
+  font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none; white-space: nowrap; z-index: 500;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
+
 <div class="safe-top"></div>
+
 <header>
   <div class="header-row">
-    <div>
-      <div class="greeting" id="greeting">Good morning</div>
-      <div class="name" id="username">Macro</div>
+    <div class="header-left">
+      <div class="greeting"  id="greeting">Good morning</div>
+      <div class="user-name" id="username">Macro</div>
     </div>
-    <button class="refresh-btn" onclick="loadData()" id="refresh-btn" aria-label="Refresh">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-    </button>
+    <div class="header-right">
+      <div class="date-pill" id="date-pill">Today</div>
+      <button class="refresh-btn" id="refresh-btn" onclick="loadData()" aria-label="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
   </div>
-  <div class="date-pill" id="date-pill">Today</div>
 </header>
-<main id="main-content">
-  <div class="loading-state"><div class="spinner"></div>Loading your day...</div>
-</main>
 
-<!-- Edit modal -->
-<div class="modal-overlay" id="edit-overlay" onclick="closeEdit(event)">
-  <div class="modal">
-    <div class="modal-title">Edit entry</div>
-    <div class="modal-field">
-      <div class="modal-label">Food name</div>
-      <input class="modal-input" id="edit-name" type="text" />
+<main id="main"></main>
+
+<!-- Edit sheet -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit entry</div>
+    <div class="field">
+      <label>Food name</label>
+      <input id="e-name" type="text" autocomplete="off" />
     </div>
-    <div class="modal-row">
-      <div class="modal-field">
-        <div class="modal-label">Calories</div>
-        <input class="modal-input" id="edit-cal" type="number" inputmode="numeric" />
-      </div>
-      <div class="modal-field">
-        <div class="modal-label">Protein (g)</div>
-        <input class="modal-input" id="edit-prot" type="number" inputmode="decimal" />
-      </div>
+    <div class="field-row">
+      <div class="field"><label>Calories</label><input id="e-cal"  type="number" inputmode="numeric" /></div>
+      <div class="field"><label>Protein (g)</label><input id="e-prot" type="number" inputmode="decimal" /></div>
     </div>
-    <div class="modal-row">
-      <div class="modal-field">
-        <div class="modal-label">Carbs (g)</div>
-        <input class="modal-input" id="edit-carbs" type="number" inputmode="decimal" />
-      </div>
-      <div class="modal-field">
-        <div class="modal-label">Fat (g)</div>
-        <input class="modal-input" id="edit-fat" type="number" inputmode="decimal" />
-      </div>
+    <div class="field-row">
+      <div class="field"><label>Carbs (g)</label><input id="e-carbs" type="number" inputmode="decimal" /></div>
+      <div class="field"><label>Fat (g)</label><input id="e-fat"   type="number" inputmode="decimal" /></div>
     </div>
-    <div class="modal-actions">
-      <button class="modal-btn cancel" onclick="closeEdit()">Cancel</button>
-      <button class="modal-btn save" onclick="saveEdit()">Save</button>
+    <div class="sheet-actions">
+      <button class="sheet-btn cancel" onclick="closeSheet()">Cancel</button>
+      <button class="sheet-btn save"   onclick="saveEdit()">Save changes</button>
     </div>
   </div>
 </div>
@@ -157,209 +335,348 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let currentEditId = null;
-const token = new URLSearchParams(window.location.search).get('u') || '';
+// ── State ─────────────────────────────────────────────────────────────────────
+const TOKEN      = new URLSearchParams(location.search).get('u') || '';
+let   editId     = null;
+let   lastData   = null;
 
-function getGreeting() {
+// ── Utilities ─────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function greeting() {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
-function formatDate() {
-  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+
+function fmtDate() {
+  return new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
 }
 
-// ── Edit modal ────────────────────────────────────────────────────────────────
-function openEdit(log) {
-  currentEditId = log.id;
-  document.getElementById('edit-name').value  = log.food_description || '';
-  document.getElementById('edit-cal').value   = log.calories  || 0;
-  document.getElementById('edit-prot').value  = log.protein_g || 0;
-  document.getElementById('edit-carbs').value = log.carbs_g   || 0;
-  document.getElementById('edit-fat').value   = log.fat_g     || 0;
-  document.getElementById('edit-overlay').classList.add('open');
-}
-function closeEdit(e) {
-  if (e && e.target !== document.getElementById('edit-overlay')) return;
-  document.getElementById('edit-overlay').classList.remove('open');
-  currentEditId = null;
-}
-async function saveEdit() {
-  if (!currentEditId) return;
-  try {
-    const res = await fetch(`/api/dashboard?u=${encodeURIComponent(token)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id:               currentEditId,
-        food_description: document.getElementById('edit-name').value,
-        calories:         parseFloat(document.getElementById('edit-cal').value),
-        protein_g:        parseFloat(document.getElementById('edit-prot').value),
-        carbs_g:          parseFloat(document.getElementById('edit-carbs').value),
-        fat_g:            parseFloat(document.getElementById('edit-fat').value)
-      })
-    });
-    if (!res.ok) throw new Error('Save failed');
-    document.getElementById('edit-overlay').classList.remove('open');
-    showToast('Entry updated ✓');
-    loadData();
-  } catch (e) {
-    showToast('Could not save — try again');
-  }
-}
-
-// ── Delete ────────────────────────────────────────────────────────────────────
-async function handleDelete(id, itemEl) {
-  if (!confirm('Delete this entry?')) return;
-  itemEl.classList.add('deleting');
-  try {
-    const res = await fetch(`/api/delete-log?id=${encodeURIComponent(id)}&u=${encodeURIComponent(token)}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Delete failed');
-    itemEl.remove();
-    showToast('Entry deleted ✓');
-    loadData();
-  } catch (e) {
-    itemEl.classList.remove('deleting');
-    showToast('Could not delete — try again');
-  }
+function dayLabel(dateStr) {
+  // dateStr = YYYY-MM-DD
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d = new Date(dateStr + 'T12:00:00');
+  return days[d.getDay()];
 }
 
 // ── SVG ring ──────────────────────────────────────────────────────────────────
 function ring(pct) {
-  const r = 40, c = 2 * Math.PI * r, d = c * Math.min(pct / 100, 1);
-  return `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-dasharray="${d} ${c-d}" stroke-linecap="round"/></svg>`;
+  const r = 38, c = 2 * Math.PI * r;
+  const fill = c * Math.min(Math.max(pct, 0) / 100, 1);
+  const color = pct > 110 ? '#ff3b30' : 'rgba(255,255,255,0.92)';
+  return `<svg width="92" height="92" viewBox="0 0 92 92">
+    <circle cx="46" cy="46" r="${r}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7.5"/>
+    <circle cx="46" cy="46" r="${r}" fill="none" stroke="${color}" stroke-width="7.5"
+      stroke-dasharray="${fill} ${c - fill}" stroke-linecap="round"
+      style="transition:stroke-dasharray 0.8s cubic-bezier(0.22,1,0.36,1)"/>
+  </svg>`;
 }
-function bar(pct, color) {
-  return `<div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
+
+// ── Weekly chart ──────────────────────────────────────────────────────────────
+function buildChart(weeklyData, goal) {
+  const maxCal = Math.max(...weeklyData.map(d => d.calories), goal, 1);
+  const avgCal = Math.round(
+    weeklyData.filter(d => d.calories > 0).reduce((s, d) => s + d.calories, 0) /
+    Math.max(weeklyData.filter(d => d.calories > 0).length, 1)
+  );
+  const goalPct = (goal / maxCal) * 100;
+
+  const cols = weeklyData.map((d, i) => {
+    const pct    = (d.calories / maxCal) * 100;
+    const isOver = d.calories > goal * 1.05;
+    const cls    = d.isToday ? 'today' : isOver ? 'over' : 'past';
+    const delay  = `animation-delay:${i * 0.06}s`;
+    const label  = d.isToday ? 'Today' : dayLabel(d.date);
+    const calTxt = d.calories > 0 ? Math.round(d.calories / 100) * 100 : '';
+
+    return `<div class="chart-col">
+      <div class="bar-wrap">
+        <div class="bar-bg"></div>
+        <div class="goal-line" style="bottom:${goalPct}%"></div>
+        <div class="bar-fill ${cls}" style="height:${Math.max(pct,0)}%;${delay}"></div>
+      </div>
+      <div class="bar-day ${d.isToday ? 'today' : ''}">${label}</div>
+    </div>`;
+  }).join('');
+
+  const avgLine = avgCal > 0
+    ? `<span style="font-weight:500;color:var(--text)">${avgCal.toLocaleString()}</span> cal avg`
+    : 'No data yet';
+
+  return `<div class="chart-card fade-up d3">
+    <div class="chart-header">
+      <div class="chart-title">This week</div>
+      <div class="chart-avg">${avgLine}</div>
+    </div>
+    <div class="chart-bars">${cols}</div>
+  </div>`;
 }
-function trashIcon() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>`;
-}
-function editIcon() {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-}
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
+const ICON_EDIT  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const ICON_TRASH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function render(data) {
-  const { user, logs } = data;
-  const tracked = user.trackedMacros || ['protein', 'carbs', 'fat'];
+  lastData = data;
+  const { user, logs, weeklyData } = data;
+  const tracked = user.trackedMacros || ['protein','carbs','fat'];
 
-  const totals = logs.reduce((a, l) => ({
-    calories: a.calories + (l.calories  || 0),
-    protein:  a.protein  + (l.protein_g || 0),
-    carbs:    a.carbs    + (l.carbs_g   || 0),
-    fat:      a.fat      + (l.fat_g     || 0)
-  }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  // Totals
+  const tot = logs.reduce((a,l) => ({
+    cal:  a.cal  + (l.calories  || 0),
+    prot: a.prot + (l.protein_g || 0),
+    carb: a.carb + (l.carbs_g   || 0),
+    fat:  a.fat  + (l.fat_g     || 0)
+  }), { cal:0, prot:0, carb:0, fat:0 });
 
-  const goals  = { calories: user.dailyCalorieTarget, protein: user.dailyProteinTarget, carbs: user.dailyCarbTarget, fat: user.dailyFatTarget };
-  const calPct = Math.round((totals.calories / goals.calories) * 100);
-  const remain = Math.max(goals.calories - totals.calories, 0);
+  const calPct   = Math.round((tot.cal / user.dailyCalorieTarget) * 100);
+  const remain   = Math.max(user.dailyCalorieTarget - tot.cal, 0);
+  const goalLabel = { lose:'Fat loss', gain:'Muscle gain', maintain:'Maintenance', recomp:'Recomp' }[user.goal] || user.goal || '—';
 
-  // Macro bars — only show tracked ones
-  const macroDefs = [
-    { key: 'protein', label: 'Protein', val: totals.protein, goal: goals.protein, color: '#000' },
-    { key: 'carbs',   label: 'Carbs',   val: totals.carbs,   goal: goals.carbs,   color: '#555' },
-    { key: 'fat',     label: 'Fat',     val: totals.fat,     goal: goals.fat,     color: '#aaa' }
-  ].filter(m => tracked.includes(m.key));
-
-  const macroHTML = macroDefs.length === 0
-    ? '<div style="color:var(--text2);font-size:13px;padding:4px 0">Tracking calories only. Text "set macros" to change.</div>'
-    : macroDefs.map(m => `
-        <div class="macro-card">
-          <div class="macro-header">
-            <div class="macro-name">${m.label}</div>
-            <div class="macro-val">${Math.round(m.val)}g / ${m.goal}g</div>
-          </div>
-          ${bar(Math.round((m.val / m.goal) * 100), m.color)}
-        </div>`).join('');
-
-  // Build log macro line based on tracked prefs
-  function logMacroLine(l) {
-    const parts = [
-      tracked.includes('protein') ? `${Math.round(l.protein_g || 0)}g P` : null,
-      tracked.includes('carbs')   ? `${Math.round(l.carbs_g   || 0)}g C` : null,
-      tracked.includes('fat')     ? `${Math.round(l.fat_g     || 0)}g F` : null
-    ].filter(Boolean);
-    return parts.join(' · ');
-  }
-
-  const logHTML = logs.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🍽</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals to the number below and they'll appear here.</div></div>`
-    : logs.map(l => `
-        <div class="log-item" id="log-${l.id}">
-          <div class="log-left">
-            <div class="log-food">${l.food_description || 'Food item'}</div>
-            <div class="log-macros">${logMacroLine(l)}</div>
-          </div>
-          <div class="log-right">
-            <div class="log-cal">${l.calories || 0}<span class="log-cal-unit"> cal</span></div>
-            <button class="icon-btn edit" onclick='openEdit(${JSON.stringify(l)})' aria-label="Edit entry">${editIcon()}</button>
-            <button class="icon-btn delete" onclick="handleDelete('${l.id}', document.getElementById('log-${l.id}'))" aria-label="Delete entry">${trashIcon()}</button>
-          </div>
-        </div>`).join('');
-
-  document.getElementById('username').textContent = user.name || 'Macro';
-  document.getElementById('main-content').innerHTML = `
-    <div class="section">
-      <div class="calorie-card">
-        <div class="calorie-top">
-          <div class="ring-wrap">${ring(calPct)}<div class="ring-center"><div class="ring-pct">${calPct}%</div><div class="ring-sub">of goal</div></div></div>
-          <div class="cal-info">
-            <div class="cal-label">Calories remaining</div>
-            <div class="cal-remain">${remain.toLocaleString()}<span class="cal-unit">cal</span></div>
-            <div class="cal-meta">${Math.round(totals.calories).toLocaleString()} eaten · ${goals.calories.toLocaleString()} goal</div>
+  // ── Calorie card ────────────────────────────────────────────────────────
+  const calCard = `
+  <div class="section fade-up d1">
+    <div class="cal-card">
+      <div class="cal-top">
+        <div class="ring-wrap">
+          ${ring(calPct)}
+          <div class="ring-center">
+            <div class="ring-pct">${calPct}%</div>
+            <div class="ring-sub">of goal</div>
           </div>
         </div>
-        <div class="cal-divider"></div>
-        <div class="cal-stats">
-          <div class="cal-stat"><div class="cal-stat-num">${Math.round(totals.calories).toLocaleString()}</div><div class="cal-stat-label">Eaten</div></div>
-          <div class="cal-stat"><div class="cal-stat-num">${remain.toLocaleString()}</div><div class="cal-stat-label">Remaining</div></div>
-          <div class="cal-stat"><div class="cal-stat-num">${goals.calories.toLocaleString()}</div><div class="cal-stat-label">Goal</div></div>
+        <div class="cal-info">
+          <div class="cal-label">Calories remaining</div>
+          <div class="cal-num">${remain.toLocaleString()}<span class="cal-unit">cal</span></div>
+          <div class="cal-sub">${Math.round(tot.cal).toLocaleString()} eaten · ${user.dailyCalorieTarget.toLocaleString()} goal</div>
+        </div>
+      </div>
+      <div class="cal-divider"></div>
+      <div class="cal-stats">
+        <div class="cal-stat">
+          <div class="cal-stat-num">${Math.round(tot.cal).toLocaleString()}</div>
+          <div class="cal-stat-label">Eaten</div>
+        </div>
+        <div class="cal-stat">
+          <div class="cal-stat-num">${remain.toLocaleString()}</div>
+          <div class="cal-stat-label">Remaining</div>
+        </div>
+        <div class="cal-stat">
+          <div class="cal-stat-num">${user.dailyCalorieTarget.toLocaleString()}</div>
+          <div class="cal-stat-label">Goal</div>
         </div>
       </div>
     </div>
-    ${macroDefs.length > 0 || tracked.length === 0 ? `
-    <div class="section" style="padding-top:24px">
-      <div class="section-label">Macros</div>
-      <div class="macro-grid">${macroHTML}</div>
-    </div>` : ''}
-    <div class="section" style="padding-top:24px">
-      <div class="section-label">Today's log</div>
-      <div class="log-list">${logHTML}</div>
+  </div>`;
+
+  // ── Streak + goal pills ─────────────────────────────────────────────────
+  const streakVal   = user.streak || 0;
+  const streakLabel = streakVal === 1 ? 'day streak' : 'day streak';
+  const pillRow = `
+  <div class="section fade-up d2">
+    <div class="pill-row">
+      <div class="info-pill">
+        <div class="pill-icon">${streakVal > 0 ? '🔥' : '💤'}</div>
+        <div class="pill-text">
+          <div class="pill-val">${streakVal}</div>
+          <div class="pill-label">${streakLabel}</div>
+        </div>
+      </div>
+      <div class="info-pill">
+        <div class="pill-icon">🎯</div>
+        <div class="pill-text">
+          <div class="pill-val">${goalLabel}</div>
+          <div class="pill-label">Current goal</div>
+        </div>
+      </div>
     </div>
-    <div class="section" style="padding-top:24px">
-      <div class="section-label">Log a meal</div>
-      <div class="sms-cta"><div class="sms-number">+1 (647) 424-4438</div><div class="sms-label">Text or send a photo to log instantly</div></div>
-    </div>`;
+  </div>`;
+
+  // ── Weekly chart ────────────────────────────────────────────────────────
+  const chartSection = `<div class="section">${buildChart(weeklyData, user.dailyCalorieTarget)}</div>`;
+
+  // ── Macro bars ──────────────────────────────────────────────────────────
+  const macroDefs = [
+    { key:'protein', label:'Protein', val:tot.prot, goal:user.dailyProteinTarget, color:'#000' },
+    { key:'carbs',   label:'Carbs',   val:tot.carb, goal:user.dailyCarbTarget,    color:'#555' },
+    { key:'fat',     label:'Fat',     val:tot.fat,  goal:user.dailyFatTarget,     color:'#aaa' }
+  ].filter(m => tracked.includes(m.key));
+
+  const macroSection = macroDefs.length > 0 ? `
+  <div class="section fade-up d4">
+    <div class="section-label">Macros</div>
+    <div class="macro-list">
+      ${macroDefs.map((m, i) => {
+        const pct = Math.min(Math.round((m.val / m.goal) * 100), 100);
+        return `<div class="macro-row">
+          <div class="macro-top">
+            <div class="macro-name">${m.label}</div>
+            <div class="macro-nums">${Math.round(m.val)}g <span style="color:var(--text3)">/ ${m.goal}g</span></div>
+          </div>
+          <div class="macro-bar-bg">
+            <div class="macro-bar-fill" style="width:${pct}%;background:${m.color};animation-delay:${0.3 + i * 0.08}s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>` : '';
+
+  // ── Log list ────────────────────────────────────────────────────────────
+  function macroLine(l) {
+    return [
+      tracked.includes('protein') ? `${Math.round(l.protein_g||0)}g P` : null,
+      tracked.includes('carbs')   ? `${Math.round(l.carbs_g||0)}g C`   : null,
+      tracked.includes('fat')     ? `${Math.round(l.fat_g||0)}g F`     : null
+    ].filter(Boolean).join(' · ');
+  }
+
+  const logInner = logs.length === 0
+    ? `<div class="empty">
+        <div class="empty-emoji">🍽️</div>
+        <div class="empty-title">Nothing logged yet</div>
+        <div class="empty-sub">Text your meals or send a photo to the number below.</div>
+       </div>`
+    : `<div class="log-list">
+        ${logs.map(l => `
+          <div class="log-item" id="li-${l.id}">
+            <div class="log-food-wrap">
+              <div class="log-food-name">${l.food_description || 'Food item'}</div>
+              <div class="log-food-macros">${macroLine(l)}</div>
+            </div>
+            <div class="log-cal-wrap">
+              <div class="log-cal-num">${l.calories||0}</div>
+              <div class="log-cal-lbl">cal</div>
+            </div>
+            <div class="log-actions">
+              <button class="act-btn edit"  onclick='openEdit(${JSON.stringify(l)})'     aria-label="Edit">${ICON_EDIT}</button>
+              <button class="act-btn trash" onclick="deleteLog('${l.id}')" aria-label="Delete">${ICON_TRASH}</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+
+  const logSection = `
+  <div class="section fade-up d5">
+    <div class="section-label">Today's log</div>
+    ${logInner}
+  </div>`;
+
+  // ── SMS CTA ─────────────────────────────────────────────────────────────
+  const cta = `
+  <div class="section fade-up d6">
+    <div class="sms-card">
+      <div class="sms-icon">💬</div>
+      <div class="sms-text">
+        <div class="sms-num">+1 (647) 424-4438</div>
+        <div class="sms-lbl">Text or send a photo to log instantly</div>
+      </div>
+    </div>
+  </div>`;
+
+  $('username').textContent = user.name || 'Macro';
+  $('main').innerHTML = calCard + pillRow + chartSection + macroSection + logSection + cta;
 }
 
-// ── Load ──────────────────────────────────────────────────────────────────────
-async function loadData() {
-  const btn = document.getElementById('refresh-btn');
-  btn.querySelector('svg').classList.add('spin');
-  document.getElementById('greeting').textContent = getGreeting();
-  document.getElementById('date-pill').textContent = formatDate();
+// ── Edit sheet ────────────────────────────────────────────────────────────────
+function openEdit(log) {
+  editId = log.id;
+  $('e-name').value  = log.food_description || '';
+  $('e-cal').value   = log.calories   || 0;
+  $('e-prot').value  = log.protein_g  || 0;
+  $('e-carbs').value = log.carbs_g    || 0;
+  $('e-fat').value   = log.fat_g      || 0;
+  $('overlay').classList.add('open');
+  setTimeout(() => $('e-name').focus(), 320);
+}
+function closeSheet() {
+  $('overlay').classList.remove('open');
+  editId = null;
+}
+function overlayClick(e) {
+  if (e.target === $('overlay')) closeSheet();
+}
+async function saveEdit() {
+  if (!editId) return;
+  const btn = $('overlay').querySelector('.save');
+  btn.textContent = 'Saving…';
+  try {
+    const res = await fetch(`/api/dashboard?u=${encodeURIComponent(TOKEN)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id:               editId,
+        food_description: $('e-name').value,
+        calories:         parseFloat($('e-cal').value)   || 0,
+        protein_g:        parseFloat($('e-prot').value)  || 0,
+        carbs_g:          parseFloat($('e-carbs').value) || 0,
+        fat_g:            parseFloat($('e-fat').value)   || 0
+      })
+    });
+    if (!res.ok) throw new Error();
+    closeSheet();
+    toast('Entry updated ✓');
+    loadData();
+  } catch {
+    toast('Could not save — try again');
+  } finally {
+    btn.textContent = 'Save changes';
+  }
+}
 
-  if (!token) {
-    document.getElementById('main-content').innerHTML = `<div class="no-token"><div class="no-token-icon">👋</div><div class="no-token-title">Welcome to Macro</div><div class="no-token-sub">Text the number below to get started. You'll receive your personal dashboard link after setup.</div><div class="no-token-number">+1 (647) 424-4438</div></div>`;
-    btn.querySelector('svg').classList.remove('spin');
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deleteLog(id) {
+  if (!confirm('Delete this entry?')) return;
+  const el = $(`li-${id}`);
+  if (el) el.classList.add('removing');
+  try {
+    const res = await fetch(`/api/delete-log?id=${encodeURIComponent(id)}&u=${encodeURIComponent(TOKEN)}`, { method:'DELETE' });
+    if (!res.ok) throw new Error();
+    toast('Entry deleted ✓');
+    loadData();
+  } catch {
+    if (el) el.classList.remove('removing');
+    toast('Could not delete — try again');
+  }
+}
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+async function loadData() {
+  const svgEl = $('refresh-btn').querySelector('svg');
+  svgEl.classList.add('spinning');
+  $('greeting').textContent  = greeting();
+  $('date-pill').textContent = fmtDate();
+
+  if (!TOKEN) {
+    $('main').innerHTML = `<div class="welcome">
+      <div class="wel-icon">👋</div>
+      <div class="wel-title">Welcome to Macro</div>
+      <div class="wel-sub">Text the number below to set up your account. You'll receive a personal dashboard link after setup.</div>
+      <div class="wel-num">+1 (647) 424-4438</div>
+    </div>`;
+    svgEl.classList.remove('spinning');
     return;
   }
 
   try {
-    const res = await fetch(`/api/dashboard?u=${encodeURIComponent(token)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(`/api/dashboard?u=${encodeURIComponent(TOKEN)}`);
+    if (!res.ok) throw new Error(`${res.status}`);
     render(await res.json());
   } catch (e) {
-    document.getElementById('main-content').innerHTML = `<div class="loading-state"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Could not load data</div><div style="font-size:14px">Check your connection and try refreshing.</div></div>`;
+    $('main').innerHTML = `<div class="err-wrap">
+      <div class="err-emoji">⚠️</div>
+      <div class="err-title">Couldn't load your data</div>
+      <div class="err-sub">Check your connection and tap refresh.</div>
+    </div>`;
   }
 
-  btn.querySelector('svg').classList.remove('spin');
+  svgEl.classList.remove('spinning');
 }
 
 loadData();
