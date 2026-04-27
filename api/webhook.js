@@ -1,6 +1,7 @@
 // ============================================================
 // api/webhook.js — The brain of Macro
-// Receives every SMS/MMS from Twilio, handles onboarding + logging
+// Handles SMS/MMS: onboarding, food logging, photo scanning,
+// editing entries, macro preferences
 // ============================================================
 
 const { supabase }        = require('../lib/supabase');
@@ -46,7 +47,6 @@ async function saveMessage(phone, role, content) {
   await supabase.from('conversation_history').insert({ user_phone: phone, role, content });
 }
 
-// Shared streak update — used by text and photo logging
 async function updateStreak(phone, user) {
   const today     = todayToronto();
   const yesterday = yesterdayToronto();
@@ -56,27 +56,34 @@ async function updateStreak(phone, user) {
   }
 }
 
-// Shared food save — used by text and photo logging
 async function saveFoodLog(phone, log) {
-  await supabase.from('food_logs').insert({
+  const { data, error } = await supabase.from('food_logs').insert({
     user_phone:       phone,
     food_description: String(log.description).slice(0, 200),
     calories:         Math.round(Number(log.calories)),
     protein_g:        Math.round(Number(log.protein_g) * 10) / 10,
     carbs_g:          Math.round(Number(log.carbs_g)   * 10) / 10,
     fat_g:            Math.round(Number(log.fat_g)     * 10) / 10
-  });
+  }).select().single();
+  if (error) throw error;
+  return data;
 }
 
-// Parse LOG:{...} from AI reply — returns object or null
+// Robust LOG parser — handles AI formatting variations
 function parseLogLine(reply) {
   const logIdx = reply.indexOf('LOG:');
   if (logIdx === -1) return null;
   try {
     const jsonStart = reply.indexOf('{', logIdx);
-    const lineEnd   = reply.indexOf('\n', logIdx);
-    const jsonStr   = reply.slice(jsonStart, lineEnd !== -1 ? lineEnd : undefined);
-    return JSON.parse(jsonStr);
+    if (jsonStart === -1) return null;
+    // Find matching closing brace (handles multi-line JSON)
+    let depth = 0, jsonEnd = -1;
+    for (let i = jsonStart; i < reply.length; i++) {
+      if (reply[i] === '{') depth++;
+      if (reply[i] === '}') { depth--; if (depth === 0) { jsonEnd = i + 1; break; } }
+    }
+    if (jsonEnd === -1) return null;
+    return JSON.parse(reply.slice(jsonStart, jsonEnd));
   } catch (e) {
     console.error('LOG parse error:', e, '| reply:', reply);
     return null;
@@ -84,29 +91,35 @@ function parseLogLine(reply) {
 }
 
 // ── Onboarding (AI-driven) ────────────────────────────────────────────────────
+// Order: Name → Goal → Gender → Age → Units → Weight → Height → Activity
 
-const ONBOARDING_PROMPT = `You are Macro, a warm and encouraging nutrition coach setting up a new user via SMS.
+const ONBOARDING_PROMPT = `You are Macro, a warm and encouraging nutrition assistant setting up a new user via SMS.
 
-COLLECT these 8 values through natural conversation:
-• units    — "metric" (kg, cm) or "imperial" (lbs, inches)
-• name     — first name
-• gender   — "male" or "female"
-• goal     — one of: "lose" (fat loss), "gain" (muscle gain), "maintain", "recomp" (body recomposition)
-• weight   — a number in their chosen units
-• height   — in cm if metric, or TOTAL inches if imperial (convert formats: "5'10" → 70, "5 ft 10" → 70)
-• age      — a number
-• activity_level — "1" (sedentary, desk job), "2" (light, 1-3x/week), "3" (moderate, 3-5x/week), "4" (very active, 6-7x/week)
+Collect these 8 values through natural, friendly conversation — one at a time:
+
+1. name        — their first name
+2. goal        — "lose" (fat loss), "gain" (muscle gain), "maintain", or "recomp" (body recomposition)
+3. gender      — "male" or "female" (needed for calorie formula)
+4. age         — a number
+5. units       — "metric" (kg/cm) or "imperial" (lbs/inches)
+6. weight      — number in their chosen units
+7. height      — cm if metric, OR total inches if imperial
+                  (convert any format: "5'10" → 70, "5 ft 10" → 70, "177cm" → 177)
+8. activity_level — "1" sedentary (desk job, little exercise)
+                    "2" lightly active (exercise 1-3x/week)
+                    "3" moderately active (exercise 3-5x/week)
+                    "4" very active (hard exercise 6-7x/week)
 
 RULES:
-- SMS format: keep each reply SHORT (ideally under 160 chars). Warm and human, not robotic.
-- Ask for ONE thing at a time. But if they volunteer info early, pick it up.
-- For goal, give clear options in your message (numbered is great).
-- For activity, always list the 4 options with examples — people don't know what "sedentary" means.
-- Validate gently: if answer seems wrong (e.g. weight of 5, age of 200, "blue" for gender), ask again.
-- Imperial height: accept "5'10", "5ft10", "5 10", "70 inches" — convert to total inches yourself.
-- Be encouraging — they're starting a health journey!
+- Start by warmly welcoming them and asking their name — nothing else yet
+- Keep each SMS reply SHORT (under 160 chars ideally). Warm, human, conversational
+- Ask ONE thing at a time. If they volunteer info early, pick it up and skip that question
+- For goal: give brief numbered options so they can just reply "1", "2" etc.
+- For activity: list all 4 options with examples — people don't know these labels
+- Validate gently: if answer seems impossible (weight=3, age=300, gender="purple"), ask again kindly
+- Height in imperial: accept any format and convert to total inches yourself
 
-When you have ALL 8 values confirmed, output ONLY this line (nothing after it):
+When ALL 8 are confirmed, output EXACTLY this (nothing else, nothing after):
 PROFILE_COMPLETE:{"name":"...","gender":"male|female","goal":"lose|gain|maintain|recomp","weight":NUMBER,"height":NUMBER,"age":NUMBER,"activity_level":"1|2|3|4","units":"metric|imperial"}`;
 
 async function handleOnboarding(phone, message, isNewUser) {
@@ -117,7 +130,7 @@ async function handleOnboarding(phone, message, isNewUser) {
   if (isNewUser) {
     systemMessages.push({
       role: 'system',
-      content: 'This is the user\'s very first message ever. Welcome them to Macro warmly and briefly, then ask whether they prefer metric (kg/cm) or imperial (lbs/ft).'
+      content: "This is the user's very first message ever. Welcome them to Macro warmly in 1-2 sentences, then ask for their first name. Nothing else yet."
     });
   }
 
@@ -143,7 +156,7 @@ async function handleOnboarding(phone, message, isNewUser) {
 
       const required = ['name', 'gender', 'goal', 'weight', 'height', 'age', 'activity_level', 'units'];
       const missing  = required.filter(k => p[k] === undefined || p[k] === null || p[k] === '');
-      if (missing.length > 0) throw new Error(`Missing fields: ${missing.join(', ')}`);
+      if (missing.length > 0) throw new Error(`Missing: ${missing.join(', ')}`);
 
       const macros = calculateMacros({
         gender: p.gender, weight: p.weight, height: p.height,
@@ -165,22 +178,22 @@ async function handleOnboarding(phone, message, isNewUser) {
         daily_protein_target: macros.protein,
         daily_carb_target:    macros.carbs,
         daily_fat_target:     macros.fat,
-        setup_status:    'complete',
-        setup_temp:      {},
-        dashboard_token: token
+        setup_status:         'complete',
+        setup_temp:           {},
+        dashboard_token:      token,
+        tracked_macros:       ['protein', 'carbs', 'fat']
       }).eq('phone', phone);
 
       const goalLabels = { lose: 'fat loss', gain: 'muscle gain', maintain: 'maintenance', recomp: 'body recomp' };
-      const goalLabel  = goalLabels[p.goal] || p.goal;
       const dashUrl    = `https://calorie-tracker-chi-plum.vercel.app?u=${token}`;
 
-      const confirm = `You're all set, ${p.name}! 🎯\n\nYour ${goalLabel} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nText me any meal — or send a photo of your food!`;
+      const confirm = `You're all set, ${p.name}! 🎯\n\nYour ${goalLabels[p.goal] || p.goal} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nText me any meal — or send a photo!`;
       await saveMessage(phone, 'assistant', confirm);
       return confirm;
 
     } catch (e) {
       console.error('Profile parse/save error:', e);
-      const err = "Something went wrong saving your profile — let's try again. What's your first name?";
+      const err = "Something went wrong — let's try again. What's your first name?";
       await saveMessage(phone, 'assistant', err);
       return err;
     }
@@ -192,21 +205,21 @@ async function handleOnboarding(phone, message, isNewUser) {
 
 // ── Photo Meal Scanning ───────────────────────────────────────────────────────
 
-const PHOTO_PROMPT = `You are Macro, a nutrition tracking assistant analyzing a food photo sent via SMS.
+const PHOTO_PROMPT = `You are Macro, analyzing a food photo sent via SMS to estimate calories and macros.
 
-Identify everything visible and estimate total calories and macros for the whole meal.
+Identify everything visible and estimate totals for the whole meal.
 
 Guidelines:
+- Consider ALL items (sides, drinks, sauces, condiments)
 - Use visible portion sizes to estimate quantities
-- Consider ALL items in the image (sides, drinks, sauces)
 - Lean slightly toward overestimating — photos hide oil, butter, hidden calories
-- Restaurant meals: use known nutrition data when you can identify the dish/chain
-- If the image clearly contains no food, say so briefly — no LOG line
+- For restaurant meals: use known nutrition data when you can identify the chain/dish
+- If no food is visible, say so briefly — no LOG line
 
-Write one short sentence describing what you see, then on the next line output:
-LOG:{"description":"Short 1-3 word name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+Write one short sentence describing what you see, then on the next line:
+LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
-If you cannot identify food in the image, just respond normally with no LOG line.`;
+If you cannot identify food, respond normally with no LOG line.`;
 
 async function handlePhotoLog(phone, body, user) {
   const mediaUrl    = body.MediaUrl0;
@@ -214,33 +227,27 @@ async function handlePhotoLog(phone, body, user) {
   const caption     = (body.Body || '').trim();
 
   if (!contentType.startsWith('image/')) {
-    return "I can only scan food photos right now — send me a JPG or PNG of your meal!";
+    return "I can only scan food photos — send me a JPG or PNG of your meal!";
   }
 
   try {
-    // Fetch image from Twilio with Basic auth
     const authHeader = 'Basic ' + Buffer.from(
       `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
     ).toString('base64');
 
     const imageRes = await fetch(mediaUrl, { headers: { Authorization: authHeader } });
-    if (!imageRes.ok) throw new Error(`Twilio media fetch failed: ${imageRes.status}`);
+    if (!imageRes.ok) throw new Error(`Media fetch failed: ${imageRes.status}`);
 
-    const imageBuffer = await imageRes.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    const base64Image = Buffer.from(await imageRes.arrayBuffer()).toString('base64');
     const dataUrl     = `data:${contentType};base64,${base64Image}`;
 
     const userContent = [
       { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
-      {
-        type: 'text',
-        text: caption
+      { type: 'text', text: caption
           ? `I ate this. Extra context: "${caption}". Estimate calories and macros.`
-          : 'Estimate the calories and macros for this meal.'
-      }
+          : 'Estimate the calories and macros for this meal.' }
     ];
 
-    // gpt-4o required for Vision — gpt-4o-mini cannot see images
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -257,16 +264,13 @@ async function handlePhotoLog(phone, body, user) {
     if (log) {
       await saveFoodLog(phone, log);
       await updateStreak(phone, user);
-
       const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
       const confirm    = `📸 ${textBefore || log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
-
       await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
       await saveMessage(phone, 'assistant', confirm);
       return confirm;
     }
 
-    // AI couldn't identify food in the image
     await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
     await saveMessage(phone, 'assistant', reply);
     return reply;
@@ -277,31 +281,143 @@ async function handlePhotoLog(phone, body, user) {
   }
 }
 
+// ── Edit Entry ────────────────────────────────────────────────────────────────
+
+const EDIT_PROMPT = `You are Macro, a nutrition tracking assistant. The user wants to correct their most recent food log entry.
+
+The original entry is provided. Based on the user's correction message, output updated macros.
+
+Always output:
+LOG:{"description":"Updated name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+
+Write one brief sentence acknowledging the correction, then the LOG line.`;
+
+async function handleEditLast(phone, message, user) {
+  // Get most recent log entry
+  const { data: last } = await supabase
+    .from('food_logs')
+    .select('*')
+    .eq('user_phone', phone)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!last) return "Nothing to edit — you haven't logged anything yet!";
+
+  // Strip "edit last" prefix from message to get just the correction
+  const correction = message.replace(/^edit\s+last\s*/i, '').trim();
+
+  if (!correction) {
+    return `Your last entry: "${last.food_description}" (${last.calories} cal)\n\nText "edit last [your correction]"\nExample: "edit last it was a large not medium"`;
+  }
+
+  const context = `Original entry: "${last.food_description}" — ${last.calories} cal, ${last.protein_g}g protein, ${last.carbs_g}g carbs, ${last.fat_g}g fat\n\nUser correction: "${correction}"`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: EDIT_PROMPT },
+      { role: 'user',   content: context }
+    ],
+    max_tokens: 150,
+    temperature: 0.3
+  });
+
+  const reply = completion.choices[0].message.content.trim();
+  const log   = parseLogLine(reply);
+
+  if (log) {
+    await supabase.from('food_logs').update({
+      food_description: String(log.description).slice(0, 200),
+      calories:         Math.round(Number(log.calories)),
+      protein_g:        Math.round(Number(log.protein_g) * 10) / 10,
+      carbs_g:          Math.round(Number(log.carbs_g)   * 10) / 10,
+      fat_g:            Math.round(Number(log.fat_g)     * 10) / 10
+    }).eq('id', last.id);
+
+    const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
+    const confirm = `${textBefore || 'Updated!'}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
+    await saveMessage(phone, 'user',      message);
+    await saveMessage(phone, 'assistant', confirm);
+    return confirm;
+  }
+
+  await saveMessage(phone, 'user',      message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+// ── Macro Preferences ─────────────────────────────────────────────────────────
+
+async function handleSetMacros(phone, message, user) {
+  const lower = message.toLowerCase();
+
+  // Check if they're specifying macros in the message itself
+  const hasProt  = lower.includes('protein') || lower.includes('prot');
+  const hasCarbs = lower.includes('carb');
+  const hasFat   = lower.includes('fat');
+  const hasCal   = lower.includes('calorie') || lower.includes('cal');
+
+  // If they said "set macros" with nothing else, show the menu
+  if (lower.trim() === 'set macros' || lower.trim() === 'macros') {
+    const current = (user.tracked_macros || ['protein', 'carbs', 'fat']).join(', ');
+    return `Which macros do you want to track? Reply with your choice:\n\n1. Protein, Carbs, Fat (all)\n2. Protein & Fat only\n3. Protein only\n4. Calories only\n\nCurrently tracking: ${current}`;
+  }
+
+  // Handle numbered replies to the menu
+  const trimmed = lower.trim();
+  let macros;
+  if (trimmed === '1' || (hasProt && hasCarbs && hasFat)) {
+    macros = ['protein', 'carbs', 'fat'];
+  } else if (trimmed === '2' || (hasProt && hasFat && !hasCarbs)) {
+    macros = ['protein', 'fat'];
+  } else if (trimmed === '3' || (hasProt && !hasCarbs && !hasFat)) {
+    macros = ['protein'];
+  } else if (trimmed === '4' || (hasCal && !hasProt && !hasCarbs && !hasFat)) {
+    macros = [];
+  } else {
+    return `Which macros do you want to track?\n\n1. Protein, Carbs, Fat (all)\n2. Protein & Fat only\n3. Protein only\n4. Calories only`;
+  }
+
+  await supabase.from('users').update({ tracked_macros: macros }).eq('phone', phone);
+
+  const label = macros.length === 0
+    ? 'calories only'
+    : macros.join(', ');
+
+  await saveMessage(phone, 'user',      message);
+  const confirm = `Got it! Now tracking: ${label} ✓\n\nYour dashboard will update automatically.`;
+  await saveMessage(phone, 'assistant', confirm);
+  return confirm;
+}
+
 // ── Food Logging (text, AI-driven) ───────────────────────────────────────────
 
-const FOOD_PROMPT = `You are Macro, a no-nonsense nutrition tracking assistant via SMS. Keep ALL replies SHORT.
+const FOOD_PROMPT = `You are Macro, a nutrition tracking assistant via SMS. Keep ALL replies SHORT.
 
 When a user describes food they ate:
-- If specific enough → output a LOG line + one short confirmation sentence
-- If too vague (unknown brand/portion/type) → ask ONE short clarifying question, no LOG line
-- If not food at all → respond helpfully and briefly, no LOG line
+- If specific enough → output a LOG line + one short confirmation sentence BEFORE it
+- If too vague → ask ONE short clarifying question, no LOG line yet
+- If not food → respond briefly, no LOG line
 
-LOG format (one line, valid JSON, numbers only):
-LOG:{"description":"Short 1-3 word name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+LOG format (single line, valid JSON):
+LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
-Key guidelines:
+Guidelines:
 - Use known chain data for restaurant items (Big Mac = 550 cal, etc.)
-- Lean toward slight OVERESTIMATE for restaurant/fast food
+- Slightly overestimate restaurant/fast food — they always underestimate
 - Include drinks and sauces if mentioned
-- Alcohol: 7 cal/gram of ethanol
-- "Chips" alone is vague. "Lays original small bag" is specific.
-- Confirmation sentence goes BEFORE the LOG line`;
+- Alcohol: 7 cal/gram of pure ethanol
+- When user answers a clarifying question from earlier in the conversation, log it — don't ask again
+- Confirmation sentence goes BEFORE the LOG line, never after`;
 
 async function handleFoodLog(phone, message, user) {
   const lower = message.toLowerCase().trim();
 
+  // ── Commands ──────────────────────────────────────────────────────────────
+
   if (lower === 'help') {
-    return `Macro commands 📋\n\n• Text any food → log it\n• Send a photo → scan it 📸\n• "stats" → today's progress\n• "delete last" → undo last entry\n• "help" → this list\n\nDashboard:\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `Macro commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "stats" → today's totals\n• "set macros" → choose what to track\n• "help" → this list\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
   }
 
   if (lower === 'stats') {
@@ -323,10 +439,17 @@ async function handleFoodLog(phone, message, user) {
 
     const left = Math.max(user.daily_calorie_target - t.cal, 0);
     const pct  = Math.round((t.cal / user.daily_calorie_target) * 100);
-    const bar  = pct >= 90 && pct <= 110 ? '🎯' : pct < 90 ? '📉' : '🔴';
-    const streakLine = user.streak > 1 ? `\n🔥 ${user.streak} day streak` : '';
+    const icon = pct >= 90 && pct <= 110 ? '🎯' : pct < 90 ? '📉' : '🔴';
+    const streakLine = (user.streak || 0) > 1 ? `\n🔥 ${user.streak} day streak` : '';
 
-    return `${bar} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining\n\n${Math.round(t.p)}g P · ${Math.round(t.c)}g C · ${Math.round(t.f)}g F${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    const tracked = user.tracked_macros || ['protein', 'carbs', 'fat'];
+    const macroLine = [
+      tracked.includes('protein') ? `${Math.round(t.p)}g P` : null,
+      tracked.includes('carbs')   ? `${Math.round(t.c)}g C` : null,
+      tracked.includes('fat')     ? `${Math.round(t.f)}g F` : null
+    ].filter(Boolean).join(' · ');
+
+    return `${icon} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining${macroLine ? '\n' + macroLine : ''}${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
   }
 
   if (lower === 'delete last') {
@@ -343,8 +466,26 @@ async function handleFoodLog(phone, message, user) {
     return `Deleted: ${last.food_description} ✓`;
   }
 
-  // AI food logging
-  const history = await getHistory(phone, 8);
+  if (lower.startsWith('edit last')) {
+    return handleEditLast(phone, message, user);
+  }
+
+  if (lower === 'set macros' || lower === 'macros') {
+    return handleSetMacros(phone, message, user);
+  }
+
+  // Check if this looks like a reply to the "set macros" menu (1-4 with no other context)
+  if (['1','2','3','4'].includes(lower.trim())) {
+    const recent = await getHistory(phone, 2);
+    const lastBot = recent.filter(m => m.role === 'assistant').pop();
+    if (lastBot && lastBot.content.includes('Which macros do you want to track')) {
+      return handleSetMacros(phone, message, user);
+    }
+  }
+
+  // ── AI food logging ────────────────────────────────────────────────────────
+
+  const history = await getHistory(phone, 10);
   await saveMessage(phone, 'user', message);
 
   const completion = await openai.chat.completions.create({
@@ -365,16 +506,24 @@ async function handleFoodLog(phone, message, user) {
     await saveFoodLog(phone, log);
     await updateStreak(phone, user);
 
+    const tracked    = user.tracked_macros || ['protein', 'carbs', 'fat'];
     const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
+    const macroParts = [
+      `${Math.round(log.calories)} cal`,
+      tracked.includes('protein') ? `${log.protein_g}g P` : null,
+      tracked.includes('carbs')   ? `${log.carbs_g}g C`   : null,
+      tracked.includes('fat')     ? `${log.fat_g}g F`     : null
+    ].filter(Boolean).join(' · ');
+
     const confirm = textBefore
-      ? `${textBefore}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`
-      : `✓ ${log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
+      ? `${textBefore}\n${macroParts}`
+      : `✓ ${log.description}\n${macroParts}`;
 
     await saveMessage(phone, 'assistant', confirm);
     return confirm;
   }
 
-  const cleanReply = reply.replace(/LOG:\{[^}]*\}/g, '').trim();
+  const cleanReply = reply.replace(/LOG:\{[\s\S]*?\}/g, '').trim();
   await saveMessage(phone, 'assistant', cleanReply);
   return cleanReply;
 }
@@ -410,7 +559,6 @@ module.exports = async (req, res) => {
       .from('users').select('*').eq('phone', phone).maybeSingle();
 
     const isNewUser = !user;
-
     if (isNewUser) {
       const { data: newUser } = await supabase
         .from('users')
@@ -419,20 +567,15 @@ module.exports = async (req, res) => {
       user = newUser;
     }
 
-    // ── Route the request ────────────────────────────────────────────────────
-
-    // Photo/MMS received
+    // Photo/MMS
     if (numMedia > 0) {
       if (user.setup_status !== 'complete') {
-        // During onboarding, ignore photos and continue conversation
         const reply = await handleOnboarding(phone, message || 'hi', isNewUser);
         return res.send(twiml(reply));
       }
-      const photoReply = await handlePhotoLog(phone, body, user);
-      return res.send(twiml(photoReply));
+      return res.send(twiml(await handlePhotoLog(phone, body, user)));
     }
 
-    // No content at all
     if (!message) return res.status(200).send(twiml(''));
 
     // Text message
