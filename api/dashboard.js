@@ -49,21 +49,26 @@ module.exports = async (req, res) => {
       days.push(torontoDate(new Date(Date.now() - i * 86400000).toISOString()));
     }
 
-    // Sum calories per day
-    const calByDay = {};
+    // Group logs by day, sum calories, embed full log list per day
+    const logsByDay = {};
+    const calByDay  = {};
     for (const log of logs) {
       const d = torontoDate(log.created_at);
+      if (!logsByDay[d]) logsByDay[d] = [];
+      logsByDay[d].push(log);
       calByDay[d] = (calByDay[d] || 0) + (log.calories || 0);
     }
 
+    // Build weeklyData with full logs embedded in each day
     const weeklyData = days.map(d => ({
       date:     d,
       calories: Math.round(calByDay[d] || 0),
-      isToday:  d === today
+      isToday:  d === today,
+      logs:     logsByDay[d] || []
     }));
 
-    // Today's full logs (with all fields for the log list)
-    const todayLogs = logs.filter(l => torontoDate(l.created_at) === today);
+    // Today's logs come from weeklyData (already filtered)
+    const todayLogs = (logsByDay[today] || []);
 
     return res.json({
       user: {
