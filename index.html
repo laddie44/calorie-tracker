@@ -284,6 +284,22 @@ main { padding: 20px 0 60px; }
 .wel-sub    { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 260px; margin: 0 auto; }
 .wel-num    { font-size: 22px; font-weight: 700; margin-top: 20px; letter-spacing: -0.5px; }
 
+/* ── History sheet ───────────────────────────────────────────────────────── */
+.hist-sheet-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.hist-date    { font-size: 16px; font-weight: 600; }
+.hist-total   { font-size: 13px; color: var(--text2); }
+.hist-empty   { text-align: center; padding: 28px 0; color: var(--text3); font-size: 14px; }
+.hist-list    { margin-top: 14px; background: var(--bg2); border-radius: var(--r-sm); overflow: hidden; }
+.hist-item    { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 0.5px solid var(--border); gap: 10px; }
+.hist-item:last-child { border-bottom: none; }
+.hist-item-left  { flex: 1; min-width: 0; }
+.hist-item-name  { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-item-macros { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.hist-item-cal   { font-size: 14px; font-weight: 600; flex-shrink: 0; }
+.hist-item-cal span { font-size: 10px; font-weight: 400; color: var(--text3); }
+.bar-wrap { cursor: pointer; }
+.bar-wrap:active .bar-fill { opacity: 0.7; }
+
 /* ── Toast ────────────────────────────────────────────────────────────────── */
 .toast {
   position: fixed; bottom: 28px; left: 50%;
@@ -345,6 +361,18 @@ main { padding: 20px 0 60px; }
   </div>
 </div>
 
+<!-- History sheet -->
+<div class="overlay" id="hist-overlay" onclick="histOverlayClick(event)">
+  <div class="sheet" id="hist-sheet">
+    <div class="sheet-handle"></div>
+    <div class="hist-sheet-title">
+      <div class="hist-date"  id="hist-date-label">Monday</div>
+      <div class="hist-total" id="hist-total-label">0 cal</div>
+    </div>
+    <div id="hist-body"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -393,9 +421,12 @@ function ring(pct) {
 }
 
 // ── Weekly chart ──────────────────────────────────────────────────────────────
+let weeklyDataStore = []; // stored so tap handler can access it
+
 function buildChart(weeklyData, goal) {
-  const maxCal = Math.max(...weeklyData.map(d => d.calories), goal, 1);
-  const avgCal = Math.round(
+  weeklyDataStore = weeklyData; // save for tap handler
+  const maxCal  = Math.max(...weeklyData.map(d => d.calories), goal, 1);
+  const avgCal  = Math.round(
     weeklyData.filter(d => d.calories > 0).reduce((s, d) => s + d.calories, 0) /
     Math.max(weeklyData.filter(d => d.calories > 0).length, 1)
   );
@@ -407,10 +438,13 @@ function buildChart(weeklyData, goal) {
     const cls    = d.isToday ? 'today' : isOver ? 'over' : 'past';
     const delay  = `animation-delay:${i * 0.06}s`;
     const label  = d.isToday ? 'Today' : dayLabel(d.date);
-    const calTxt = d.calories > 0 ? Math.round(d.calories / 100) * 100 : '';
+    const hasLogs = (d.logs || []).length > 0;
+    // Only make tappable if there are logs that day
+    const tap    = hasLogs ? `onclick="openHistorySheet(${i})"` : '';
+    const cursor = hasLogs ? 'cursor:pointer' : 'cursor:default';
 
     return `<div class="chart-col">
-      <div class="bar-wrap">
+      <div class="bar-wrap" ${tap} style="${cursor}" title="${hasLogs ? 'Tap to see meals' : ''}">
         <div class="bar-bg"></div>
         <div class="goal-line" style="bottom:${goalPct}%"></div>
         <div class="bar-fill ${cls}" style="height:${Math.max(pct,0)}%;${delay}"></div>
@@ -641,6 +675,52 @@ async function saveEdit() {
   } finally {
     btn.textContent = 'Save changes';
   }
+}
+
+// ── History sheet ────────────────────────────────────────────────────────────
+function openHistorySheet(dayIndex) {
+  const day     = weeklyDataStore[dayIndex];
+  if (!day || !day.logs || day.logs.length === 0) return;
+
+  const tracked = lastData?.user?.trackedMacros || ['protein','carbs','fat'];
+
+  // Format the date label
+  const dateObj  = new Date(day.date + 'T12:00:00');
+  const isToday  = day.isToday;
+  const dateLabel = isToday
+    ? 'Today'
+    : dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+  $('hist-date-label').textContent  = dateLabel;
+  $('hist-total-label').textContent = `${day.calories.toLocaleString()} cal`;
+
+  function macroLine(l) {
+    return [
+      tracked.includes('protein') ? `${Math.round(l.protein_g||0)}g P` : null,
+      tracked.includes('carbs')   ? `${Math.round(l.carbs_g||0)}g C`   : null,
+      tracked.includes('fat')     ? `${Math.round(l.fat_g||0)}g F`     : null
+    ].filter(Boolean).join(' · ');
+  }
+
+  const rows = day.logs.map(l => `
+    <div class="hist-item">
+      <div class="hist-item-left">
+        <div class="hist-item-name">${l.food_description || 'Food item'}</div>
+        <div class="hist-item-macros">${macroLine(l)}</div>
+      </div>
+      <div class="hist-item-cal">${l.calories || 0}<span> cal</span></div>
+    </div>`).join('');
+
+  $('hist-body').innerHTML = `<div class="hist-list">${rows}</div>`;
+  $('hist-overlay').classList.add('open');
+}
+
+function closeHistSheet() {
+  $('hist-overlay').classList.remove('open');
+}
+
+function histOverlayClick(e) {
+  if (e.target === $('hist-overlay')) closeHistSheet();
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
