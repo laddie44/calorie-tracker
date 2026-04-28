@@ -307,23 +307,48 @@ async function handleOnboarding(phone, message, isNewUser) {
   return reply;
 }
 
-// ── Photo Meal Scanning ───────────────────────────────────────────────────────
+// ── Photo Scanning — Meal + Nutrition Label ──────────────────────────────────
 
-const PHOTO_PROMPT = `You are Calio, an AI nutrition assistant. You are analyzing a food photo sent via SMS to estimate calories and macros.
+// Prompt for regular meal photos
+const MEAL_PHOTO_PROMPT = `You are Calio, an AI nutrition assistant analyzing a meal photo sent via SMS.
 
 Identify everything visible and estimate totals for the whole meal.
 
 Guidelines:
-- Consider ALL items (sides, drinks, sauces, condiments)
+- Consider ALL items (sides, drinks, sauces, condiments, oils)
 - Use visible portion sizes to estimate quantities
 - Lean slightly toward overestimating — photos hide oil, butter, hidden calories
 - For restaurant meals: use known nutrition data when you can identify the chain/dish
 - If no food is visible, say so briefly — no LOG line
 
-Write one short sentence describing what you see, then on the next line:
+Write one short confirmation sentence, then on the next line:
 LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
 If you cannot identify food, respond normally with no LOG line.`;
+
+// Prompt for nutrition label photos — reads exact printed values
+const LABEL_PHOTO_PROMPT = `You are Calio, an AI nutrition assistant reading a nutrition facts label photo.
+
+Your job: read the EXACT numbers printed on the label. Do not estimate — transcribe what is written.
+
+Important rules:
+- Use the "Per serving" values (not "Per 100g" or "Per container" unless that's all shown)
+- If serving size info is visible, note it briefly
+- Read: Calories, Protein (g), Total Carbohydrates (g), Total Fat (g)
+- Ignore fiber, sodium, vitamins — just the 4 core macros
+- If the label shows multiple columns (per serving / per container), use per serving
+
+Write one short sentence confirming what you read and the product name if visible, then:
+LOG:{"description":"Product name from label","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+
+Use 📋 emoji in your confirmation to signal this came from a label.`;
+
+// Classifier prompt — determines if image is a label or a meal
+const PHOTO_CLASSIFIER_PROMPT = `Look at this image and respond with exactly one word:
+- "label" — if it shows a Nutrition Facts / Supplement Facts panel (the standard black-and-white nutrition grid)
+- "meal" — if it shows food, a plate, a dish, a drink, a packaged product without a clear label, or anything else
+
+One word only. No punctuation.`;
 
 async function handlePhotoLog(phone, body, user) {
   const mediaUrl    = body.MediaUrl0;
@@ -331,10 +356,11 @@ async function handlePhotoLog(phone, body, user) {
   const caption     = (body.Body || '').trim();
 
   if (!contentType.startsWith('image/')) {
-    return "I can only scan food photos — send me a JPG or PNG of your meal!";
+    return "I can only scan food photos — send me a JPG or PNG!";
   }
 
   try {
+    // Fetch image from Twilio
     const authHeader = 'Basic ' + Buffer.from(
       `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
     ).toString('base64');
@@ -345,21 +371,43 @@ async function handlePhotoLog(phone, body, user) {
     const base64Image = Buffer.from(await imageRes.arrayBuffer()).toString('base64');
     const dataUrl     = `data:${contentType};base64,${base64Image}`;
 
-    const userContent = [
-      { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
-      { type: 'text', text: caption
-          ? `I ate this. Extra context: "${caption}". Estimate calories and macros.`
-          : 'Estimate the calories and macros for this meal.' }
-    ];
+    const imageBlock = { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } };
+
+    // ── Step 1: Classify — label or meal? ────────────────────────────────────
+    const classifyRes = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{
+        role: 'user',
+        content: [
+          imageBlock,
+          { type: 'text', text: PHOTO_CLASSIFIER_PROMPT }
+        ]
+      }],
+      max_tokens: 5,
+      temperature: 0
+    });
+
+    const photoType = classifyRes.choices[0].message.content.trim().toLowerCase();
+    const isLabel   = photoType === 'label';
+
+    console.log(`Photo classified as: ${photoType}`);
+
+    // ── Step 2: Route to appropriate prompt ───────────────────────────────────
+    const systemPrompt = isLabel ? LABEL_PHOTO_PROMPT : MEAL_PHOTO_PROMPT;
+    const userText     = isLabel
+      ? `Read the nutrition facts label in this image and log the macros per serving.${caption ? ` Product context: "${caption}"` : ''}`
+      : caption
+        ? `I ate this. Extra context: "${caption}". Estimate calories and macros.`
+        : 'Estimate the calories and macros for this meal.';
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
-        { role: 'system', content: PHOTO_PROMPT },
-        { role: 'user',   content: userContent }
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: [imageBlock, { type: 'text', text: userText }] }
       ],
       max_tokens: 250,
-      temperature: 0.3
+      temperature: isLabel ? 0.1 : 0.3  // near-zero temp for label reading (just transcribing)
     });
 
     const reply = completion.choices[0].message.content.trim();
@@ -369,12 +417,14 @@ async function handlePhotoLog(phone, body, user) {
       await saveFoodLog(phone, log);
       await updateStreak(phone, user);
       const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
-      const confirm    = `📸 ${textBefore || log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
+      const emoji      = isLabel ? '📋' : '📸';
+      const confirm    = `${emoji} ${textBefore || log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
       await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
       await saveMessage(phone, 'assistant', confirm);
       return confirm;
     }
 
+    // No food/label identified
     await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
     await saveMessage(phone, 'assistant', reply);
     return reply;
@@ -383,6 +433,112 @@ async function handlePhotoLog(phone, body, user) {
     console.error('Photo log error:', err);
     return "Couldn't scan that photo — try again, or just text me what you ate!";
   }
+}
+
+// ── Weight Logging ───────────────────────────────────────────────────────────
+
+// Regex to detect weight messages: "75kg", "165 lbs", "weighed 180", "weight 82.5"
+const WEIGHT_REGEX = /^(?:weighed(?:\s+in)?(?:\s+at)?|weight\s+(?:is\s+)?|i(?:'m|\s+am)\s+|logged?\s+)?\s*(\d{2,3}(?:\.\d{1,2})?)\s*(kg|kgs|kilogram|lbs?|pounds?)\s*$/i;
+
+function parseWeightEntry(message) {
+  const match = message.trim().match(WEIGHT_REGEX);
+  if (!match) return null;
+  const value = parseFloat(match[1]);
+  const unit  = match[2].toLowerCase();
+  // Convert to kg for storage
+  const weightKg = unit.startsWith('lb') || unit.startsWith('pound')
+    ? value * 0.453592
+    : value;
+  return { weightKg: Math.round(weightKg * 10) / 10, displayValue: value, displayUnit: unit.startsWith('lb') || unit.startsWith('pound') ? 'lbs' : 'kg' };
+}
+
+async function handleWeightLog(phone, message, user) {
+  const parsed = parseWeightEntry(message);
+  if (!parsed) return null; // not a weight message
+
+  const today = todayToronto();
+
+  // Upsert — one weight entry per day (replace if already logged today)
+  const { data: existing } = await supabase
+    .from('weight_logs')
+    .select('id')
+    .eq('user_phone', phone)
+    .eq('logged_date', today)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from('weight_logs')
+      .update({ weight_kg: parsed.weightKg })
+      .eq('id', existing.id);
+  } else {
+    await supabase.from('weight_logs')
+      .insert({ user_phone: phone, weight_kg: parsed.weightKg, logged_date: today });
+  }
+
+  // Get last 7 weight entries for trend
+  const { data: recent } = await supabase
+    .from('weight_logs')
+    .select('weight_kg, logged_date')
+    .eq('user_phone', phone)
+    .order('logged_date', { ascending: false })
+    .limit(7);
+
+  // Calculate trend if we have at least 2 entries
+  let trendLine = '';
+  if (recent && recent.length >= 2) {
+    const oldest  = recent[recent.length - 1].weight_kg;
+    const newest  = recent[0].weight_kg;
+    const diff    = newest - oldest;
+    const absDiff = Math.abs(diff).toFixed(1);
+
+    if (Math.abs(diff) < 0.1) {
+      trendLine = '\nTrend: holding steady ↔';
+    } else if (diff < 0) {
+      trendLine = `\nTrend: down ${absDiff}kg over ${recent.length} logs 📉`;
+    } else {
+      trendLine = `\nTrend: up ${absDiff}kg over ${recent.length} logs 📈`;
+    }
+  }
+
+  // Show in user's preferred units
+  const displayWeight = user.units === 'imperial'
+    ? `${(parsed.weightKg * 2.20462).toFixed(1)} lbs`
+    : `${parsed.weightKg} kg`;
+
+  const confirm = `✓ Logged ${displayWeight}${trendLine}`;
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', confirm);
+  return confirm;
+}
+
+async function handleWeightHistory(phone, user) {
+  const { data: logs } = await supabase
+    .from('weight_logs')
+    .select('weight_kg, logged_date')
+    .eq('user_phone', phone)
+    .order('logged_date', { ascending: false })
+    .limit(7);
+
+  if (!logs || logs.length === 0) {
+    return "No weight logged yet! Text your weight to start tracking — e.g. \"75kg\" or \"165 lbs\".";
+  }
+
+  const useImperial = user.units === 'imperial';
+  const lines = logs.map(l => {
+    const displayW = useImperial
+      ? `${(l.weight_kg * 2.20462).toFixed(1)} lbs`
+      : `${l.weight_kg} kg`;
+    const date = new Date(l.logged_date + 'T12:00:00')
+      .toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${date}: ${displayW}`;
+  });
+
+  // Trend over available window
+  const diff    = logs[0].weight_kg - logs[logs.length - 1].weight_kg;
+  const absDiff = Math.abs(diff).toFixed(1);
+  const trend   = Math.abs(diff) < 0.1 ? 'Holding steady ↔' : diff < 0 ? `Down ${absDiff}kg 📉` : `Up ${absDiff}kg 📈`;
+
+  return `📊 Your weight (last ${logs.length} entries):\n\n${lines.join('\n')}\n\n${trend}`;
 }
 
 // ── Edit Entry ────────────────────────────────────────────────────────────────
@@ -741,7 +897,7 @@ async function handleFoodLog(phone, message, user) {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "delete account" → remove all your data\n• "help" → this list\n\ntextcalio.com?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
+    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "delete account" → remove all your data\n• "weight" → see your weight history\n• "help" → this list\n\ntextcalio.com?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
   }
 
   if (lower === 'my targets' || lower === 'my goals' || lower === 'targets' || lower === 'my macros') {
@@ -843,6 +999,16 @@ async function handleFoodLog(phone, message, user) {
       return handleSetMacros(phone, message, user);
     }
   }
+
+  // ── Weight commands ──────────────────────────────────────────────────────────
+
+  if (lower === 'weight' || lower === 'my weight' || lower === 'weight history') {
+    return handleWeightHistory(phone, user);
+  }
+
+  // Auto-detect weight entry (e.g. "75kg", "165 lbs", "weighed 180")
+  const weightResult = await handleWeightLog(phone, message, user);
+  if (weightResult !== null) return weightResult;
 
   // ── AI food logging — smart dual path ───────────────────────────────────────
 
