@@ -284,6 +284,21 @@ main { padding: 20px 0 60px; }
 .wel-sub    { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 260px; margin: 0 auto; }
 .wel-num    { font-size: 22px; font-weight: 700; margin-top: 20px; letter-spacing: -0.5px; }
 
+/* ── Weight trend card ───────────────────────────────────────────────────── */
+.weight-card { background: var(--bg2); border-radius: var(--radius); padding: 18px 16px 14px; }
+.weight-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+.weight-title  { font-size: 14px; font-weight: 600; }
+.weight-delta  { font-size: 12px; color: var(--text2); }
+.weight-chart  { position: relative; height: 72px; display: flex; align-items: flex-end; gap: 3px; }
+.weight-empty  { text-align: center; padding: 16px 0; font-size: 13px; color: var(--text3); }
+.w-bar-wrap    { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.w-dot-col     { position: relative; width: 100%; display: flex; justify-content: center; }
+.w-dot         { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.w-dot.latest  { background: var(--text); width: 9px; height: 9px; }
+.w-line-svg    { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
+.weight-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+.w-label       { font-size: 10px; color: var(--text3); }
+
 /* ── History sheet ───────────────────────────────────────────────────────── */
 .hist-sheet-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
 .hist-date    { font-size: 16px; font-weight: 600; }
@@ -420,6 +435,103 @@ function ring(pct) {
   </svg>`;
 }
 
+// ── Weight trend chart ───────────────────────────────────────────────────────
+function buildWeightCard(weightData, units) {
+  if (!weightData || weightData.length === 0) {
+    return `<div class="section fade-up d3b">
+      <div class="weight-card">
+        <div class="weight-header">
+          <div class="weight-title">Weight</div>
+          <div class="weight-delta" style="color:var(--text3)">No data yet</div>
+        </div>
+        <div class="weight-empty">Text your weight to start tracking<br><span style="font-size:12px;color:var(--text3)">e.g. "75kg" or "165 lbs"</span></div>
+      </div>
+    </div>`;
+  }
+
+  const useImperial = units === 'imperial';
+  const toDisplay   = kg => useImperial ? +(kg * 2.20462).toFixed(1) : +kg.toFixed(1);
+  const unitLabel   = useImperial ? 'lbs' : 'kg';
+
+  const points  = weightData.map(w => ({ date: w.logged_date, val: toDisplay(w.weight_kg) }));
+  const vals    = points.map(p => p.val);
+  const minVal  = Math.min(...vals);
+  const maxVal  = Math.max(...vals);
+  const range   = maxVal - minVal || 1;
+  const first   = vals[0];
+  const last    = vals[vals.length - 1];
+  const diff    = +(last - first).toFixed(1);
+  const absDiff = Math.abs(diff);
+
+  let deltaText, deltaColor;
+  if (absDiff < 0.1) {
+    deltaText = 'Holding steady';
+    deltaColor = 'var(--text2)';
+  } else if (diff < 0) {
+    deltaText = `↓ ${absDiff}${unitLabel} in ${points.length} logs`;
+    deltaColor = '#27ae60';
+  } else {
+    deltaText = `↑ ${absDiff}${unitLabel} in ${points.length} logs`;
+    deltaColor = '#e74c3c';
+  }
+
+  // Build SVG sparkline connecting the dots
+  const chartH = 56;
+  const dotR   = 3.5;
+  const pct    = v => ((v - minVal) / range);
+  const yPos   = v => chartH - dotR - (pct(v) * (chartH - dotR * 2));
+
+  // We'll use a simple flex dot layout with an SVG overlay for the line
+  // Calculate relative positions for SVG path
+  const n = points.length;
+  const dotPositions = points.map((p, i) => ({
+    x: n === 1 ? 50 : (i / (n - 1)) * 100,
+    y: yPos(p.val),
+    val: p.val,
+    date: p.date,
+    isLatest: i === n - 1
+  }));
+
+  const pathD = dotPositions.map((p, i) =>
+    `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)}% ${p.y.toFixed(1)}px`
+  ).join(' ');
+
+  const dotsHTML = dotPositions.map(p => `
+    <circle cx="${p.x.toFixed(1)}%" cy="${p.y.toFixed(1)}px" r="${p.isLatest ? 5 : 3}"
+      fill="${p.isLatest ? 'var(--text)' : 'var(--text3)'}"
+      stroke="var(--bg2)" stroke-width="1.5"/>
+  `).join('');
+
+  // Date labels: first and last only
+  const fmt = d => {
+    const dt = new Date(d + 'T12:00:00');
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const currentWeight = `${last}${unitLabel}`;
+  const startWeight   = `${first}${unitLabel}`;
+
+  return `<div class="section fade-up d3b">
+    <div class="weight-card">
+      <div class="weight-header">
+        <div class="weight-title">Weight <span style="font-size:13px;font-weight:400;color:var(--text2)">${currentWeight}</span></div>
+        <div class="weight-delta" style="color:${deltaColor}">${deltaText}</div>
+      </div>
+      <div style="position:relative;height:${chartH}px;width:100%;">
+        <svg style="position:absolute;top:0;left:0;width:100%;height:${chartH}px;overflow:visible;" preserveAspectRatio="none">
+          <path d="${pathD}" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          ${dotsHTML}
+        </svg>
+      </div>
+      <div class="weight-labels">
+        <span class="w-label">${fmt(points[0].date)}</span>
+        <span class="w-label">${startWeight} → ${currentWeight}</span>
+        <span class="w-label">${fmt(points[points.length-1].date)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 // ── Weekly chart ──────────────────────────────────────────────────────────────
 let weeklyDataStore = []; // stored so tap handler can access it
 
@@ -550,6 +662,9 @@ function render(data) {
   // ── Weekly chart ────────────────────────────────────────────────────────
   const chartSection = `<div class="section">${buildChart(weeklyData, user.dailyCalorieTarget)}</div>`;
 
+  // ── Weight trend ─────────────────────────────────────────────────────────
+  const weightSection = buildWeightCard(data.weightData || [], user.units || 'metric');
+
   // ── Macro bars ──────────────────────────────────────────────────────────
   const macroDefs = [
     { key:'protein', label:'Protein', val:tot.prot, goal:user.dailyProteinTarget, color:'#000' },
@@ -628,7 +743,7 @@ function render(data) {
   </div>`;
 
   $('username').textContent = user.name || 'Calio';
-  $('main').innerHTML = calCard + pillRow + chartSection + macroSection + logSection + cta;
+  $('main').innerHTML = calCard + pillRow + chartSection + weightSection + macroSection + logSection + cta;
 }
 
 // ── Edit sheet ────────────────────────────────────────────────────────────────
