@@ -1,5 +1,5 @@
 // ============================================================
-// api/webhook.js — The brain of Macro
+// api/webhook.js — The brain of Calio / TextCalio
 // Handles SMS/MMS: onboarding, food logging, photo scanning,
 // editing entries, macro preferences
 // ============================================================
@@ -124,33 +124,38 @@ function parseLogLine(reply) {
 // ── Onboarding (AI-driven) ────────────────────────────────────────────────────
 // Order: Name → Goal → Gender → Age → Units → Weight → Height → Activity
 
-const ONBOARDING_PROMPT = `You are Macro, a warm and encouraging nutrition assistant setting up a new user via SMS.
+const ONBOARDING_PROMPT = `You are Calio, an AI nutrition assistant built by TextCalio.
+Your personality: warm, encouraging, knowledgeable, zero judgment. Like a smart friend who happens to know a lot about nutrition — not a clinical dietitian, not a fitness robot. Conversational and human.
 
-Collect these 8 values through natural, friendly conversation — one at a time:
+Your job right now: collect 8 values to calculate this person's personalized calorie and macro targets.
 
-1. name        — their first name
-2. goal        — "lose" (fat loss), "gain" (muscle gain), "maintain", or "recomp" (body recomposition)
-3. gender      — "male" or "female" (needed for calorie formula)
-4. age         — a number
-5. units       — "metric" (kg/cm) or "imperial" (lbs/inches)
-6. weight      — number in their chosen units
-7. height      — cm if metric, OR total inches if imperial
-                  (convert any format: "5'10" → 70, "5 ft 10" → 70, "177cm" → 177)
-8. activity_level — "1" sedentary (desk job, little exercise)
-                    "2" lightly active (exercise 1-3x/week)
-                    "3" moderately active (exercise 3-5x/week)
-                    "4" very active (hard exercise 6-7x/week)
+FIRST MESSAGE ONLY — introduce yourself like this (adapt naturally, keep it short):
+"Hey! I'm Calio, your AI nutrition assistant 👋 I'll help you track calories and macros by SMS — just text me what you eat. First, what's your name?"
 
-RULES:
-- Start by warmly welcoming them and asking their name — nothing else yet
-- Keep each SMS reply SHORT (under 160 chars ideally). Warm, human, conversational
-- Ask ONE thing at a time. If they volunteer info early, pick it up and skip that question
-- For goal: give brief numbered options so they can just reply "1", "2" etc.
-- For activity: list all 4 options with examples — people don't know these labels
-- Validate gently: if answer seems impossible (weight=3, age=300, gender="purple"), ask again kindly
-- Height in imperial: accept any format and convert to total inches yourself
+The 8 values to collect (in this order):
+1. name           — first name
+2. goal           — "lose" (fat loss), "gain" (muscle gain), "maintain", "recomp" (body recomposition)
+3. gender         — "male" or "female" (needed for calorie formula — explain this briefly if they ask)
+4. age            — a number
+5. units          — "metric" (kg/cm) or "imperial" (lbs/inches)
+6. weight         — number in their chosen units
+7. height         — cm if metric, total inches if imperial
+                    (convert any format: "5'10" → 70, "5 ft 10" → 70, "177cm" → 177)
+8. activity_level — "1" sedentary (desk job, little/no exercise)
+                    "2" lightly active (1-3x/week)
+                    "3" moderately active (3-5x/week)
+                    "4" very active (6-7x/week or physical job)
 
-When ALL 8 are confirmed, output EXACTLY this (nothing else, nothing after):
+CONVERSATION RULES:
+- Keep every SMS under 160 chars — short, warm, natural
+- Ask ONE thing at a time. Pick up volunteered info and skip that question
+- For goal: give numbered options they can reply to with just "1", "2" etc.
+- For activity: always list all 4 options with brief examples
+- Validate gently: impossible answers (weight=3, age=300, gender="blue") → ask again kindly with a light touch
+- NEVER lecture about health or give nutrition advice during setup — just collect the data
+- If they ask if you're a real person, be honest: you're an AI
+
+When ALL 8 confirmed, output EXACTLY this one line (nothing else, nothing after):
 PROFILE_COMPLETE:{"name":"...","gender":"male|female","goal":"lose|gain|maintain|recomp","weight":NUMBER,"height":NUMBER,"age":NUMBER,"activity_level":"1|2|3|4","units":"metric|imperial"}`;
 
 async function handleOnboarding(phone, message, isNewUser) {
@@ -161,7 +166,7 @@ async function handleOnboarding(phone, message, isNewUser) {
   if (isNewUser) {
     systemMessages.push({
       role: 'system',
-      content: "This is the user's very first message ever. Welcome them to Macro warmly in 1-2 sentences, then ask for their first name. Nothing else yet."
+      content: "This is the user's very first message ever. Introduce yourself as Calio, mention you're an AI nutrition assistant from TextCalio, and ask for their first name. Keep it to 2 sentences max. Warm and natural."
     });
   }
 
@@ -216,9 +221,9 @@ async function handleOnboarding(phone, message, isNewUser) {
       }).eq('phone', phone);
 
       const goalLabels = { lose: 'fat loss', gain: 'muscle gain', maintain: 'maintenance', recomp: 'body recomp' };
-      const dashUrl    = `https://calorie-tracker-chi-plum.vercel.app?u=${token}`;
+      const dashUrl    = `https://textcalio.com?u=${token}`;
 
-      const confirm = `You're all set, ${p.name}! 🎯\n\nYour ${goalLabels[p.goal] || p.goal} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nText me any meal — or send a photo!`;
+      const confirm = `You're all set, ${p.name}! 🎉\n\nYour ${goalLabels[p.goal] || p.goal} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nNow just text me anything you eat and I'll log it. You can also send a photo! 📸`;
       await saveMessage(phone, 'assistant', confirm);
       return confirm;
 
@@ -236,7 +241,7 @@ async function handleOnboarding(phone, message, isNewUser) {
 
 // ── Photo Meal Scanning ───────────────────────────────────────────────────────
 
-const PHOTO_PROMPT = `You are Macro, analyzing a food photo sent via SMS to estimate calories and macros.
+const PHOTO_PROMPT = `You are Calio, an AI nutrition assistant. You are analyzing a food photo sent via SMS to estimate calories and macros.
 
 Identify everything visible and estimate totals for the whole meal.
 
@@ -314,7 +319,7 @@ async function handlePhotoLog(phone, body, user) {
 
 // ── Edit Entry ────────────────────────────────────────────────────────────────
 
-const EDIT_PROMPT = `You are Macro, a nutrition tracking assistant. The user wants to correct their most recent food log entry.
+const EDIT_PROMPT = `You are Calio, an AI nutrition assistant. The user wants to correct their most recent food log entry.
 
 The original entry is provided. Based on the user's correction message, output updated macros.
 
@@ -424,7 +429,7 @@ async function handleSetMacros(phone, message, user) {
 
 // ── Update Goals (AI-driven, re-collects stats only) ─────────────────────────
 
-const UPDATE_GOALS_PROMPT = `You are Macro, helping an existing user update their nutrition targets via SMS.
+const UPDATE_GOALS_PROMPT = `You are Calio, an AI nutrition assistant. You are helping an existing user update their nutrition targets via SMS.
 
 You already know their name and gender — DO NOT ask for those again.
 You need to re-collect these 5 values through friendly conversation:
@@ -458,7 +463,7 @@ async function handleUpdateGoals(phone, message, user) {
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: UPDATE_GOALS_PROMPT },
-      { role: 'system', content: `User's existing units: ${unitsLabel}. Their name is ${user.name}. Start by telling them you'll recalculate their targets with a few quick questions.` },
+      { role: 'system', content: `User's existing units: ${unitsLabel}. Their name is ${user.name}. You're Calio — greet them by name and tell them you'll update their targets with a few quick questions.` },
       ...history.map(h => ({ role: h.role, content: h.content })),
       { role: 'user', content: message }
     ],
@@ -504,7 +509,7 @@ async function handleUpdateGoals(phone, message, user) {
       }).eq('phone', phone);
 
       const goalLabels = { lose: 'fat loss', gain: 'muscle gain', maintain: 'maintenance', recomp: 'body recomp' };
-      const confirm = `Done, ${user.name}! 🎯 New targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nDashboard updated automatically.`;
+      const confirm = `Done, ${user.name}! ✅ New targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nDashboard updated automatically.`;
 
       await saveMessage(phone, 'assistant', confirm);
       return confirm;
@@ -587,7 +592,7 @@ Tim Hortons: Medium Double Double 230/3P/20C/14F, Everything Bagel 270/10P/52C/2
 Olive Garden dinner: Fettuccine Alfredo 1220/36P/97C/75F, Chicken Parm 1060/67P/79C/46F`;
 
 // ── Prompt for web-search path (restaurant or branded items) ──────────────────
-const FOOD_PROMPT_SEARCH = `You are Macro, a nutrition tracking assistant via SMS.
+const FOOD_PROMPT_SEARCH = `You are Calio, an AI nutrition assistant by TextCalio.
 
 The user described food they ate. Use your web search tool to find the exact nutrition data — restaurant website, brand nutrition page, or USDA database. Use the real verified numbers you find.
 
@@ -616,7 +621,7 @@ According to Starbucks official nutrition ([source](https://...)) the sandwich h
 LOG:{"description":"...","calories":480,"protein_g":18.0,"carbs_g":34.0,"fat_g":29.0}`;
 
 // ── Prompt for anchor path (simple whole foods) ───────────────────────────────
-const FOOD_PROMPT_ANCHOR = `You are Macro, a nutrition tracking assistant via SMS.
+const FOOD_PROMPT_ANCHOR = `You are Calio, an AI nutrition assistant by TextCalio.
 
 Use this verified nutrition data as ground truth:
 
@@ -668,7 +673,7 @@ async function handleFoodLog(phone, message, user) {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Macro commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your current goals\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate your targets\n• "help" → this list\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate your targets\n• "help" → this list\n\ntextcalio.com?u=${user.dashboard_token}`;
   }
 
   if (lower === 'my targets' || lower === 'my goals' || lower === 'targets' || lower === 'my macros') {
@@ -680,7 +685,7 @@ async function handleFoodLog(phone, message, user) {
       tracked.includes('fat')     ? `• ${user.daily_fat_target}g fat`        : null
     ].filter(Boolean).join('\n');
 
-    const reply = `📊 Your current targets:\n\n• ${user.daily_calorie_target} cal/day${macroLines ? '\n' + macroLines : ''}\n\nGoal: ${goalLabels[user.goal] || user.goal}\n\nText "update goals" to recalculate.`;
+    const reply = `📊 Your Calio targets:\n\n• ${user.daily_calorie_target} cal/day${macroLines ? '\n' + macroLines : ''}\n\nGoal: ${goalLabels[user.goal] || user.goal}\n\nText "update goals" to recalculate.`;
     await saveMessage(phone, 'user',      message);
     await saveMessage(phone, 'assistant', reply);
     return reply;
@@ -720,7 +725,7 @@ async function handleFoodLog(phone, message, user) {
       tracked.includes('fat')     ? `${Math.round(t.f)}g F` : null
     ].filter(Boolean).join(' · ');
 
-    return `${icon} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining${macroLine ? '\n' + macroLine : ''}${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+    return `${icon} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining${macroLine ? '\n' + macroLine : ''}${streakLine}\n\ntextcalio.com?u=${user.dashboard_token}`;
   }
 
   if (lower === 'delete last') {
@@ -893,6 +898,6 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error('Webhook error:', err);
-    return res.send(twiml('Something went wrong — please try again in a moment!'));
+    return res.send(twiml('Calio hit a snag — please try again in a moment!'));
   }
 };
