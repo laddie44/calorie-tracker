@@ -11,7 +11,7 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-const FROM_NUMBER = '+16474244438';
+const FROM_NUMBER = process.env.TWILIO_PHONE_NUMBER || '+16474244438';
 
 module.exports = async (req, res) => {
   // Vercel cron protection — only allow requests with the cron secret
@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     // Get all fully onboarded users
     const { data: users } = await supabase
       .from('users')
-      .select('phone,name,daily_calorie_target,daily_protein_target,dashboard_token,streak,tracked_macros')
+      .select('phone,name,daily_calorie_target,daily_protein_target,dashboard_token,streak,tracked_macros,opted_out')
       .eq('setup_status', 'complete');
 
     if (!users || users.length === 0) return res.json({ sent: 0, total: 0 });
@@ -48,6 +48,9 @@ module.exports = async (req, res) => {
         const todayLogs = (recentLogs || []).filter(l =>
           new Date(l.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) === today
         );
+
+        // Skip users who have opted out
+        if (user.opted_out) continue;
 
         // Only send summary if they logged at least one thing today
         if (todayLogs.length === 0) continue;
