@@ -7,10 +7,10 @@
 <!-- PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Macro">
+<meta name="apple-mobile-web-app-title" content="Calio">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
-<meta name="application-name" content="Macro">
+<meta name="application-name" content="Calio">
 
 <!-- Icons -->
 <link rel="manifest" href="/manifest.json">
@@ -18,9 +18,9 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
 
 <!-- SEO / share -->
-<meta name="description" content="Your personal calorie and macro tracker">
+<meta name="description" content="Calio — AI nutrition tracking by SMS">
 
-<title>Macro</title>
+<title>Calio by TextCalio</title>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -321,7 +321,7 @@ main { padding: 20px 0 60px; }
   <div class="header-row">
     <div class="header-left">
       <div class="greeting"  id="greeting">Good morning</div>
-      <div class="user-name" id="username">Macro</div>
+      <div class="user-name" id="username">Calio</div>
     </div>
     <div class="header-right">
       <div class="date-pill" id="date-pill">Today</div>
@@ -559,7 +559,7 @@ function render(data) {
 
   const macroSection = macroDefs.length > 0 ? `
   <div class="section fade-up d4">
-    <div class="section-label">Macros</div>
+    <div class="section-label">Nutrition</div>
     <div class="macro-list">
       ${macroDefs.map((m, i) => {
         const pct = Math.min(Math.round((m.val / m.goal) * 100), 100);
@@ -622,12 +622,12 @@ function render(data) {
       <div class="sms-icon">💬</div>
       <div class="sms-text">
         <div class="sms-num">+1 (647) 424-4438</div>
-        <div class="sms-lbl">Text or send a photo to log instantly</div>
+        <div class="sms-lbl">Text or send a photo — Calio logs it instantly</div>
       </div>
     </div>
   </div>`;
 
-  $('username').textContent = user.name || 'Macro';
+  $('username').textContent = user.name || 'Calio';
   $('main').innerHTML = calCard + pillRow + chartSection + macroSection + logSection + cta;
 }
 
@@ -749,8 +749,8 @@ async function loadData() {
   if (!TOKEN) {
     $('main').innerHTML = `<div class="welcome">
       <div class="wel-icon">👋</div>
-      <div class="wel-title">Welcome to Macro</div>
-      <div class="wel-sub">Text the number below to set up your account. You'll receive a personal dashboard link after setup.</div>
+      <div class="wel-title">Welcome to Calio</div>
+      <div class="wel-sub">Text the number below to get started. Calio is your AI nutrition assistant — just text what you eat.</div>
       <div class="wel-num">+1 (647) 424-4438</div>
     </div>`;
     svgEl.classList.remove('spinning');
