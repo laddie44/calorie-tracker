@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
 
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('phone,name,goal,streak,daily_calorie_target,daily_protein_target,daily_carb_target,daily_fat_target,tracked_macros')
+    .select('phone,name,goal,units,streak,daily_calorie_target,daily_protein_target,daily_carb_target,daily_fat_target,tracked_macros')
     .eq('dashboard_token', u)
     .maybeSingle();
 
@@ -70,10 +70,21 @@ module.exports = async (req, res) => {
     // Today's logs come from weeklyData (already filtered)
     const todayLogs = (logsByDay[today] || []);
 
+    // Fetch last 30 days of weight logs for the trend chart
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000)
+      .toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+    const { data: weightData } = await supabase
+      .from('weight_logs')
+      .select('weight_kg, logged_date')
+      .eq('user_phone', user.phone)
+      .gte('logged_date', thirtyDaysAgo)
+      .order('logged_date', { ascending: true });
+
     return res.json({
       user: {
         name:               user.name,
         goal:               user.goal,
+        units:              user.units || 'metric',
         streak:             user.streak || 0,
         dailyCalorieTarget: user.daily_calorie_target || 2000,
         dailyProteinTarget: user.daily_protein_target || 150,
@@ -83,6 +94,7 @@ module.exports = async (req, res) => {
       },
       logs:        todayLogs,
       weeklyData,
+      weightData:  weightData || [],
       today
     });
   }
