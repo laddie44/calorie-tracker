@@ -7,8 +7,76 @@
 const { supabase }        = require('../lib/supabase');
 const { calculateMacros } = require('../lib/macros');
 const { OpenAI }          = require('openai');
+const twilio              = require('twilio');
+const crypto              = require('crypto');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// ── Twilio signature validation ───────────────────────────────────────────────
+// Verifies every incoming request is genuinely from Twilio, not a fake request
+function validateTwilioSignature(req, rawBody) {
+  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+  const signature  = req.headers['x-twilio-signature'] || '';
+  const url        = `https://${req.headers.host}${req.url}`;
+
+  // Parse params from raw body
+  const params = {};
+  for (const [k, v] of new URLSearchParams(rawBody)) {
+    params[k] = v;
+  }
+
+  // Build validation string: URL + sorted key/value pairs
+  const sortedKeys = Object.keys(params).sort();
+  let validationStr = url;
+  for (const key of sortedKeys) {
+    validationStr += key + params[key];
+  }
+
+  // HMAC-SHA1 signature
+  const expected = crypto
+    .createHmac('sha1', authToken)
+    .update(Buffer.from(validationStr, 'utf-8'))
+    .digest('base64');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+
+// ── Per-user rate limiting ────────────────────────────────────────────────────
+// Prevents abuse — max 20 messages per user per minute
+const rateLimitMap = new Map();
+
+function isRateLimited(phone) {
+  const now     = Date.now();
+  const window  = 60 * 1000;  // 1 minute
+  const maxMsgs = 20;
+
+  if (!rateLimitMap.has(phone)) {
+    rateLimitMap.set(phone, []);
+  }
+
+  // Remove timestamps older than the window
+  const timestamps = rateLimitMap.get(phone).filter(t => now - t < window);
+  timestamps.push(now);
+  rateLimitMap.set(phone, timestamps);
+
+  return timestamps.length > maxMsgs;
+}
+
+// Clean up rate limit map every 5 minutes to prevent memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [phone, timestamps] of rateLimitMap.entries()) {
+    const recent = timestamps.filter(t => now - t < 60000);
+    if (recent.length === 0) {
+      rateLimitMap.delete(phone);
+    } else {
+      rateLimitMap.set(phone, recent);
+    }
+  }
+}, 5 * 60 * 1000);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -673,7 +741,7 @@ async function handleFoodLog(phone, message, user) {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate your targets\n• "help" → this list\n\ntextcalio.com?u=${user.dashboard_token}`;
+    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "delete account" → remove all your data\n• "help" → this list\n\ntextcalio.com?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
   }
 
   if (lower === 'my targets' || lower === 'my goals' || lower === 'targets' || lower === 'my macros') {
@@ -689,6 +757,23 @@ async function handleFoodLog(phone, message, user) {
     await saveMessage(phone, 'user',      message);
     await saveMessage(phone, 'assistant', reply);
     return reply;
+  }
+
+  if (lower === 'delete account' || lower === 'delete my account' || lower === 'remove my account') {
+    // Soft confirm before deletion — wait for "confirm delete"
+    await saveMessage(phone, 'user', message);
+    const warn = 'Are you sure? This will permanently delete ALL your data — logs, targets, everything.\n\nReply "confirm delete" to proceed, or anything else to cancel.';
+    await saveMessage(phone, 'assistant', warn);
+    return warn;
+  }
+
+  if (lower === 'confirm delete') {
+    // Hard delete everything — PIPEDA compliant account deletion
+    const userPhone = phone;
+    await supabase.from('conversation_history').delete().eq('user_phone', userPhone);
+    await supabase.from('food_logs').delete().eq('user_phone', userPhone);
+    await supabase.from('users').delete().eq('phone', userPhone);
+    return 'Your Calio account and all data have been permanently deleted. Thanks for using Calio. 👋';
   }
 
   if (lower === 'update goals' || lower === 'update my goals' || lower === 'change goals') {
@@ -842,23 +927,64 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/xml');
 
   try {
-    let body = req.body;
-    if (typeof body === 'string') {
-      body = Object.fromEntries(new URLSearchParams(body));
-    }
-    if (!body || !body.From) {
-      body = await new Promise((resolve) => {
-        let raw = '';
-        req.on('data', chunk => { raw += chunk; });
-        req.on('end', () => resolve(Object.fromEntries(new URLSearchParams(raw))));
-      });
+    // ── Always read raw body first (needed for signature validation) ──────────
+    const rawBody = await new Promise((resolve) => {
+      let raw = '';
+      req.on('data', chunk => { raw += chunk; });
+      req.on('end', () => resolve(raw));
+    });
+
+    // ── Twilio signature validation ───────────────────────────────────────────
+    // Skip in development (no auth token set) but always enforce in production
+    if (process.env.TWILIO_AUTH_TOKEN && process.env.NODE_ENV !== 'development') {
+      try {
+        const valid = validateTwilioSignature(req, rawBody);
+        if (!valid) {
+          console.warn('Invalid Twilio signature — request rejected');
+          return res.status(403).send(twiml(''));
+        }
+      } catch (sigErr) {
+        // If signature check itself errors (e.g. mismatched buffer lengths),
+        // log and reject rather than letting potentially fake requests through
+        console.warn('Signature validation error:', sigErr.message);
+        return res.status(403).send(twiml(''));
+      }
     }
 
-    const phone    = body.From;
+    // ── Parse body ────────────────────────────────────────────────────────────
+    const body  = Object.fromEntries(new URLSearchParams(rawBody));
+    const phone = body.From;
     const message  = (body.Body || '').trim();
     const numMedia = parseInt(body.NumMedia || '0', 10);
 
     if (!phone) return res.status(400).send(twiml('Error: missing phone number'));
+
+    // ── Rate limiting ─────────────────────────────────────────────────────────
+    if (isRateLimited(phone)) {
+      console.warn(`Rate limit hit for ${phone}`);
+      return res.send(twiml("You're sending messages too quickly — please slow down and try again in a minute."));
+    }
+
+    // ── STOP / HELP / UNSTOP — Twilio compliance ──────────────────────────────
+    // These must be handled before any other logic
+    const msgLower = message.toLowerCase().trim();
+
+    if (msgLower === 'stop' || msgLower === 'stopall' || msgLower === 'unsubscribe' || msgLower === 'cancel' || msgLower === 'quit') {
+      // Opt user out of daily summaries — Twilio handles blocking further messages
+      await supabase.from('users').update({ opted_out: true }).eq('phone', phone);
+      return res.send(twiml("You've been unsubscribed from Calio messages. Text START to resubscribe anytime."));
+    }
+
+    if (msgLower === 'start' || msgLower === 'unstop' || msgLower === 'yes') {
+      await supabase.from('users').update({ opted_out: false }).eq('phone', phone);
+      return res.send(twiml("Welcome back! You're resubscribed to Calio. Text me anything you eat to start logging."));
+    }
+
+    if (msgLower === 'help') {
+      // HELP must return business name, service desc, and STOP info per CTIA guidelines
+      const helpMsg = `Calio by TextCalio - AI nutrition tracking by SMS.\n\nText any food to log it, or text HELP for commands.\n\nText STOP to unsubscribe.\nSupport: help@textcalio.com`;
+      return res.send(twiml(helpMsg));
+    }
 
     // Get or create user
     let { data: user } = await supabase
@@ -868,9 +994,14 @@ module.exports = async (req, res) => {
     if (isNewUser) {
       const { data: newUser } = await supabase
         .from('users')
-        .insert({ phone, setup_status: 'onboarding', setup_temp: {} })
+        .insert({ phone, setup_status: 'onboarding', setup_temp: {}, opted_out: false })
         .select().single();
       user = newUser;
+    }
+
+    // If user has opted out, silently ignore (Twilio handles blocking but be safe)
+    if (user?.opted_out) {
+      return res.send(twiml(''));
     }
 
     // Photo/MMS
@@ -898,6 +1029,6 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error('Webhook error:', err);
-    return res.send(twiml('Calio hit a snag — please try again in a moment!'));
+    return res.send(twiml("Calio hit a snag — please try again in a moment!"));
   }
 };
