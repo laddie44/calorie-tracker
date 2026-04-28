@@ -1,7 +1,7 @@
 {
-  "name": "Macro",
-  "short_name": "Macro",
-  "description": "SMS-powered calorie and macro tracker",
+  "name": "Calio",
+  "short_name": "Calio",
+  "description": "AI nutrition tracking by SMS \u2014 by TextCalio",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
