@@ -715,9 +715,9 @@ main { padding: 20px 0 60px; }
 
   <!-- Hero -->
   <div class="l-hero">
-    <div class="l-hero-badge">🤖 AI-powered nutrition</div>
-    <h1 class="l-hero-h1">Track nutrition<br><em>by text.</em></h1>
-    <p class="l-hero-sub">No app to download. Just text Calio what you ate and get instant calorie and macro tracking — like having a nutritionist in your pocket.</p>
+    <div class="l-hero-badge">✦ Calorie tracking without the app</div>
+    <h1 class="l-hero-h1">The calorie tracker<br><em>that works by text.</em></h1>
+    <p class="l-hero-sub">Text Calio what you ate. Get your calories and macros in seconds — no app, no database search, no barcode scanning.</p>
     <a class="l-hero-cta" href="/signup.html">
       Start 7-day free trial
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -841,6 +841,7 @@ main { padding: 20px 0 60px; }
           <div class="l-price-trial">7 days free, then $9.99/month</div>
         </a>
       </div>
+      <a class="l-hero-cta" href="/signup.html" style="margin-top:28px;">Start my free trial</a>
       <p class="l-pricing-note">Try free for 7 days. No charge until your trial ends. · Secure payment via Stripe</p>
     </div>
   </div>
@@ -848,6 +849,13 @@ main { padding: 20px 0 60px; }
   <!-- FAQ -->
   <div class="l-faq">
     <h2 class="l-faq-h2">Frequently asked questions</h2>
+    <div class="l-faq-item">
+      <button class="l-faq-q" onclick="toggleFaq(this)">
+        How is this different from MyFitnessPal?
+        <svg class="l-faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="l-faq-a">MyFitnessPal and similar apps make you search a food database, choose serving sizes, and log meals manually. TextCalio works by text. You message Calio what you ate in plain English, and Calio logs your calories and macros in seconds — no app to open, no database to search.</div>
+    </div>
     <div class="l-faq-item">
       <button class="l-faq-q" onclick="toggleFaq(this)">
         Do I need to download an app?
@@ -875,6 +883,15 @@ main { padding: 20px 0 60px; }
         <svg class="l-faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="l-faq-a">Your data is only used to power Calio's tracking features. We never sell your information or use it for advertising. You can delete your entire account and all data by texting "delete account" to Calio at any time.</div>
+    </div>
+  </div>
+
+  <!-- Closing CTA -->
+  <div style="padding:80px 24px;text-align:center;background:var(--cream);border-top:0.5px solid rgba(0,0,0,0.07);">
+    <div style="max-width:560px;margin:0 auto;">
+      <h2 style="font-size:clamp(24px,4vw,36px);font-weight:700;letter-spacing:-1px;line-height:1.2;color:var(--black);margin-bottom:14px;">Ready to make tracking effortless?</h2>
+      <p style="font-size:16px;color:var(--gray);line-height:1.65;margin-bottom:32px;">Start your 7-day free trial and text your first meal in minutes. No app to download. No database to search.</p>
+      <a class="l-hero-cta" href="/signup.html">Start my free trial</a>
     </div>
   </div>
 
