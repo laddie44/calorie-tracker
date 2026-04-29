@@ -1170,6 +1170,43 @@ module.exports = async (req, res) => {
       return res.send(twiml(''));
     }
 
+    // ── Subscription gate ─────────────────────────────────────────────────────
+    // New users (never signed up on web) → send to signup
+    if (isNewUser) {
+      return res.send(twiml("Welcome to TextCalio! 👋\n\nSign up at textcalio.com/signup to start your 7-day free trial and meet Calio, your AI nutrition coach. Takes 2 minutes!"));
+    }
+
+    // Existing users: check subscription status
+    const status      = user.subscription_status;
+    const trialEnd    = user.trial_end ? new Date(user.trial_end) : null;
+    const trialExpired = status === 'trialing' && trialEnd && new Date() > trialEnd;
+
+    if (trialExpired) {
+      // Mark as expired and send re-engage
+      await supabase.from('users').update({ subscription_status: 'expired' }).eq('phone', phone);
+      return res.send(twiml(`Your TextCalio trial has ended, ${user.name || 'there'}!\n\nSubscribe to continue tracking with Calio:\ntextcalio.com/signup\n\nYour data is saved and waiting for you. 💙`));
+    }
+
+    if (status === 'canceled' || status === 'expired') {
+      return res.send(twiml(`Welcome back, ${user.name || 'there'}! 👋\n\nResubscribe to continue using Calio:\ntextcalio.com/signup\n\nYour data is saved and ready. 💙`));
+    }
+
+    if (status === 'past_due') {
+      // Let them use it but add a note (Stripe will retry payment automatically)
+      // Don't block — just continue to food logging
+    }
+
+    if (status === 'pending') {
+      return res.send(twiml("Your account is almost ready! Give it another moment, then try texting again. 💙"));
+    }
+
+    if (!status || status === 'inactive') {
+      // Shouldn't happen after migration, but handle gracefully
+      return res.send(twiml("Get started with TextCalio at textcalio.com/signup to meet Calio, your AI nutrition coach! 💙"));
+    }
+
+    // status is 'active' or 'trialing' (not expired) — continue normally ✓
+
     // Photo/MMS
     if (numMedia > 0) {
       if (user.setup_status !== 'complete') {
