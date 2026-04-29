@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
         ].filter(Boolean).join(' · ');
         const macroLine = macroParts ? `\n${macroParts}` : '';
 
-        const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)${macroLine}\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}\n\ncalorie-tracker-chi-plum.vercel.app?u=${user.dashboard_token}`;
+        const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)${macroLine}\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}\n\ntextcalio.com?u=${user.dashboard_token}`;
 
         await client.messages.create({ body: msg, from: FROM_NUMBER, to: user.phone });
         sent++;
