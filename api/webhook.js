@@ -1197,12 +1197,13 @@ module.exports = async (req, res) => {
     }
 
     if (status === 'pending') {
-      return res.send(twiml("Your account is almost ready! Give it another moment, then try texting again. 💙"));
+      // Should rarely happen - check if Stripe session recently created
+      return res.send(twiml("Your account is setting up! You'll receive a welcome SMS in the next 1-2 minutes. If you're still waiting after that, contact support@textcalio.com 💙"));
     }
 
     if (!status || status === 'inactive') {
-      // Shouldn't happen after migration, but handle gracefully
-      return res.send(twiml("Get started with TextCalio at textcalio.com/signup to meet Calio, your AI nutrition coach! 💙"));
+      // User exists in DB but hasn't subscribed yet (or migration not run)
+      return res.send(twiml("Hi! To use Calio, start your 7-day free trial at:\ntextcalio.com/signup\n\nNo app needed — just sign up and text back! 💙"));
     }
 
     // status is 'active' or 'trialing' (not expired) — continue normally ✓
