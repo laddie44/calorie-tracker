@@ -766,7 +766,7 @@ html, body {
       <p class="q-label">Almost there</p>
       <h2 class="q-title" id="account-title">Create your account</h2>
       <p class="q-sub">Your dashboard and SMS access link to your phone number.</p>
-      <input class="text-input" id="phone-input" type="tel" inputmode="tel" placeholder="+1 (647) 424-4438" autocomplete="tel" oninput="onTextChange('phone', this.value)">
+      <input class="text-input" id="phone-input" type="tel" inputmode="tel" placeholder="Your mobile number" autocomplete="tel" oninput="onTextChange('phone', this.value)">
       <input class="text-input" id="email-input" type="email" inputmode="email" placeholder="your@email.com" autocomplete="email" oninput="onTextChange('email', this.value)">
       <div class="error-msg" id="account-error">Please enter a valid phone number and email.</div>
     </div>
@@ -915,7 +915,7 @@ function updateUI(flowIdx, screenId) {
     btnSvg.style.display = '';
     termsNote.style.display = 'none';
   } else if (screenId === 11) {
-    btnText.textContent = 'Looks good — continue';
+    btnText.textContent = 'Start my free trial';
     btnSvg.style.display = '';
     termsNote.style.display = 'none';
   } else if (screenId === 12) {
