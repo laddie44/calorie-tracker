@@ -862,13 +862,8 @@ async function loadData() {
   $('date-pill').textContent = fmtDate();
 
   if (!TOKEN) {
-    $('main').innerHTML = `<div class="welcome">
-      <div class="wel-icon">👋</div>
-      <div class="wel-title">Welcome to Calio</div>
-      <div class="wel-sub">Text the number below to get started. Calio is your AI nutrition assistant — just text what you eat.</div>
-      <div class="wel-num">+1 (647) 424-4438</div>
-    </div>`;
-    svgEl.classList.remove('spinning');
+    // No dashboard token — redirect to the landing/signup page
+    window.location.href = '/signup.html';
     return;
   }
 
