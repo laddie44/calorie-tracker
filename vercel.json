@@ -1,13 +1,14 @@
 {
+  "rewrites": [
+    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/success", "destination": "/success.html" },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" }
+  ],
   "functions": {
-    "api/*.js": {
-      "maxDuration": 30
-    }
+    "api/*.js": { "maxDuration": 30 }
   },
   "crons": [
-    {
-      "path": "/api/daily-summary",
-      "schedule": "0 2 * * *"
-    }
+    { "path": "/api/daily-summary", "schedule": "0 2 * * *" }
   ]
 }
