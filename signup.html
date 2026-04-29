@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0096FF">
+<title>Get Started — TextCalio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cream:   #FBF7EF;
+  --blue:    #0096FF;
+  --blue-dk: #007ACC;
+  --black:   #111111;
+  --gray:    #6B7280;
+  --gray-lt: #E5E7EB;
+  --white:   #FFFFFF;
+  --radius:  16px;
+  --r-sm:    10px;
+  --shadow:  0 2px 12px rgba(0,0,0,0.08);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.wrap {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+.progress-rail {
+  height: 3px;
+  background: var(--gray-lt);
+  border-radius: 2px;
+  margin: 20px 0 0;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ── Top nav ─────────────────────────────────────────────────────────────── */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 0;
+  min-height: 44px;
+}
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 500; color: var(--gray);
+  background: none; border: none; cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: var(--black); }
+.back-btn svg { width: 16px; height: 16px; }
+.back-btn.hidden { visibility: hidden; pointer-events: none; }
+.step-indicator {
+  font-size: 13px; color: var(--gray); font-weight: 400;
+}
+
+/* ── Logo ────────────────────────────────────────────────────────────────── */
+.logo-wrap {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-mark { width: 32px; height: 32px; }
+.logo-text {
+  font-size: 17px; font-weight: 700; color: var(--black);
+  letter-spacing: -0.3px;
+}
+
+/* ── Screens ─────────────────────────────────────────────────────────────── */
+.screens-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 0 32px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(40px);
+  transition: opacity 0.35s cubic-bezier(0.22,1,0.36,1),
+              transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+}
+.screen.out-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  pointer-events: none;
+}
+
+/* Welcome screen */
+.welcome-logo {
+  width: 72px; height: 72px; margin-bottom: 32px;
+}
+.welcome-tagline {
+  font-size: 11px; font-weight: 600; color: var(--blue);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+.welcome-h1 {
+  font-size: clamp(32px, 8vw, 44px);
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  line-height: 1.1;
+  color: var(--black);
+  margin-bottom: 16px;
+}
+.welcome-h1 em { font-style: normal; color: var(--blue); }
+.welcome-sub {
+  font-size: 16px;
+  color: var(--gray);
+  line-height: 1.65;
+  margin-bottom: 40px;
+  max-width: 340px;
+}
+.social-proof {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 32px;
+}
+.avatars { display: flex; }
+.avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--cream);
+  margin-left: -8px; background: var(--blue-dk);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: white; font-weight: 600;
+}
+.avatar:first-child { margin-left: 0; }
+.proof-text { font-size: 13px; color: var(--gray); }
+.proof-text strong { color: var(--black); }
+
+/* Question screens */
+.q-label {
+  font-size: 11px; font-weight: 600; color: var(--blue);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 12px;
+}
+.q-title {
+  font-size: clamp(22px, 5.5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.7px;
+  line-height: 1.2;
+  color: var(--black);
+  margin-bottom: 8px;
+}
+.q-sub {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+/* Cards (goal, gender, activity) */
+.cards-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.cards-grid.two-col { grid-template-columns: 1fr 1fr; }
+.cards-grid.one-col { grid-template-columns: 1fr; }
+
+.card {
+  background: var(--white);
+  border: 2px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: flex-start; gap: 12px;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.card:hover { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,150,255,0.12); }
+.card.selected { border-color: var(--blue); background: rgba(0,150,255,0.06); }
+.card.selected .card-check { opacity: 1; }
+.card-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.card-body { flex: 1; }
+.card-name { font-size: 15px; font-weight: 600; color: var(--black); margin-bottom: 3px; }
+.card-desc { font-size: 12px; color: var(--gray); line-height: 1.4; }
+.card-check {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--blue); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s; margin-top: 2px;
+}
+.card-check svg { width: 10px; height: 10px; color: white; }
+
+/* Number inputs */
+.input-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+.num-input {
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--black);
+  letter-spacing: -1.5px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid var(--gray-lt);
+  padding: 8px 0 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+}
+.num-input::-webkit-outer-spin-button,
+.num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.num-input:focus { border-bottom-color: var(--blue); }
+.num-input::placeholder { color: var(--gray-lt); }
+.input-unit {
+  position: absolute;
+  bottom: 14px;
+  right: 0;
+  font-size: 18px;
+  color: var(--gray);
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.unit-toggle {
+  display: flex;
+  background: var(--white);
+  border: 1px solid var(--gray-lt);
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+  margin-bottom: 24px;
+}
+.unit-btn {
+  padding: 7px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.unit-btn.active { background: var(--blue); color: white; }
+
+/* Text input (name, phone, email) */
+.text-input {
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--black);
+  background: var(--white);
+  border: 2px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+.text-input:focus { border-color: var(--blue); }
+.text-input::placeholder { color: #C8CDD5; font-weight: 400; font-size: 18px; }
+
+/* Plan selection */
+.plan-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.plan-card {
+  background: var(--white);
+  border: 2px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+.plan-card:hover { border-color: var(--blue); }
+.plan-card.selected { border-color: var(--blue); background: rgba(0,150,255,0.05); }
+.plan-badge {
+  position: absolute;
+  top: -10px; left: 16px;
+  background: var(--blue);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+.plan-name { font-size: 15px; font-weight: 600; color: var(--black); }
+.plan-price { font-size: 13px; color: var(--gray); margin-top: 3px; }
+.plan-amount { font-size: 22px; font-weight: 700; color: var(--black); }
+.plan-per { font-size: 13px; color: var(--gray); }
+
+/* Calculating animation */
+.calc-wrap {
+  text-align: center;
+  padding: 24px 0;
+}
+.calc-logo { margin: 0 auto 32px; width: 64px; height: 64px; }
+.calc-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+.calc-sub { font-size: 15px; color: var(--gray); margin-bottom: 40px; }
+.calc-steps { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
+.calc-step {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px; color: var(--gray);
+  opacity: 0; transform: translateY(6px);
+  transition: all 0.3s;
+}
+.calc-step.show { opacity: 1; transform: translateY(0); }
+.calc-step.done { color: var(--black); }
+.step-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--gray-lt); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.3s;
+}
+.calc-step.done .step-dot { background: var(--blue); }
+.step-dot svg { width: 10px; height: 10px; color: white; display: none; }
+.calc-step.done .step-dot svg { display: block; }
+
+/* Plan reveal */
+.reveal-wrap { }
+.reveal-greeting {
+  font-size: 13px; font-weight: 600; color: var(--blue);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.reveal-title {
+  font-size: clamp(24px,6vw,30px); font-weight: 700;
+  letter-spacing: -0.8px; line-height: 1.2;
+  margin-bottom: 24px;
+}
+.reveal-card {
+  background: var(--black);
+  border-radius: 20px;
+  padding: 24px;
+  color: white;
+  margin-bottom: 16px;
+}
+.reveal-main {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-bottom: 6px;
+}
+.reveal-num {
+  font-size: 52px; font-weight: 700;
+  letter-spacing: -2px; color: white; line-height: 1;
+}
+.reveal-unit {
+  font-size: 18px; color: rgba(255,255,255,0.5);
+}
+.reveal-label {
+  font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px;
+}
+.reveal-macros {
+  display: flex; gap: 0;
+  border-top: 0.5px solid rgba(255,255,255,0.1);
+  padding-top: 16px;
+}
+.reveal-macro {
+  flex: 1; text-align: center;
+}
+.reveal-macro:not(:last-child) {
+  border-right: 0.5px solid rgba(255,255,255,0.1);
+}
+.r-macro-num { font-size: 20px; font-weight: 700; color: white; letter-spacing: -0.5px; }
+.r-macro-g { font-size: 12px; color: rgba(255,255,255,0.4); }
+.r-macro-lbl { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+.reveal-projection {
+  background: var(--white);
+  border: 1px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 24px;
+  font-size: 14px; color: var(--gray);
+}
+.reveal-projection strong { color: var(--black); }
+
+/* Primary button */
+.btn-primary {
+  width: 100%;
+  background: var(--blue);
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 16px 24px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: -0.2px;
+}
+.btn-primary:hover { background: var(--blue-dk); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-primary svg { width: 18px; height: 18px; }
+
+/* Bottom area */
+.screen-bottom {
+  padding: 16px 0 32px;
+  flex-shrink: 0;
+}
+.terms-note {
+  font-size: 12px; color: var(--gray); text-align: center;
+  margin-top: 12px; line-height: 1.5;
+}
+.terms-note a { color: var(--gray); }
+
+/* Error */
+.error-msg {
+  font-size: 13px; color: #DC2626;
+  padding: 10px 14px;
+  background: #FEF2F2;
+  border-radius: 8px;
+  margin-top: 8px;
+  display: none;
+}
+.error-msg.show { display: block; }
+
+/* Loading spinner on button */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Progress bar (hidden on welcome) -->
+  <div class="progress-rail" id="progress-rail" style="visibility:hidden">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <!-- Top nav -->
+  <div class="top-nav">
+    <button class="back-btn hidden" id="back-btn" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="logo-wrap" id="nav-logo" style="display:none">
+      <svg class="logo-mark" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#0096FF" d="M65,28 A28,28 0 1,0 21,62 L6,78 L23,63 A28,28 0 0,0 65,56 L56,51 A17,17 0 1,1 56,34 Z"/>
+        <circle cx="76" cy="32" r="6" fill="#0096FF"/>
+        <circle cx="76" cy="52" r="6" fill="#0096FF"/>
+      </svg>
+      <span class="logo-text">TextCalio</span>
+    </div>
+    <span class="step-indicator" id="step-indicator"></span>
+  </div>
+
+  <!-- Screens viewport -->
+  <div class="screens-viewport">
+
+    <!-- ── SCREEN 0: Welcome ─────────────────────────────────────────────── -->
+    <div class="screen active" id="screen-0">
+      <svg class="welcome-logo" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#0096FF" d="M65,28 A28,28 0 1,0 21,62 L6,78 L23,63 A28,28 0 0,0 65,56 L56,51 A17,17 0 1,1 56,34 Z"/>
+        <circle cx="76" cy="32" r="6" fill="#0096FF"/>
+        <circle cx="76" cy="52" r="6" fill="#0096FF"/>
+      </svg>
+      <p class="welcome-tagline">TextCalio — Meet Calio</p>
+      <h1 class="welcome-h1">Your AI nutrition coach, <em>by text.</em></h1>
+      <p class="welcome-sub">Text Calio what you eat. Get instant calories and macros — no app needed, no manual logging.</p>
+      <div class="social-proof">
+        <div class="avatars">
+          <div class="avatar" style="background:#0096FF">J</div>
+          <div class="avatar" style="background:#007ACC">M</div>
+          <div class="avatar" style="background:#0079A8">S</div>
+          <div class="avatar" style="background:#006894">A</div>
+        </div>
+        <p class="proof-text"><strong>Hundreds</strong> already tracking smarter</p>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 1: Goal ───────────────────────────────────────────────── -->
+    <div class="screen" id="screen-1">
+      <p class="q-label">Step 1 of 8</p>
+      <h2 class="q-title">What's your main goal?</h2>
+      <p class="q-sub">Calio builds your targets around this.</p>
+      <div class="cards-grid one-col" id="goal-cards">
+        <div class="card" data-value="lose" onclick="selectCard('goal', 'lose', this)">
+          <div class="card-icon">🔥</div>
+          <div class="card-body"><div class="card-name">Lose fat</div><div class="card-desc">Calorie deficit with high protein to protect muscle</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" data-value="gain" onclick="selectCard('goal', 'gain', this)">
+          <div class="card-icon">💪</div>
+          <div class="card-body"><div class="card-name">Build muscle</div><div class="card-desc">Calorie surplus with elevated protein for growth</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" data-value="maintain" onclick="selectCard('goal', 'maintain', this)">
+          <div class="card-icon">⚖️</div>
+          <div class="card-body"><div class="card-name">Maintain weight</div><div class="card-desc">Stay at current weight with balanced nutrition</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" data-value="recomp" onclick="selectCard('goal', 'recomp', this)">
+          <div class="card-icon">🔄</div>
+          <div class="card-body"><div class="card-name">Body recomposition</div><div class="card-desc">Lose fat and build muscle simultaneously</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 2: Gender ─────────────────────────────────────────────── -->
+    <div class="screen" id="screen-2">
+      <p class="q-label">Step 2 of 8</p>
+      <h2 class="q-title">What's your biological sex?</h2>
+      <p class="q-sub">Used for the calorie formula — nothing else.</p>
+      <div class="cards-grid two-col">
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:24px 16px;" data-value="male" onclick="selectCard('gender', 'male', this)">
+          <div class="card-icon" style="margin-bottom:8px">♂️</div>
+          <div class="card-name">Male</div>
+          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:24px 16px;" data-value="female" onclick="selectCard('gender', 'female', this)">
+          <div class="card-icon" style="margin-bottom:8px">♀️</div>
+          <div class="card-name">Female</div>
+          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 3: Name ───────────────────────────────────────────────── -->
+    <div class="screen" id="screen-3">
+      <p class="q-label">Step 3 of 8</p>
+      <h2 class="q-title">What's your first name?</h2>
+      <p class="q-sub">So Calio can greet you personally.</p>
+      <input class="text-input" id="name-input" type="text" placeholder="First name" autocomplete="given-name" autocapitalize="words" oninput="onTextChange('name', this.value)">
+      <div class="error-msg" id="name-error">Please enter your first name.</div>
+    </div>
+
+    <!-- ── SCREEN 4: Age ─────────────────────────────────────────────────── -->
+    <div class="screen" id="screen-4">
+      <p class="q-label">Step 4 of 8</p>
+      <h2 class="q-title">How old are you?</h2>
+      <p class="q-sub">Age affects your metabolic rate.</p>
+      <div class="input-wrap">
+        <input class="num-input" id="age-input" type="number" inputmode="numeric" placeholder="28" min="16" max="100" oninput="onNumberChange('age', this.value)">
+        <span class="input-unit">yrs</span>
+      </div>
+      <div class="error-msg" id="age-error">Please enter a valid age (16-100).</div>
+    </div>
+
+    <!-- ── SCREEN 5: Units ───────────────────────────────────────────────── -->
+    <div class="screen" id="screen-5">
+      <p class="q-label">Step 5 of 8</p>
+      <h2 class="q-title">Which units do you prefer?</h2>
+      <p class="q-sub">Choose what feels natural to you.</p>
+      <div class="cards-grid two-col">
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:28px 16px;" data-value="metric" onclick="selectCard('units', 'metric', this)">
+          <div class="card-icon" style="margin-bottom:8px">🌍</div>
+          <div class="card-name">Metric</div>
+          <div class="card-desc" style="text-align:center">kg, cm</div>
+          <div class="card-check" style="margin:10px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:28px 16px;" data-value="imperial" onclick="selectCard('units', 'imperial', this)">
+          <div class="card-icon" style="margin-bottom:8px">🦅</div>
+          <div class="card-name">Imperial</div>
+          <div class="card-desc" style="text-align:center">lbs, in</div>
+          <div class="card-check" style="margin:10px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 6: Weight ─────────────────────────────────────────────── -->
+    <div class="screen" id="screen-6">
+      <p class="q-label">Step 6 of 8</p>
+      <h2 class="q-title">Current weight</h2>
+      <p class="q-sub">Calio uses this to calculate your daily targets.</p>
+      <div class="input-wrap">
+        <input class="num-input" id="weight-input" type="number" inputmode="decimal" placeholder="75" oninput="onNumberChange('weight', this.value)">
+        <span class="input-unit" id="weight-unit">kg</span>
+      </div>
+      <div class="error-msg" id="weight-error">Please enter a valid weight.</div>
+    </div>
+
+    <!-- ── SCREEN 7: Height ─────────────────────────────────────────────── -->
+    <div class="screen" id="screen-7">
+      <p class="q-label">Step 7 of 8</p>
+      <h2 class="q-title">Your height</h2>
+      <p class="q-sub" id="height-sub">Enter your height in cm.</p>
+      <div class="input-wrap">
+        <input class="num-input" id="height-input" type="number" inputmode="decimal" placeholder="175" oninput="onNumberChange('height', this.value)">
+        <span class="input-unit" id="height-unit">cm</span>
+      </div>
+      <div class="error-msg" id="height-error">Please enter a valid height.</div>
+    </div>
+
+    <!-- ── SCREEN 8: Target weight ─────────────────────────────────────── -->
+    <div class="screen" id="screen-8">
+      <p class="q-label">Step 8 of 8</p>
+      <h2 class="q-title" id="target-title">What's your target weight?</h2>
+      <p class="q-sub" id="target-sub">Your goal to work toward.</p>
+      <div class="input-wrap">
+        <input class="num-input" id="target-input" type="number" inputmode="decimal" placeholder="68" oninput="onNumberChange('targetWeight', this.value)">
+        <span class="input-unit" id="target-unit">kg</span>
+      </div>
+      <div class="error-msg" id="target-error">Please enter a target weight.</div>
+    </div>
+
+    <!-- ── SCREEN 9: Activity ─────────────────────────────────────────── -->
+    <div class="screen" id="screen-9">
+      <p class="q-label" id="activity-label">Step 8 of 8</p>
+      <h2 class="q-title">How active are you?</h2>
+      <p class="q-sub">Choose the option that best describes your typical week.</p>
+      <div class="cards-grid one-col">
+        <div class="card" data-value="1" onclick="selectCard('activityLevel', '1', this)">
+          <div class="card-icon">🖥️</div>
+          <div class="card-body"><div class="card-name">Sedentary</div><div class="card-desc">Desk job, little or no exercise</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" data-value="2" onclick="selectCard('activityLevel', '2', this)">
+          <div class="card-icon">🚶</div>
+          <div class="card-body"><div class="card-name">Lightly active</div><div class="card-desc">Light exercise or walks 1-3 days/week</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" data-value="3" onclick="selectCard('activityLevel', '3', this)">
+          <div class="card-icon">🏃</div>
+          <div class="card-body"><div class="card-name">Moderately active</div><div class="card-desc">Moderate exercise or sports 3-5 days/week</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" data-value="4" onclick="selectCard('activityLevel', '4', this)">
+          <div class="card-icon">🏋️</div>
+          <div class="card-body"><div class="card-name">Very active</div><div class="card-desc">Hard exercise 6-7 days/week or physical job</div></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 10: Calculating ─────────────────────────────────────── -->
+    <div class="screen" id="screen-10">
+      <div class="calc-wrap">
+        <svg class="calc-logo" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#0096FF" d="M65,28 A28,28 0 1,0 21,62 L6,78 L23,63 A28,28 0 0,0 65,56 L56,51 A17,17 0 1,1 56,34 Z"/>
+          <circle cx="76" cy="32" r="6" fill="#0096FF"/>
+          <circle cx="76" cy="52" r="6" fill="#0096FF"/>
+        </svg>
+        <h2 class="calc-title">Building your plan...</h2>
+        <p class="calc-sub">Calio is crunching your numbers</p>
+        <div class="calc-steps">
+          <div class="calc-step" id="cs-1">
+            <div class="step-dot"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            Calculating your metabolic rate
+          </div>
+          <div class="calc-step" id="cs-2">
+            <div class="step-dot"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            Adjusting for your activity level
+          </div>
+          <div class="calc-step" id="cs-3">
+            <div class="step-dot"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            Setting macro targets for your goal
+          </div>
+          <div class="calc-step" id="cs-4">
+            <div class="step-dot"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            Your personalized plan is ready
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 11: Plan reveal ─────────────────────────────────────── -->
+    <div class="screen" id="screen-11">
+      <div class="reveal-wrap">
+        <p class="reveal-greeting">Your personalized plan</p>
+        <h2 class="reveal-title" id="reveal-title">Here's what Calio built for you</h2>
+        <div class="reveal-card">
+          <div class="reveal-main">
+            <span class="reveal-num" id="reveal-cal">0</span>
+            <span class="reveal-unit">cal/day</span>
+          </div>
+          <p class="reveal-label" id="reveal-label">Daily calorie target</p>
+          <div class="reveal-macros">
+            <div class="reveal-macro">
+              <div class="r-macro-num" id="reveal-prot">0</div>
+              <div class="r-macro-g">g</div>
+              <div class="r-macro-lbl">Protein</div>
+            </div>
+            <div class="reveal-macro">
+              <div class="r-macro-num" id="reveal-carbs">0</div>
+              <div class="r-macro-g">g</div>
+              <div class="r-macro-lbl">Carbs</div>
+            </div>
+            <div class="reveal-macro">
+              <div class="r-macro-num" id="reveal-fat">0</div>
+              <div class="r-macro-g">g</div>
+              <div class="r-macro-lbl">Fat</div>
+            </div>
+          </div>
+        </div>
+        <div class="reveal-projection" id="reveal-projection" style="display:none">
+          <span>📅</span>
+          <span id="reveal-proj-text">Based on your targets...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 12: Account ──────────────────────────────────────────── -->
+    <div class="screen" id="screen-12">
+      <p class="q-label">Almost there</p>
+      <h2 class="q-title" id="account-title">Create your account</h2>
+      <p class="q-sub">Your dashboard and SMS access link to your phone number.</p>
+      <input class="text-input" id="phone-input" type="tel" inputmode="tel" placeholder="+1 (647) 424-4438" autocomplete="tel" oninput="onTextChange('phone', this.value)">
+      <input class="text-input" id="email-input" type="email" inputmode="email" placeholder="your@email.com" autocomplete="email" oninput="onTextChange('email', this.value)">
+      <div class="error-msg" id="account-error">Please enter a valid phone number and email.</div>
+    </div>
+
+    <!-- ── SCREEN 13: Plan selection ──────────────────────────────────── -->
+    <div class="screen" id="screen-13">
+      <p class="q-label">Start your free trial</p>
+      <h2 class="q-title">Choose your plan</h2>
+      <p class="q-sub">7 days free, then your chosen plan. Cancel anytime.</p>
+      <div class="plan-cards">
+        <div class="plan-card" id="plan-yearly" onclick="selectPlan('yearly')">
+          <div class="plan-badge">Most popular</div>
+          <div>
+            <div class="plan-name">Annual</div>
+            <div class="plan-price">$69.99/year — save $50 vs monthly</div>
+          </div>
+          <div style="text-align:right">
+            <div class="plan-amount">$5.83</div>
+            <div class="plan-per">/month</div>
+          </div>
+        </div>
+        <div class="plan-card" id="plan-monthly" onclick="selectPlan('monthly')">
+          <div>
+            <div class="plan-name">Monthly</div>
+            <div class="plan-price">Flexible, cancel anytime</div>
+          </div>
+          <div style="text-align:right">
+            <div class="plan-amount">$9.99</div>
+            <div class="plan-per">/month</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px 14px;background:rgba(0,150,255,0.06);border-radius:10px;border:1px solid rgba(0,150,255,0.15)">
+        <p style="font-size:13px;color:var(--black);line-height:1.5;">
+          <strong>7-day free trial</strong> — your card won't be charged until after the trial. Cancel anytime before then and you won't pay a cent.
+        </p>
+      </div>
+      <div class="error-msg" id="plan-error">Please select a plan to continue.</div>
+    </div>
+
+  </div><!-- end screens-viewport -->
+
+  <!-- Bottom button area -->
+  <div class="screen-bottom" id="screen-bottom">
+    <button class="btn-primary" id="main-btn" onclick="handleNext()">
+      <span id="btn-text">Get started</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <p class="terms-note" id="terms-note" style="display:none">
+      By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.
+      Msg &amp; data rates may apply.
+    </p>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const data = {
+  goal: null, gender: null, name: '',
+  age: null, units: null, weight: null,
+  height: null, targetWeight: null, activityLevel: null,
+  phone: '', email: '',
+  plan: null, priceId: null,
+  calories: 0, protein: 0, carbs: 0, fat: 0
+};
+
+const PRICE_IDS = {
+  monthly: 'price_1TRLLwBSGwHBXwI8t2p8ZQd6',
+  yearly:  'price_1TRLMoBSGwHBXwI8kbeB0hQ0'
+};
+
+let currentScreen = 0;
+const TOTAL_QUESTIONS = 8; // screens 1-9 (excl. target for maintain/recomp)
+
+// Screens that are "question" screens (for progress bar)
+// Dynamic: screen 8 (target weight) may be skipped
+function getScreenFlow() {
+  const skipTarget = data.goal === 'maintain' || data.goal === 'recomp';
+  return [0, 1, 2, 3, 4, 5, 6, 7, skipTarget ? null : 8, 9, 10, 11, 12, 13].filter(n => n !== null);
+}
+
+function getQuestionScreens() {
+  return getScreenFlow().filter(n => n >= 1 && n <= 9);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showScreen(idx) {
+  const screens = getScreenFlow();
+  const screenId = screens[idx];
+
+  // Animate out current
+  const current = document.querySelector('.screen.active');
+  if (current) { current.classList.add('out-left'); current.classList.remove('active'); }
+
+  // Animate in new
+  setTimeout(() => {
+    if (current) current.classList.remove('out-left');
+    const next = document.getElementById('screen-' + screenId);
+    if (next) { next.classList.add('active'); next.style.transform = ''; next.style.opacity = ''; }
+    updateUI(idx, screenId);
+  }, 10);
+}
+
+function updateUI(flowIdx, screenId) {
+  const screens = getScreenFlow();
+  const questionScreens = getQuestionScreens();
+
+  // Progress bar
+  const rail = document.getElementById('progress-rail');
+  const fill = document.getElementById('progress-fill');
+  if (screenId === 0) {
+    rail.style.visibility = 'hidden';
+  } else {
+    rail.style.visibility = 'visible';
+    const qIdx = questionScreens.indexOf(screenId);
+    const pct = qIdx >= 0 ? ((qIdx + 1) / questionScreens.length) * 100 : 100;
+    fill.style.width = Math.min(pct, 100) + '%';
+  }
+
+  // Top nav
+  const backBtn    = document.getElementById('back-btn');
+  const navLogo    = document.getElementById('nav-logo');
+  const stepInd    = document.getElementById('step-indicator');
+  const termsNote  = document.getElementById('terms-note');
+
+  if (screenId === 0) {
+    backBtn.classList.add('hidden');
+    navLogo.style.display = 'none';
+    stepInd.textContent = '';
+  } else {
+    backBtn.classList.remove('hidden');
+    navLogo.style.display = 'flex';
+    if (screenId >= 1 && screenId <= 9) {
+      const qIdx = questionScreens.indexOf(screenId);
+      stepInd.textContent = `${qIdx + 1} of ${questionScreens.length}`;
+    } else {
+      stepInd.textContent = '';
+    }
+  }
+
+  // Button text
+  const btnText = document.getElementById('btn-text');
+  const btnSvg  = document.querySelector('#main-btn svg');
+  if (screenId === 0) {
+    btnText.textContent = 'Get started — it\'s free';
+    btnSvg.style.display = '';
+    termsNote.style.display = 'none';
+  } else if (screenId === 11) {
+    btnText.textContent = 'Looks good — continue';
+    btnSvg.style.display = '';
+    termsNote.style.display = 'none';
+  } else if (screenId === 12) {
+    btnText.textContent = 'Create my account';
+    btnSvg.style.display = '';
+    termsNote.style.display = 'block';
+  } else if (screenId === 13) {
+    btnText.textContent = 'Start 7-day free trial';
+    btnSvg.style.display = 'none';
+    termsNote.style.display = 'block';
+  } else if (screenId === 10) {
+    document.getElementById('main-btn').style.display = 'none';
+    return;
+  } else {
+    btnText.textContent = 'Continue';
+    btnSvg.style.display = '';
+    termsNote.style.display = 'none';
+  }
+  document.getElementById('main-btn').style.display = '';
+
+  // Auto-focus inputs
+  setTimeout(() => {
+    const inputs = { 3: 'name-input', 4: 'age-input', 6: 'weight-input', 7: 'height-input', 8: 'target-input', 12: 'phone-input' };
+    if (inputs[screenId]) {
+      const el = document.getElementById(inputs[screenId]);
+      if (el) el.focus();
+    }
+  }, 380);
+
+  // Screen 8 (target weight): update labels based on units
+  if (screenId === 8) {
+    const isImp = data.units === 'imperial';
+    document.getElementById('target-unit').textContent = isImp ? 'lbs' : 'kg';
+    document.getElementById('target-sub').textContent = `Your ${data.goal === 'lose' ? 'goal' : 'target'} weight in ${isImp ? 'lbs' : 'kg'}.`;
+  }
+
+  // Screen 6 (weight) + 7 (height): update units
+  if (screenId === 6) {
+    const isImp = data.units === 'imperial';
+    document.getElementById('weight-unit').textContent = isImp ? 'lbs' : 'kg';
+    document.getElementById('weight-input').placeholder = isImp ? '165' : '75';
+  }
+  if (screenId === 7) {
+    const isImp = data.units === 'imperial';
+    document.getElementById('height-unit').textContent = isImp ? 'in' : 'cm';
+    document.getElementById('height-sub').textContent = isImp ? 'Enter total inches (e.g. 5\'10" = 70).' : 'Enter your height in cm.';
+    document.getElementById('height-input').placeholder = isImp ? '70' : '175';
+  }
+}
+
+function goBack() {
+  const screens = getScreenFlow();
+  const idx = screens.indexOf(currentScreen);
+  if (idx > 0) {
+    currentScreen = screens[idx - 1];
+    showScreen(screens.indexOf(currentScreen));
+  }
+}
+
+// ── Input handlers ────────────────────────────────────────────────────────────
+function selectCard(field, value, el) {
+  data[field] = value;
+  const parent = el.closest('.cards-grid');
+  parent.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  // Auto-advance after short delay
+  setTimeout(() => handleNext(), 280);
+}
+
+function onTextChange(field, value) { data[field] = value.trim(); }
+function onNumberChange(field, value) { data[field] = value ? parseFloat(value) : null; }
+
+function selectPlan(plan) {
+  data.plan = plan;
+  data.priceId = PRICE_IDS[plan];
+  document.getElementById('plan-yearly').classList.toggle('selected', plan === 'yearly');
+  document.getElementById('plan-monthly').classList.toggle('selected', plan === 'monthly');
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
+function validate(screenId) {
+  const hideAll = () => {
+    document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+  };
+  hideAll();
+
+  function err(id, msg) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.classList.add('show'); }
+    return false;
+  }
+
+  switch(screenId) {
+    case 1: return data.goal ? true : err('', '');
+    case 2: return data.gender ? true : err('', '');
+    case 3: return data.name.length >= 2 ? true : err('name-error', 'Please enter your first name.');
+    case 4:
+      const age = parseInt(data.age);
+      return (age >= 16 && age <= 100) ? true : err('age-error', 'Please enter a valid age (16–100).');
+    case 5: return data.units ? true : err('', '');
+    case 6:
+      const w = parseFloat(data.weight);
+      const minW = data.units === 'imperial' ? 50 : 25;
+      const maxW = data.units === 'imperial' ? 700 : 320;
+      return (w >= minW && w <= maxW) ? true : err('weight-error', 'Please enter a valid weight.');
+    case 7:
+      const h = parseFloat(data.height);
+      const minH = data.units === 'imperial' ? 48 : 120;
+      const maxH = data.units === 'imperial' ? 96 : 250;
+      return (h >= minH && h <= maxH) ? true : err('height-error', 'Please enter a valid height.');
+    case 8:
+      const t = parseFloat(data.targetWeight);
+      const minT = data.units === 'imperial' ? 50 : 25;
+      const maxT = data.units === 'imperial' ? 700 : 320;
+      return (t >= minT && t <= maxT) ? true : err('target-error', 'Please enter a valid target weight.');
+    case 9: return data.activityLevel ? true : err('', '');
+    case 12:
+      const phoneDigits = data.phone.replace(/\D/g, '');
+      const validPhone  = phoneDigits.length >= 10;
+      const validEmail  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
+      return (validPhone && validEmail) ? true : err('account-error', 'Please enter a valid phone number and email address.');
+    case 13:
+      return data.plan ? true : err('plan-error', 'Please select a plan to continue.');
+    default: return true;
+  }
+}
+
+// ── Main next handler ─────────────────────────────────────────────────────────
+async function handleNext() {
+  const screens  = getScreenFlow();
+  const flowIdx  = screens.indexOf(currentScreen);
+  const screenId = currentScreen;
+
+  if (!validate(screenId)) return;
+
+  // Special screens
+  if (screenId === 9) {
+    // After activity: run calculation animation
+    const nextIdx = flowIdx + 1;
+    currentScreen = screens[nextIdx]; // screen 10 (calculating)
+    showScreen(nextIdx);
+    runCalcAnimation();
+    return;
+  }
+
+  if (screenId === 13) {
+    // Final step: create checkout
+    await createCheckout();
+    return;
+  }
+
+  // Advance to next screen
+  const nextIdx = flowIdx + 1;
+  if (nextIdx < screens.length) {
+    currentScreen = screens[nextIdx];
+    showScreen(nextIdx);
+  }
+}
+
+// ── Calculation animation ────────────────────────────────────────────────────
+function calculatePlan() {
+  const { gender, weight, height, age, activityLevel, goal, units } = data;
+  const weightKg = units === 'imperial' ? weight * 0.453592 : weight;
+  const heightCm = units === 'imperial' ? height * 2.54 : height;
+  let bmr = gender === 'male'
+    ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
+    : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
+  const tdee = bmr * mult[activityLevel];
+  let calories = goal === 'lose' ? tdee - 500 : goal === 'gain' ? tdee + 300 : tdee;
+  calories = Math.max(Math.round(calories), 1200);
+  const protein = Math.round(weightKg * (goal === 'gain' ? 2.2 : goal === 'lose' ? 2.0 : 1.8));
+  const fat = Math.round((calories * 0.25) / 9);
+  const carbs = Math.max(Math.round((calories - protein * 4 - fat * 9) / 4), 50);
+  return { calories, protein, carbs, fat };
+}
+
+function runCalcAnimation() {
+  const steps   = ['cs-1','cs-2','cs-3','cs-4'];
+  const delays  = [300, 700, 1100, 1500];
+  steps.forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).classList.add('show');
+      setTimeout(() => document.getElementById(id).classList.add('done'), 200);
+    }, delays[i]);
+  });
+
+  setTimeout(() => {
+    const { calories, protein, carbs, fat } = calculatePlan();
+    data.calories = calories; data.protein = protein; data.carbs = carbs; data.fat = fat;
+    const screens = getScreenFlow();
+    const revIdx  = screens.indexOf(11);
+    currentScreen = 11;
+    showScreen(revIdx);
+    animateReveal(calories, protein, carbs, fat);
+  }, 2400);
+}
+
+function animateCount(el, target, duration) {
+  const start = Date.now();
+  const step  = () => {
+    const prog = Math.min((Date.now() - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - prog, 3); // cubic ease-out
+    el.textContent = Math.round(target * ease);
+    if (prog < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function animateReveal(cal, prot, carbs, fat) {
+  const goalLabels = { lose:'fat loss',gain:'muscle gain',maintain:'maintenance',recomp:'body recomp' };
+  document.getElementById('reveal-title').textContent = `${data.name}'s ${goalLabels[data.goal]} plan`;
+  document.getElementById('reveal-label').textContent = `Daily calorie target for ${goalLabels[data.goal]}`;
+
+  setTimeout(() => {
+    animateCount(document.getElementById('reveal-cal'),   cal,   800);
+    animateCount(document.getElementById('reveal-prot'),  prot,  700);
+    animateCount(document.getElementById('reveal-carbs'), carbs, 700);
+    animateCount(document.getElementById('reveal-fat'),   fat,   700);
+  }, 200);
+
+  // Projection
+  const projEl = document.getElementById('reveal-projection');
+  const projTx = document.getElementById('reveal-proj-text');
+  if (data.targetWeight && (data.goal === 'lose' || data.goal === 'gain')) {
+    const weightKg  = data.units === 'imperial' ? data.weight * 0.453592 : data.weight;
+    const targetKg  = data.units === 'imperial' ? data.targetWeight * 0.453592 : data.targetWeight;
+    const diff      = Math.abs(targetKg - weightKg);
+    const weeklyKg  = data.goal === 'lose' ? 0.5 : 0.3;
+    const weeks     = Math.round(diff / weeklyKg);
+    const goalDate  = new Date();
+    goalDate.setDate(goalDate.getDate() + weeks * 7);
+    const dateStr   = goalDate.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    projTx.innerHTML = `At this rate, you could reach <strong>${data.targetWeight}${data.units === 'imperial' ? 'lbs' : 'kg'}</strong> by <strong>${dateStr}</strong>`;
+    projEl.style.display = 'flex';
+  } else {
+    projEl.style.display = 'none';
+  }
+}
+
+// ── Checkout ──────────────────────────────────────────────────────────────────
+async function createCheckout() {
+  const btn     = document.getElementById('main-btn');
+  const btnText = document.getElementById('btn-text');
+  const btnSvg  = btn.querySelector('svg');
+  btn.disabled  = true;
+  btnText.textContent = 'Creating your trial...';
+  btnSvg.style.display = 'none';
+  const spinner = document.createElement('div');
+  spinner.className = 'spinner';
+  btn.appendChild(spinner);
+
+  const hideErr = document.getElementById('plan-error');
+  if (hideErr) hideErr.classList.remove('show');
+
+  try {
+    const payload = {
+      phone:         data.phone,
+      email:         data.email,
+      priceId:       data.priceId,
+      name:          data.name,
+      goal:          data.goal,
+      gender:        data.gender,
+      age:           data.age,
+      weight:        data.weight,
+      height:        data.height,
+      units:         data.units,
+      activityLevel: data.activityLevel,
+      targetWeight:  data.targetWeight
+    };
+
+    const res  = await fetch('/api/create-checkout', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload)
+    });
+
+    const json = await res.json();
+    if (!res.ok || !json.url) throw new Error(json.error || 'Could not create checkout session');
+
+    window.location.href = json.url;
+
+  } catch (err) {
+    btn.disabled = false;
+    btnText.textContent = 'Start 7-day free trial';
+    btnSvg.style.display = '';
+    spinner.remove();
+    const errEl = document.getElementById('plan-error');
+    errEl.textContent = `Something went wrong: ${err.message}. Please try again.`;
+    errEl.classList.add('show');
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init() {
+  const screens = getScreenFlow();
+  currentScreen = 0;
+  // Pre-select yearly plan
+  selectPlan('yearly');
+  updateUI(0, 0);
+}
+
+init();
+</script>
+</body>
+</html>
