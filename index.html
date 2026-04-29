@@ -3,25 +3,372 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-<!-- PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Calio">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#FBF7EF">
 <meta name="application-name" content="Calio">
-
-<!-- Icons -->
+<meta name="description" content="TextCalio — AI nutrition tracking by SMS. No app needed. Just text Calio what you ate.">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<title>TextCalio — AI Nutrition by SMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 
-<!-- SEO / share -->
-<meta name="description" content="Calio — AI nutrition tracking by SMS">
-
-<title>Calio by TextCalio</title>
 <style>
+/* ════════════════════════════════════════════════════════════════
+   SHARED TOKENS
+════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  /* Brand */
+  --cream:   #FBF7EF;
+  --blue:    #0096FF;
+  --blue-dk: #007ACC;
+  --black:   #111111;
+  --gray:    #6B7280;
+  --gray-lt: #E5E7EB;
+  --white:   #FFFFFF;
+  /* Dashboard compat */
+  --bg:     #ffffff;
+  --bg2:    #f5f5f7;
+  --bg3:    #e8e8ed;
+  --text:   #000000;
+  --text2:  #6e6e73;
+  --text3:  #aeaeb2;
+  --border: rgba(0,0,0,0.07);
+  --radius: 20px;
+  --r-sm:   14px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SPLASH / LOGO ANIMATION
+════════════════════════════════════════════════════════════════ */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--cream);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  animation: splashFadeOut 0.5s ease 2.0s forwards;
+  pointer-events: none;
+}
+#splash.done { display: none; }
+.splash-logo { width: 80px; height: 76px; animation: splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
+.splash-name  { font-family: 'DM Sans', sans-serif; font-size: 20px; font-weight: 700; color: var(--black); letter-spacing: -0.4px; opacity: 0; animation: splashFadeIn 0.4s ease 0.6s forwards; }
+.splash-dot-top { transform-origin: center; animation: dotWink 0.35s ease 1.1s both; }
+
+@keyframes splashPop    { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+@keyframes splashFadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes splashFadeOut { 0% { opacity:1; } 100% { opacity:0; pointer-events:none; } }
+@keyframes dotWink      { 0%,100% { transform:scaleY(1); } 40%,60% { transform:scaleY(0.05); } }
+
+/* ════════════════════════════════════════════════════════════════
+   LANDING PAGE
+════════════════════════════════════════════════════════════════ */
+#landing {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* ── Landing Nav ── */
+.l-nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(251,247,239,0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 0.5px solid rgba(0,0,0,0.07);
+  padding: 0 24px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1200px; margin: 0 auto; width: 100%;
+}
+.l-nav-outer {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(251,247,239,0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 0.5px solid rgba(0,0,0,0.07);
+}
+.l-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.l-logo-mark { width: 30px; height: 28px; }
+.l-logo-text { font-size: 17px; font-weight: 700; color: var(--black); letter-spacing: -0.3px; }
+.l-nav-links { display: flex; align-items: center; gap: 8px; }
+.l-nav-login {
+  font-size: 14px; font-weight: 500; color: var(--gray);
+  background: none; border: none; cursor: pointer;
+  padding: 8px 14px; border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.l-nav-login:hover { background: var(--gray-lt); color: var(--black); }
+.l-nav-cta {
+  font-size: 14px; font-weight: 600; color: white;
+  background: var(--blue); border: none; cursor: pointer;
+  padding: 9px 18px; border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s; text-decoration: none;
+  display: inline-flex; align-items: center;
+}
+.l-nav-cta:hover { background: var(--blue-dk); }
+
+/* ── Landing sections ── */
+.l-section { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Hero ── */
+.l-hero {
+  padding: 72px 24px 80px;
+  text-align: center;
+  max-width: 700px; margin: 0 auto;
+}
+.l-hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--blue);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  background: rgba(0,150,255,0.1); padding: 5px 12px; border-radius: 20px;
+  margin-bottom: 24px;
+}
+.l-hero-h1 {
+  font-size: clamp(36px,7vw,60px);
+  font-weight: 700; letter-spacing: -2px; line-height: 1.05;
+  color: var(--black); margin-bottom: 20px;
+}
+.l-hero-h1 em { font-style: normal; color: var(--blue); }
+.l-hero-sub {
+  font-size: clamp(16px,2.5vw,19px);
+  color: var(--gray); line-height: 1.7; margin-bottom: 36px;
+  max-width: 500px; margin-left: auto; margin-right: auto;
+}
+.l-hero-cta {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--blue); color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px; font-weight: 600; letter-spacing: -0.2px;
+  padding: 16px 32px; border-radius: 16px;
+  text-decoration: none; border: none; cursor: pointer;
+  transition: all 0.18s; margin-bottom: 20px;
+}
+.l-hero-cta:hover { background: var(--blue-dk); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,150,255,0.3); }
+.l-hero-note { font-size: 13px; color: var(--gray); }
+
+/* ── Trust strip ── */
+.l-trust {
+  display: flex; justify-content: center; gap: 32px; flex-wrap: wrap;
+  padding: 24px 24px 64px; border-bottom: 0.5px solid rgba(0,0,0,0.07);
+  max-width: 700px; margin: 0 auto;
+}
+.l-trust-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--gray); }
+.l-trust-icon { color: var(--blue); font-size: 16px; }
+
+/* ── Demo section ── */
+.l-demo {
+  padding: 80px 24px;
+  display: flex; gap: 60px; align-items: center;
+  max-width: 1100px; margin: 0 auto; flex-wrap: wrap;
+}
+.l-demo-text { flex: 1; min-width: 280px; }
+.l-demo-label { font-size: 12px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+.l-demo-h2 { font-size: clamp(26px,4vw,38px); font-weight: 700; letter-spacing: -1px; line-height: 1.15; color: var(--black); margin-bottom: 16px; }
+.l-demo-p { font-size: 15px; color: var(--gray); line-height: 1.75; margin-bottom: 24px; }
+.l-demo-steps { display: flex; flex-direction: column; gap: 14px; }
+.l-demo-step { display: flex; align-items: flex-start; gap: 12px; }
+.l-demo-step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(0,150,255,0.12); color: var(--blue);
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.l-demo-step-text { font-size: 14px; color: var(--black); line-height: 1.5; padding-top: 5px; }
+.l-demo-step-text span { color: var(--gray); }
+
+/* Phone mockup */
+.l-phone-wrap { flex-shrink: 0; display: flex; justify-content: center; }
+.l-phone {
+  width: 260px; height: 520px;
+  background: #1C1C1E;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.08);
+  position: relative;
+}
+.l-phone-notch {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  width: 90px; height: 28px;
+  background: #1C1C1E; border-radius: 20px; z-index: 2;
+}
+.l-phone-screen {
+  background: var(--cream); border-radius: 34px;
+  height: 100%; display: flex; flex-direction: column; overflow: hidden;
+}
+.l-phone-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 44px 16px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.07);
+  background: white;
+}
+.l-phone-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--blue); display: flex; align-items: center; justify-content: center;
+}
+.l-phone-avatar svg { width: 20px; height: 19px; }
+.l-phone-contact { flex: 1; }
+.l-phone-contact-name { font-size: 13px; font-weight: 600; color: var(--black); }
+.l-phone-contact-status { font-size: 11px; color: #34C759; }
+.l-phone-convo {
+  flex: 1; overflow: hidden; padding: 12px 12px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.l-msg {
+  max-width: 82%; padding: 9px 12px;
+  border-radius: 17px; font-size: 13px; line-height: 1.4;
+  white-space: pre-line; word-break: break-word;
+}
+.l-msg-user {
+  background: var(--blue); color: white;
+  align-self: flex-end; border-bottom-right-radius: 4px;
+}
+.l-msg-calio {
+  background: white; color: var(--black);
+  align-self: flex-start; border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.l-msg-typing {
+  background: white; align-self: flex-start;
+  border-radius: 17px; border-bottom-left-radius: 4px;
+  padding: 10px 14px; display: flex; gap: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.l-typing-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #C7C7CC;
+  animation: typingBounce 1.2s ease infinite;
+}
+.l-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.l-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typingBounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
+@keyframes msgIn { from { opacity:0; transform:translateY(6px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+.l-msg-anim { animation: msgIn 0.25s cubic-bezier(0.22,1,0.36,1) both; }
+
+/* ── Features ── */
+.l-features {
+  padding: 80px 24px; background: white;
+}
+.l-features-inner { max-width: 1100px; margin: 0 auto; }
+.l-features-label { font-size: 12px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+.l-features-h2 { font-size: clamp(24px,4vw,36px); font-weight: 700; letter-spacing: -1px; line-height: 1.2; margin-bottom: 48px; max-width: 500px; }
+.l-features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.l-feature-card {
+  background: var(--cream); border-radius: 20px; padding: 24px;
+}
+.l-feature-icon { font-size: 28px; margin-bottom: 14px; }
+.l-feature-title { font-size: 16px; font-weight: 600; color: var(--black); margin-bottom: 8px; }
+.l-feature-desc { font-size: 14px; color: var(--gray); line-height: 1.65; }
+
+/* ── Pricing ── */
+.l-pricing {
+  padding: 80px 24px;
+  text-align: center;
+}
+.l-pricing-inner { max-width: 800px; margin: 0 auto; }
+.l-pricing-label { font-size: 12px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+.l-pricing-h2 { font-size: clamp(24px,4vw,36px); font-weight: 700; letter-spacing: -1px; margin-bottom: 8px; }
+.l-pricing-sub { font-size: 15px; color: var(--gray); margin-bottom: 40px; }
+.l-pricing-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+@media(max-width:520px) { .l-pricing-cards { grid-template-columns: 1fr; } }
+.l-price-card {
+  background: white; border: 2px solid var(--gray-lt);
+  border-radius: 20px; padding: 28px 24px; text-align: left; cursor: pointer;
+  transition: all 0.18s; position: relative;
+  text-decoration: none; display: block;
+}
+.l-price-card:hover { border-color: var(--blue); box-shadow: 0 4px 20px rgba(0,150,255,0.12); transform: translateY(-2px); }
+.l-price-card.popular { border-color: var(--blue); background: rgba(0,150,255,0.03); }
+.l-price-badge {
+  position: absolute; top: -11px; left: 20px;
+  background: var(--blue); color: white;
+  font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px;
+}
+.l-price-name { font-size: 14px; font-weight: 500; color: var(--gray); margin-bottom: 10px; }
+.l-price-amount { font-size: 38px; font-weight: 700; color: var(--black); letter-spacing: -1.5px; line-height: 1; }
+.l-price-per { font-size: 14px; color: var(--gray); margin-bottom: 6px; }
+.l-price-savings { font-size: 13px; color: var(--blue); font-weight: 500; margin-bottom: 20px; height: 18px; }
+.l-price-trial { font-size: 13px; color: var(--gray); }
+.l-pricing-note { font-size: 13px; color: var(--gray); }
+
+/* ── FAQ ── */
+.l-faq { padding: 64px 24px; max-width: 700px; margin: 0 auto; }
+.l-faq-h2 { font-size: clamp(22px,4vw,32px); font-weight: 700; letter-spacing: -0.8px; margin-bottom: 32px; text-align: center; }
+.l-faq-item { border-bottom: 0.5px solid rgba(0,0,0,0.08); }
+.l-faq-q {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 0; font-size: 15px; font-weight: 500; color: var(--black);
+  cursor: pointer; gap: 12px; background: none; border: none;
+  width: 100%; text-align: left; font-family: 'DM Sans', sans-serif;
+}
+.l-faq-q:hover { color: var(--blue); }
+.l-faq-chevron { width: 18px; height: 18px; color: var(--gray); transition: transform 0.2s; flex-shrink: 0; }
+.l-faq-item.open .l-faq-chevron { transform: rotate(180deg); }
+.l-faq-a { font-size: 14px; color: var(--gray); line-height: 1.75; padding-bottom: 16px; display: none; }
+.l-faq-item.open .l-faq-a { display: block; }
+
+/* ── Footer ── */
+.l-footer {
+  background: var(--black); color: white;
+  padding: 48px 24px 32px;
+}
+.l-footer-inner { max-width: 1100px; margin: 0 auto; }
+.l-footer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.l-footer-tagline { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 32px; }
+.l-footer-links { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 32px; }
+.l-footer-links a { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; }
+.l-footer-links a:hover { color: white; }
+.l-footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
+
+/* ── Login modal ── */
+.l-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity:0; } to { opacity:1; } }
+.l-modal {
+  background: white; border-radius: 24px 24px 0 0;
+  padding: 32px 24px 40px; width: 100%; max-width: 480px;
+  animation: modalSlideUp 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes modalSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.l-modal-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+.l-modal-sub { font-size: 14px; color: var(--gray); margin-bottom: 24px; line-height: 1.5; }
+.l-modal-input {
+  width: 100%; font-family: 'DM Sans', sans-serif;
+  font-size: 17px; font-weight: 500; color: var(--black);
+  background: var(--cream); border: 2px solid var(--gray-lt);
+  border-radius: 12px; padding: 14px 16px; outline: none;
+  margin-bottom: 12px; transition: border-color 0.2s;
+}
+.l-modal-input:focus { border-color: var(--blue); }
+.l-modal-btn {
+  width: 100%; background: var(--blue); color: white;
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600;
+  padding: 15px; border: none; border-radius: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+.l-modal-btn:hover { background: var(--blue-dk); }
+.l-modal-success {
+  text-align: center; padding: 16px;
+  font-size: 15px; color: var(--black); line-height: 1.6;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════════════════════════ */
+#dashboard {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  max-width: 430px; margin: 0 auto; overflow-x: hidden;
+  min-height: 100dvh;
+}
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 :root {
@@ -326,10 +673,257 @@ main { padding: 20px 0 60px; }
   pointer-events: none; white-space: nowrap; z-index: 500;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════
+     SPLASH / LOGO ANIMATION
+═══════════════════════════════════════════════ -->
+<div id="splash">
+  <svg class="splash-logo" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/>
+    <circle class="splash-dot-top" cx="82" cy="32" r="7" fill="#0096FF"/>
+    <circle cx="82" cy="56" r="7" fill="#0096FF"/>
+  </svg>
+  <span class="splash-name">TextCalio</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LANDING PAGE (shown when no dashboard token)
+═══════════════════════════════════════════════ -->
+<div id="landing" style="display:none">
+
+  <!-- Nav -->
+  <div class="l-nav-outer">
+    <nav class="l-nav">
+      <a class="l-logo" href="/">
+        <svg class="l-logo-mark" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/>
+          <circle cx="82" cy="32" r="7" fill="#0096FF"/>
+          <circle cx="82" cy="56" r="7" fill="#0096FF"/>
+        </svg>
+        <span class="l-logo-text">TextCalio</span>
+      </a>
+      <div class="l-nav-links">
+        <button class="l-nav-login" onclick="showLoginModal()">Login</button>
+        <a class="l-nav-cta" href="/signup.html">Start free trial</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Hero -->
+  <div class="l-hero">
+    <div class="l-hero-badge">🤖 AI-powered nutrition</div>
+    <h1 class="l-hero-h1">Track nutrition<br><em>by text.</em></h1>
+    <p class="l-hero-sub">No app to download. Just text Calio what you ate and get instant calorie and macro tracking — like having a nutritionist in your pocket.</p>
+    <a class="l-hero-cta" href="/signup.html">
+      Start 7-day free trial
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <br>
+    <span class="l-hero-note">No credit card required for trial · Cancel anytime</span>
+  </div>
+
+  <!-- Trust strip -->
+  <div class="l-trust">
+    <div class="l-trust-item"><span class="l-trust-icon">✦</span> 7-day free trial</div>
+    <div class="l-trust-item"><span class="l-trust-icon">✦</span> No app download</div>
+    <div class="l-trust-item"><span class="l-trust-icon">✦</span> AI-powered accuracy</div>
+    <div class="l-trust-item"><span class="l-trust-icon">✦</span> Cancel anytime</div>
+  </div>
+
+  <!-- Interactive Demo -->
+  <div class="l-demo">
+    <div class="l-demo-text">
+      <p class="l-demo-label">See it in action</p>
+      <h2 class="l-demo-h2">Tracking takes one text. That's it.</h2>
+      <p class="l-demo-p">Calio understands natural language, scans nutrition labels from photos, looks up real restaurant data live, and tracks your weight trend over time.</p>
+      <div class="l-demo-steps">
+        <div class="l-demo-step">
+          <div class="l-demo-step-num">1</div>
+          <div class="l-demo-step-text">Text what you ate. <span>Calio logs it instantly with exact macros.</span></div>
+        </div>
+        <div class="l-demo-step">
+          <div class="l-demo-step-num">2</div>
+          <div class="l-demo-step-text">Send a photo. <span>Calio reads meals and nutrition labels automatically.</span></div>
+        </div>
+        <div class="l-demo-step">
+          <div class="l-demo-step-num">3</div>
+          <div class="l-demo-step-text">Get a daily summary at 9:30pm. <span>See your totals and what's left for the day.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="l-phone-wrap">
+      <div class="l-phone">
+        <div class="l-phone-notch"></div>
+        <div class="l-phone-screen">
+          <div class="l-phone-header">
+            <div class="l-phone-avatar">
+              <svg viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="white"/>
+                <circle cx="82" cy="32" r="7" fill="white"/>
+                <circle cx="82" cy="56" r="7" fill="white"/>
+              </svg>
+            </div>
+            <div class="l-phone-contact">
+              <div class="l-phone-contact-name">Calio</div>
+              <div class="l-phone-contact-status">● Active</div>
+            </div>
+          </div>
+          <div class="l-phone-convo" id="phone-convo"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="l-features">
+    <div class="l-features-inner">
+      <p class="l-features-label">Why TextCalio</p>
+      <h2 class="l-features-h2">Everything you need. Nothing you don't.</h2>
+      <div class="l-features-grid">
+        <div class="l-feature-card">
+          <div class="l-feature-icon">💬</div>
+          <div class="l-feature-title">Natural language logging</div>
+          <div class="l-feature-desc">Say "I had a chicken caesar salad for lunch" and Calio figures out the rest. No searching databases, no barcode scanning.</div>
+        </div>
+        <div class="l-feature-card">
+          <div class="l-feature-icon">🔍</div>
+          <div class="l-feature-title">Live restaurant lookup</div>
+          <div class="l-feature-desc">Calio searches restaurant websites in real time. Get accurate Starbucks, McDonald's, and Tim Hortons data — not database estimates from 2019.</div>
+        </div>
+        <div class="l-feature-card">
+          <div class="l-feature-icon">📸</div>
+          <div class="l-feature-title">Photo meal & label scanning</div>
+          <div class="l-feature-desc">Take a photo of your meal or a nutrition label. Calio reads it automatically. Labels give exact manufacturer values.</div>
+        </div>
+        <div class="l-feature-card">
+          <div class="l-feature-icon">⚖️</div>
+          <div class="l-feature-title">Weight tracking</div>
+          <div class="l-feature-desc">Text your weight anytime ("75kg"). Calio shows your trend over time so you can see if your nutrition plan is working.</div>
+        </div>
+        <div class="l-feature-card">
+          <div class="l-feature-icon">📊</div>
+          <div class="l-feature-title">Personal dashboard</div>
+          <div class="l-feature-desc">A web dashboard shows your weekly calorie chart, macro breakdown, weight trend, and full food history — no app required.</div>
+        </div>
+        <div class="l-feature-card">
+          <div class="l-feature-icon">🎯</div>
+          <div class="l-feature-title">Personalized targets</div>
+          <div class="l-feature-desc">Calio calculates your daily calorie and macro targets using the Mifflin-St Jeor formula — the same one used by registered dietitians.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div class="l-pricing">
+    <div class="l-pricing-inner">
+      <p class="l-pricing-label">Simple pricing</p>
+      <h2 class="l-pricing-h2">Start free. Stay because it works.</h2>
+      <p class="l-pricing-sub">7-day free trial on every plan. Cancel anytime — no questions asked.</p>
+      <div class="l-pricing-cards">
+        <a class="l-price-card popular" href="/signup.html">
+          <div class="l-price-badge">Most popular</div>
+          <div class="l-price-name">Annual</div>
+          <div class="l-price-amount">$5.83</div>
+          <div class="l-price-per">/month, billed $69.99/year</div>
+          <div class="l-price-savings">Save $50 vs monthly</div>
+          <div class="l-price-trial">7 days free, then $69.99/year</div>
+        </a>
+        <a class="l-price-card" href="/signup.html">
+          <div class="l-price-name">Monthly</div>
+          <div class="l-price-amount">$9.99</div>
+          <div class="l-price-per">/month</div>
+          <div class="l-price-savings">&nbsp;</div>
+          <div class="l-price-trial">7 days free, then $9.99/month</div>
+        </a>
+      </div>
+      <p class="l-pricing-note">No credit card required during trial · Secure payment via Stripe</p>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="l-faq">
+    <h2 class="l-faq-h2">Frequently asked questions</h2>
+    <div class="l-faq-item">
+      <button class="l-faq-q" onclick="toggleFaq(this)">
+        Do I need to download an app?
+        <svg class="l-faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="l-faq-a">No app, ever. TextCalio works entirely over SMS. Save Calio's number in your contacts and text like you would a friend. Your dashboard is a website that works on any phone.</div>
+    </div>
+    <div class="l-faq-item">
+      <button class="l-faq-q" onclick="toggleFaq(this)">
+        How accurate is the nutrition data?
+        <svg class="l-faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="l-faq-a">For restaurant meals, Calio searches the restaurant's actual website in real time — not a static database. For packaged food, send a photo of the nutrition label and Calio reads the exact manufacturer values. For home-cooked meals, Calio uses verified USDA data as anchors.</div>
+    </div>
+    <div class="l-faq-item">
+      <button class="l-faq-q" onclick="toggleFaq(this)">
+        What if I want to cancel?
+        <svg class="l-faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="l-faq-a">Cancel anytime at support@textcalio.com or by texting Calio. If you cancel during your trial, you won't be charged at all. After that, cancellation takes effect at the end of your billing period.</div>
+    </div>
+    <div class="l-faq-item">
+      <button class="l-faq-q" onclick="toggleFaq(this)">
+        What does Calio do with my data?
+        <svg class="l-faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="l-faq-a">Your data is only used to power Calio's tracking features. We never sell your information or use it for advertising. You can delete your entire account and all data by texting "delete account" to Calio at any time.</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="l-footer">
+    <div class="l-footer-inner">
+      <div class="l-footer-logo">
+        <svg width="26" height="25" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="white"/>
+          <circle cx="82" cy="32" r="7" fill="white"/>
+          <circle cx="82" cy="56" r="7" fill="white"/>
+        </svg>
+        <span style="font-size:16px;font-weight:700;color:white">TextCalio</span>
+      </div>
+      <p class="l-footer-tagline">Conversations that care. Wellness that lasts.</p>
+      <div class="l-footer-links">
+        <a href="/signup.html">Get started</a>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms of Service</a>
+        <a href="mailto:support@textcalio.com">Support</a>
+      </div>
+      <p class="l-footer-copy">© 2025 TextCalio Inc. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Login modal -->
+  <div id="login-modal" style="display:none" onclick="if(event.target===this)closeLoginModal()">
+    <div class="l-modal-overlay" onclick="if(event.target===this.parentElement)closeLoginModal()">
+      <div class="l-modal">
+        <div id="login-form">
+          <h2 class="l-modal-title">Access your dashboard</h2>
+          <p class="l-modal-sub">Enter your phone number and we'll text you a link to your Calio dashboard.</p>
+          <input class="l-modal-input" id="login-phone" type="tel" inputmode="tel" placeholder="+1 (647) 000-0000" autocomplete="tel">
+          <button class="l-modal-btn" onclick="submitLogin()">Send my dashboard link</button>
+        </div>
+        <div id="login-success" style="display:none" class="l-modal-success">
+          <div style="font-size:32px;margin-bottom:12px">💬</div>
+          <strong>Check your texts!</strong><br>
+          If your number is registered, you'll receive a link within 30 seconds.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     DASHBOARD (shown when ?u=TOKEN present)
+═══════════════════════════════════════════════ -->
+<div id="dashboard" style="display:none">
 <div class="safe-top"></div>
 
 <header>
@@ -389,8 +983,124 @@ main { padding: 20px 0 60px; }
 </div>
 
 <div class="toast" id="toast"></div>
+</div>
+
+<div id="toast"></div>
 
 <script>
+// ── Token check — decide which view to show ────────────────────────────────
+const TOKEN = new URLSearchParams(location.search).get('u') || '';
+
+function initView() {
+  const splash = document.getElementById('splash');
+  
+  // Only show splash once per session
+  const splashSeen = sessionStorage.getItem('splash_seen');
+  
+  if (!splashSeen) {
+    sessionStorage.setItem('splash_seen', '1');
+    // After animation completes, show the right view
+    setTimeout(() => {
+      splash.classList.add('done');
+      showView();
+    }, 2500);
+  } else {
+    splash.classList.add('done');
+    showView();
+  }
+}
+
+function showView() {
+  if (TOKEN) {
+    document.getElementById('dashboard').style.display = '';
+    document.getElementById('landing').style.display = 'none';
+    loadData();
+  } else {
+    document.getElementById('landing').style.display = '';
+    document.getElementById('dashboard').style.display = 'none';
+    startPhoneDemo();
+  }
+}
+
+initView();
+
+// ── Landing: Login modal ────────────────────────────────────────────────────
+function showLoginModal() {
+  const modal = document.getElementById('login-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('login-phone').focus(), 100);
+}
+function closeLoginModal() {
+  document.getElementById('login-modal').style.display = 'none';
+  document.getElementById('login-form').style.display = '';
+  document.getElementById('login-success').style.display = 'none';
+  document.getElementById('login-phone').value = '';
+}
+async function submitLogin() {
+  const phone = document.getElementById('login-phone').value;
+  if (phone.replace(/\D/g,'').length < 10) return;
+  try {
+    await fetch('/api/send-dashboard-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+  } catch(e) {}
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('login-success').style.display = '';
+}
+
+// ── Landing: FAQ toggles ───────────────────────────────────────────────────
+function toggleFaq(btn) {
+  const item = btn.parentElement;
+  item.classList.toggle('open');
+}
+
+// ── Landing: Phone demo ────────────────────────────────────────────────────
+const demoSteps = [
+  { from: 'user',  text: 'Just had a Big Mac meal 🍔' },
+  { from: 'calio', text: '🔍 Logged your Big Mac meal!\n920 cal · 35g P · 96g C · 44g F', typing: true },
+  { from: 'user',  text: 'Sending photo of Clif Bar 📸' },
+  { from: 'calio', text: '📋 Read your Clif Bar label!\n250 cal · 10g P · 44g C · 5g F', typing: true },
+  { from: 'user',  text: '78.5kg' },
+  { from: 'calio', text: '✓ Logged 78.5 kg\nTrend: down 1.2kg over 5 logs 📉', typing: true },
+  { from: 'user',  text: 'stats' },
+  { from: 'calio', text: "Today's total:\n1,170 cal (68% of target)\n55g P · 140g C · 49g F\n\n830 cal remaining 🎯", typing: true },
+];
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function startPhoneDemo() {
+  const convo = document.getElementById('phone-convo');
+  if (!convo) return;
+  
+  while (true) {
+    convo.innerHTML = '';
+    for (const step of demoSteps) {
+      await sleep(step.from === 'user' ? 900 : 0);
+      if (step.typing) {
+        const ty = document.createElement('div');
+        ty.className = 'l-msg-typing l-msg-anim';
+        ty.innerHTML = '<div class="l-typing-dot"></div><div class="l-typing-dot"></div><div class="l-typing-dot"></div>';
+        convo.appendChild(ty);
+        convo.scrollTop = convo.scrollHeight;
+        await sleep(1300);
+        ty.remove();
+      }
+      const b = document.createElement('div');
+      b.className = `l-msg l-msg-${step.from} l-msg-anim`;
+      b.textContent = step.text;
+      convo.appendChild(b);
+      convo.scrollTop = convo.scrollHeight;
+      await sleep(step.from === 'calio' ? 1100 : 700);
+    }
+    await sleep(3500);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DASHBOARD CODE (only runs when TOKEN present)
+// ══════════════════════════════════════════════════════════════════
 // ── State ─────────────────────────────────────────────────────────────────────
 const TOKEN      = new URLSearchParams(location.search).get('u') || '';
 let   editId     = null;
@@ -862,8 +1572,7 @@ async function loadData() {
   $('date-pill').textContent = fmtDate();
 
   if (!TOKEN) {
-    // No dashboard token — redirect to the landing/signup page
-    window.location.href = '/signup.html';
+    // No token - landing page is shown instead (handled above)
     return;
   }
 
