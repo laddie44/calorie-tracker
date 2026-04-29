@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
       setup_status:         'complete',
       setup_temp:           {},
       tracked_macros:       ['protein', 'carbs', 'fat'],
-      subscription_status:  'pending',
+      subscription_status:  'trialing', // Optimistic — webhook will confirm
       stripe_customer_id:   customerId
     };
 
