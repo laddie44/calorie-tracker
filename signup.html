@@ -204,6 +204,7 @@ html, body {
 .card:hover { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,150,255,0.12); }
 .card.selected { border-color: var(--blue); background: rgba(0,150,255,0.06); }
 .card.selected .card-check { opacity: 1; }
+.card.selected .gender-svg { opacity: 1 !important; }
 .card-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
 .card-body { flex: 1; }
 .card-name { font-size: 15px; font-weight: 600; color: var(--black); margin-bottom: 3px; }
@@ -362,11 +363,12 @@ html, body {
   margin-bottom: 24px;
 }
 .reveal-card {
-  background: var(--black);
+  background: var(--white);
+  border: 1.5px solid rgba(0,150,255,0.18);
   border-radius: 20px;
   padding: 24px;
-  color: white;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 24px rgba(0,150,255,0.08);
 }
 .reveal-main {
   display: flex; align-items: baseline; gap: 6px;
@@ -374,28 +376,46 @@ html, body {
 }
 .reveal-num {
   font-size: 52px; font-weight: 700;
-  letter-spacing: -2px; color: white; line-height: 1;
+  letter-spacing: -2px; color: var(--blue); line-height: 1;
 }
 .reveal-unit {
-  font-size: 18px; color: rgba(255,255,255,0.5);
+  font-size: 18px; color: var(--gray);
 }
 .reveal-label {
-  font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px;
+  font-size: 13px; color: var(--gray); margin-bottom: 20px;
 }
 .reveal-macros {
   display: flex; gap: 0;
-  border-top: 0.5px solid rgba(255,255,255,0.1);
+  border-top: 0.5px solid rgba(0,0,0,0.07);
   padding-top: 16px;
 }
 .reveal-macro {
   flex: 1; text-align: center;
 }
 .reveal-macro:not(:last-child) {
-  border-right: 0.5px solid rgba(255,255,255,0.1);
+  border-right: 0.5px solid rgba(0,0,0,0.07);
 }
-.r-macro-num { font-size: 20px; font-weight: 700; color: white; letter-spacing: -0.5px; }
-.r-macro-g { font-size: 12px; color: rgba(255,255,255,0.4); }
-.r-macro-lbl { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+.r-macro-num { font-size: 20px; font-weight: 700; color: var(--black); letter-spacing: -0.5px; }
+.r-macro-g { font-size: 12px; color: var(--gray); }
+.r-macro-lbl { font-size: 11px; color: var(--gray); margin-top: 3px; }
+
+/* Calculation explanation */
+.reveal-explain {
+  border: none; margin-bottom: 12px;
+  background: rgba(0,150,255,0.05); border-radius: 12px; overflow: hidden;
+}
+.reveal-explain summary {
+  padding: 11px 14px; font-size: 13px; font-weight: 500; color: var(--blue);
+  cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+}
+.reveal-explain summary::-webkit-details-marker {{ display: none; }}
+.reveal-explain-body { padding: 0 14px 14px; font-size: 13px; color: var(--gray); line-height: 1.65; }
+.reveal-edit-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; color: var(--gray); background: none; border: none;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px; margin-bottom: 20px;
+}
 
 .reveal-projection {
   background: var(--white);
@@ -476,11 +496,7 @@ html, body {
       Back
     </button>
     <div class="logo-wrap" id="nav-logo" style="display:none">
-      <svg class="logo-mark" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill="#0096FF" d="M65,28 A28,28 0 1,0 21,62 L6,78 L23,63 A28,28 0 0,0 65,56 L56,51 A17,17 0 1,1 56,34 Z"/>
-        <circle cx="76" cy="32" r="6" fill="#0096FF"/>
-        <circle cx="76" cy="52" r="6" fill="#0096FF"/>
-      </svg>
+      <svg class="logo-mark" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/><circle cx="82" cy="32" r="7" fill="#0096FF"/><circle cx="82" cy="56" r="7" fill="#0096FF"/></svg>
       <span class="logo-text">TextCalio</span>
     </div>
     <span class="step-indicator" id="step-indicator"></span>
@@ -491,11 +507,7 @@ html, body {
 
     <!-- ── SCREEN 0: Welcome ─────────────────────────────────────────────── -->
     <div class="screen active" id="screen-0">
-      <svg class="welcome-logo" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill="#0096FF" d="M65,28 A28,28 0 1,0 21,62 L6,78 L23,63 A28,28 0 0,0 65,56 L56,51 A17,17 0 1,1 56,34 Z"/>
-        <circle cx="76" cy="32" r="6" fill="#0096FF"/>
-        <circle cx="76" cy="52" r="6" fill="#0096FF"/>
-      </svg>
+      <svg class="welcome-logo" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/><circle cx="82" cy="32" r="7" fill="#0096FF"/><circle cx="82" cy="56" r="7" fill="#0096FF"/></svg>
       <p class="welcome-tagline">TextCalio — Meet Calio</p>
       <h1 class="welcome-h1">Your AI nutrition coach, <em>by text.</em></h1>
       <p class="welcome-sub">Text Calio what you eat. Get instant calories and macros — no app needed, no manual logging.</p>
@@ -545,15 +557,27 @@ html, body {
       <h2 class="q-title">What's your biological sex?</h2>
       <p class="q-sub">Used for the calorie formula — nothing else.</p>
       <div class="cards-grid two-col">
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:24px 16px;" data-value="male" onclick="selectCard('gender', 'male', this)">
-          <div class="card-icon" style="margin-bottom:8px">♂️</div>
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:28px 16px 20px;" data-value="male" onclick="selectCard('gender', 'male', this)">
+          <svg width="56" height="88" viewBox="0 0 56 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:14px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
+            <circle cx="28" cy="13" r="11" fill="#0096FF"/>
+            <rect x="24" y="22" width="8" height="7" rx="3" fill="#0096FF"/>
+            <path d="M8 32 Q28 27 48 32 L46 64 H38 L36 51 H20 L18 64 H10 Z" fill="#0096FF"/>
+            <rect x="10" y="64" width="14" height="22" rx="5" fill="#0096FF"/>
+            <rect x="32" y="64" width="14" height="22" rx="5" fill="#0096FF"/>
+          </svg>
           <div class="card-name">Male</div>
-          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-check" style="margin:10px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:24px 16px;" data-value="female" onclick="selectCard('gender', 'female', this)">
-          <div class="card-icon" style="margin-bottom:8px">♀️</div>
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:28px 16px 20px;" data-value="female" onclick="selectCard('gender', 'female', this)">
+          <svg width="50" height="88" viewBox="0 0 50 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:14px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
+            <circle cx="25" cy="13" r="11" fill="#0096FF"/>
+            <rect x="21" y="22" width="8" height="7" rx="3" fill="#0096FF"/>
+            <path d="M12 32 Q25 27 38 32 Q35 43 32 50 Q38 57 40 68 Q33 72 25 72 Q17 72 10 68 Q12 57 18 50 Q15 43 12 32 Z" fill="#0096FF"/>
+            <rect x="10" y="68" width="12" height="20" rx="5" fill="#0096FF"/>
+            <rect x="28" y="68" width="12" height="20" rx="5" fill="#0096FF"/>
+          </svg>
           <div class="card-name">Female</div>
-          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-check" style="margin:10px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
       </div>
     </div>
@@ -668,11 +692,7 @@ html, body {
     <!-- ── SCREEN 10: Calculating ─────────────────────────────────────── -->
     <div class="screen" id="screen-10">
       <div class="calc-wrap">
-        <svg class="calc-logo" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#0096FF" d="M65,28 A28,28 0 1,0 21,62 L6,78 L23,63 A28,28 0 0,0 65,56 L56,51 A17,17 0 1,1 56,34 Z"/>
-          <circle cx="76" cy="32" r="6" fill="#0096FF"/>
-          <circle cx="76" cy="52" r="6" fill="#0096FF"/>
-        </svg>
+        <svg class="calc-logo" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/><circle cx="82" cy="32" r="7" fill="#0096FF"/><circle cx="82" cy="56" r="7" fill="#0096FF"/></svg>
         <h2 class="calc-title">Building your plan...</h2>
         <p class="calc-sub">Calio is crunching your numbers</p>
         <div class="calc-steps">
@@ -729,6 +749,15 @@ html, body {
           <span>📅</span>
           <span id="reveal-proj-text">Based on your targets...</span>
         </div>
+        <details class="reveal-explain">
+          <summary>How were these numbers calculated? <span style="font-size:16px">+</span></summary>
+          <div class="reveal-explain-body">
+            Calio uses the <strong>Mifflin-St Jeor equation</strong> — the gold standard formula used by registered dietitians. It factors in your height, weight, age, and sex to calculate your basal metabolic rate, then adjusts for your activity level and goal (±500 cal for fat loss/gain). Macro splits are optimized for your specific goal.
+          </div>
+        </details>
+        <button class="reveal-edit-link" onclick="goToScreen(getScreenFlow().indexOf(7))">
+          ← Edit my details
+        </button>
       </div>
     </div>
 
@@ -964,6 +993,14 @@ function selectPlan(plan) {
   data.priceId = PRICE_IDS[plan];
   document.getElementById('plan-yearly').classList.toggle('selected', plan === 'yearly');
   document.getElementById('plan-monthly').classList.toggle('selected', plan === 'monthly');
+}
+
+function goToScreen(flowIdx) {
+  const screens = getScreenFlow();
+  if (flowIdx >= 0 && flowIdx < screens.length) {
+    currentScreen = screens[flowIdx];
+    showScreen(flowIdx);
+  }
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
