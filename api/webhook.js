@@ -189,6 +189,30 @@ function parseLogLine(reply) {
   return null;
 }
 
+// ── Strip citations and URLs from AI replies before sending as SMS ───────────
+// The web_search_preview tool injects footnotes/links even when told not to.
+// This runs on textBefore (the human-readable portion of any AI food reply).
+function stripCitations(text) {
+  return text
+    // OpenAI web search citation blocks: 【...†source...】
+    .replace(/【[^】]*】/g, '')
+    // Markdown links [text](url) — keep the visible text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    // Bare URLs
+    .replace(/https?:\/\/\S+/g, '')
+    // Parenthetical site references: (site.com), (source.com, 2024), (via site.com)
+    .replace(/\([a-zA-Z0-9.-]+\.(com|ca|org|net|io|gov|co)[^)]{0,60}\)/g, '')
+    // utm tracking params that leak through
+    .replace(/utm_\S*/g, '')
+    // Numbered footnotes [1], [2] etc.
+    .replace(/\[\d+\]/g, '')
+    // Collapse 3+ newlines to one blank line
+    .replace(/\n{3,}/g, '\n\n')
+    // Trim each line and drop empties
+    .split('\n').map(l => l.trim()).filter(l => l.length > 0).join('\n')
+    .trim();
+}
+
 // ── Onboarding (AI-driven) ────────────────────────────────────────────────────
 // Order: Name → Goal → Gender → Age → Units → Weight → Height → Activity
 
@@ -416,7 +440,7 @@ async function handlePhotoLog(phone, body, user) {
     if (log) {
       await saveFoodLog(phone, log);
       await updateStreak(phone, user);
-      const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
+      const textBefore = stripCitations(reply.slice(0, reply.indexOf('LOG:')).trim());
       const emoji      = isLabel ? '📋' : '📸';
       const confirm    = `${emoji} ${textBefore || log.description}\n${Math.round(log.calories)} cal · ${log.protein_g}g P · ${log.carbs_g}g C · ${log.fat_g}g F`;
       await saveMessage(phone, 'user',      caption ? `[photo] ${caption}` : '[photo]');
@@ -820,24 +844,25 @@ const FOOD_PROMPT_SEARCH = `You are Calio, an AI nutrition assistant by TextCali
 
 The user described food they ate. Use your web search tool to find the exact nutrition data — restaurant website, brand nutrition page, or USDA database. Use the real verified numbers you find.
 
-RESPONSE FORMAT — two lines only, nothing else:
-Line 1: Short confirmation (max 10 words, use 🔍 emoji, NO URLs, NO citations, NO source names)
-Line 2: The LOG line
+RESPONSE FORMAT — exactly two lines, nothing else:
+Line 1: "Logged: [food name] 🔍" — max 12 words, no URLs, no citations, no source names, no parentheses
+Line 2: The LOG line (must start with LOG:)
 
 LOG:{"description":"Item name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
 STRICT RULES:
 - Your entire response must be exactly 2 lines — confirmation then LOG line
-- Do NOT include URLs, links, citations, footnotes, or source names anywhere
+- Do NOT include URLs, links, citations, footnotes, source names, or parenthetical references anywhere
 - Do NOT write "According to..." or mention where you found the data
 - Do NOT add any text after the LOG line's closing }
+- Do NOT add explanation if exact nutrition is unavailable — use your best estimate and the same 2-line format
 - LOG line must start with LOG: on its own line
 - Valid JSON only — numbers, no units inside the JSON, all 4 fields required
 - Sum ALL items mentioned into ONE log line total
 - Include sides, drinks, sauces if mentioned
 
 Good example:
-Logged your Starbucks breakfast sandwich! 🔍
+Logged: Starbucks Sausage Egg Cheddar Sandwich 🔍
 LOG:{"description":"Starbucks Sausage Egg Cheddar","calories":480,"protein_g":18.0,"carbs_g":34.0,"fat_g":29.0}
 
 Bad example (never do this):
@@ -851,10 +876,13 @@ Use this verified nutrition data as ground truth:
 
 ${NUTRITION_ANCHORS}
 
-For items NOT in the table: estimate using careful nutritional knowledge. Use ~ in your reply and state what portion you assumed.
+For items NOT in the table: estimate using careful nutritional knowledge.
 
 RESPONSE FORMAT (always in this order):
-1. Short confirmation sentence
+1. One short confirmation line only — never more than one line before LOG:
+   - Single item: "Logged: [food name]!"
+   - Multiple items: "Logged: [item1] + [item2]"
+   - Estimate with assumed portion: "~Logged: [food] (assumed [portion])"
 2. LOG line on its own line
 
 LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
@@ -867,13 +895,14 @@ RULES:
 - Include sauces, drinks, condiments, oils
 - Alcohol: 7 cal/gram of ethanol
 - The LOG line saves food to the database — never skip it
+- NEVER write ingredient breakdowns, per-item lists, or paragraph explanations before the LOG line
 
 Correct example:
-Logged 2 eggs and toast!
+Logged: 2 eggs + wheat toast!
 LOG:{"description":"2 eggs + wheat toast","calories":221,"protein_g":16.0,"carbs_g":15.5,"fat_g":11.1}
 
 Correct example (estimate):
-~Logged your pasta (assumed 2 cups cooked + marinara)
+~Logged: pasta marinara (assumed 2 cups cooked)
 LOG:{"description":"Pasta marinara","calories":520,"protein_g":14.0,"carbs_g":89.0,"fat_g":9.0}`;
 
 // ── Detect if message needs a real-time web lookup ────────────────────────────
@@ -1063,9 +1092,11 @@ async function handleFoodLog(phone, message, user) {
     await updateStreak(phone, user);
 
     const tracked    = user.tracked_macros || ['protein', 'carbs', 'fat'];
-    const textBefore = reply.slice(0, reply.indexOf('LOG:')).trim();
+    const rawBefore  = reply.slice(0, reply.indexOf('LOG:')).trim();
+    const textBefore = stripCitations(rawBefore)
+      .split('\n').filter(l => l.trim()).slice(0, 2).join('\n');
     const macroParts = [
-      `${Math.round(log.calories)} cal`,
+      `~${Math.round(log.calories)} cal`,
       tracked.includes('protein') ? `${log.protein_g}g P` : null,
       tracked.includes('carbs')   ? `${log.carbs_g}g C`   : null,
       tracked.includes('fat')     ? `${log.fat_g}g F`     : null
@@ -1073,7 +1104,7 @@ async function handleFoodLog(phone, message, user) {
 
     const confirm = textBefore
       ? `${textBefore}\n${macroParts}`
-      : `✓ ${log.description}\n${macroParts}`;
+      : `Logged: ${log.description}\n${macroParts}`;
 
     await saveMessage(phone, 'assistant', confirm);
     return confirm;
