@@ -1,13 +1,13 @@
 {
   "name": "Calio",
   "short_name": "Calio",
-  "description": "AI nutrition tracking by SMS \u2014 by TextCalio",
+  "description": "AI nutrition tracking by SMS — by TextCalio",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#FBF7EF",
+  "theme_color": "#0096FF",
   "icons": [
     {
       "src": "/icons/icon-192.png",
