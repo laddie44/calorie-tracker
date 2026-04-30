@@ -313,7 +313,7 @@
 
 /* ── Footer ── */
 .l-footer {
-  background: var(--black); color: white;
+  background: #0B1F33; color: white;
   padding: 48px 24px 32px;
 }
 .l-footer-inner { max-width: 1100px; margin: 0 auto; }
@@ -426,6 +426,7 @@ header {
 .greeting  { font-size: 12px; color: var(--text2); margin-bottom: 1px; font-weight: 400; letter-spacing: 0.1px; }
 .user-name { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; }
 .header-right { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.dash-brand-mark { width: 20px; height: 20px; object-fit: contain; opacity: 0.6; flex-shrink: 0; }
 
 .date-pill {
   background: var(--bg2); border-radius: 20px;
@@ -453,7 +454,7 @@ main { padding: 20px 0 60px; }
 
 /* ── Calorie card (hero) ──────────────────────────────────────────────────── */
 .cal-card {
-  background: var(--text); border-radius: var(--radius);
+  background: #0B1F33; border-radius: var(--radius);
   padding: 22px; color: #fff; overflow: hidden; position: relative;
 }
 .cal-top { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
@@ -504,15 +505,15 @@ main { padding: 20px 0 60px; }
   min-height: 3px;
   animation: growBar 0.6s cubic-bezier(0.22,1,0.36,1) both;
 }
-.bar-fill.today { background: var(--text); }
-.bar-fill.past  { background: var(--text3); }
+.bar-fill.today { background: #0096FF; }
+.bar-fill.past  { background: #CCE8FF; }
 .bar-fill.over  { background: #ff3b30; }
 .goal-line {
   position: absolute; left: -2px; right: -2px; height: 1.5px;
   background: rgba(0,0,0,0.18); border-radius: 1px; z-index: 2;
 }
 .bar-day  { font-size: 10px; color: var(--text3); font-weight: 400; }
-.bar-day.today { color: var(--text); font-weight: 600; }
+.bar-day.today { color: #0096FF; font-weight: 600; }
 .bar-cal  { font-size: 9px; color: var(--text2); font-weight: 500; display: none; }
 
 /* ── Macro bars ───────────────────────────────────────────────────────────── */
@@ -598,7 +599,7 @@ main { padding: 20px 0 60px; }
   font-size: 15px; color: var(--text); font-family: inherit;
   transition: border-color 0.15s;
 }
-.field input:focus { outline: none; border-color: #000; background: #fff; }
+.field input:focus { outline: none; border-color: #0096FF; background: #fff; }
 .field-row  { display: flex; gap: 8px; }
 .field-row .field { flex: 1; }
 .sheet-actions { display: flex; gap: 8px; margin-top: 16px; }
@@ -609,7 +610,7 @@ main { padding: 20px 0 60px; }
 }
 .sheet-btn:active { opacity: 0.7; }
 .sheet-btn.cancel { background: var(--bg2); color: var(--text); }
-.sheet-btn.save   { background: var(--text); color: #fff; }
+.sheet-btn.save   { background: #0096FF; color: #fff; }
 
 /* ── States ───────────────────────────────────────────────────────────────── */
 .skeleton {
@@ -933,6 +934,7 @@ main { padding: 20px 0 60px; }
       <div class="user-name" id="username">Calio</div>
     </div>
     <div class="header-right">
+      <img src="/icons/textcalio-icon.png" alt="TextCalio" class="dash-brand-mark">
       <div class="date-pill" id="date-pill">Today</div>
       <button class="refresh-btn" id="refresh-btn" onclick="loadData()" aria-label="Refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1377,9 +1379,9 @@ function render(data) {
 
   // ── Macro bars ──────────────────────────────────────────────────────────
   const macroDefs = [
-    { key:'protein', label:'Protein', val:tot.prot, goal:user.dailyProteinTarget, color:'#000' },
-    { key:'carbs',   label:'Carbs',   val:tot.carb, goal:user.dailyCarbTarget,    color:'#555' },
-    { key:'fat',     label:'Fat',     val:tot.fat,  goal:user.dailyFatTarget,     color:'#aaa' }
+    { key:'protein', label:'Protein', val:tot.prot, goal:user.dailyProteinTarget, color:'#0096FF' },
+    { key:'carbs',   label:'Carbs',   val:tot.carb, goal:user.dailyCarbTarget,    color:'#66C0FF' },
+    { key:'fat',     label:'Fat',     val:tot.fat,  goal:user.dailyFatTarget,     color:'#B3DEFF' }
   ].filter(m => tracked.includes(m.key));
 
   const macroSection = macroDefs.length > 0 ? `
