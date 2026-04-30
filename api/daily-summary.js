@@ -79,7 +79,26 @@ module.exports = async (req, res) => {
         ].filter(Boolean).join(' · ');
         const macroLine = macroParts ? `\n${macroParts}` : '';
 
-        const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)${macroLine}\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}\n\ntextcalio.com?u=${user.dashboard_token}`;
+        let dashToken = user.dashboard_token;
+        if (!dashToken) {
+          try {
+            const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+            let newToken;
+            for (let i = 0; i < 10; i++) {
+              const t = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+              const { data: taken } = await supabase.from('users').select('phone').eq('dashboard_token', t).maybeSingle();
+              if (!taken) { newToken = t; break; }
+            }
+            if (newToken) {
+              await supabase.from('users').update({ dashboard_token: newToken }).eq('phone', user.phone);
+              dashToken = newToken;
+            }
+          } catch (tokenErr) {
+            console.error(`Failed to generate token for ${user.phone}:`, tokenErr.message);
+          }
+        }
+        const dashLine = dashToken ? `\n\ntextcalio.com?u=${dashToken}` : '';
+        const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)${macroLine}\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}${dashLine}`;
 
         await client.messages.create({ body: msg, from: FROM_NUMBER, to: user.phone });
         sent++;

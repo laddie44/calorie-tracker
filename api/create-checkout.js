@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
 
     // Upsert pending user in Supabase so webhook can find them
     const { data: existingUser } = await supabase
-      .from('users').select('phone').eq('phone', normalized).maybeSingle();
+      .from('users').select('phone, dashboard_token').eq('phone', normalized).maybeSingle();
 
     const userData = {
       phone:                normalized,
@@ -85,7 +85,18 @@ module.exports = async (req, res) => {
     };
 
     if (existingUser) {
-      await supabase.from('users').update(userData).eq('phone', normalized);
+      const updateData = { ...userData };
+      if (!existingUser.dashboard_token) {
+        const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+        let token;
+        for (let i = 0; i < 10; i++) {
+          const t = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+          const { data: taken } = await supabase.from('users').select('phone').eq('dashboard_token', t).maybeSingle();
+          if (!taken) { token = t; break; }
+        }
+        if (token) updateData.dashboard_token = token;
+      }
+      await supabase.from('users').update(updateData).eq('phone', normalized);
     } else {
       // Generate unique dashboard token
       const chars = 'abcdefghjkmnpqrstuvwxyz23456789';

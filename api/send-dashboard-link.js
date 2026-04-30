@@ -35,11 +35,32 @@ module.exports = async (req, res) => {
       .eq('phone', normalized)
       .maybeSingle();
 
-    if (user && user.dashboard_token && user.setup_status === 'complete') {
-      const name     = user.name || 'there';
-      const dashUrl  = `textcalio.com?u=${user.dashboard_token}`;
-      const msg      = `Hi ${name}! Here's your Calio dashboard link:\n${dashUrl}\n\nTap to view your nutrition data. — Calio 💙`;
-      await client.messages.create({ body: msg, from: FROM, to: normalized });
+    if (user && user.setup_status === 'complete') {
+      let token = user.dashboard_token;
+      if (!token) {
+        console.log(`send-dashboard-link: generating missing token for ${normalized}`);
+        try {
+          const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+          let newToken;
+          for (let i = 0; i < 10; i++) {
+            const t = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+            const { data: taken } = await supabase.from('users').select('phone').eq('dashboard_token', t).maybeSingle();
+            if (!taken) { newToken = t; break; }
+          }
+          if (newToken) {
+            await supabase.from('users').update({ dashboard_token: newToken }).eq('phone', normalized);
+            token = newToken;
+          }
+        } catch (tokenErr) {
+          console.error('send-dashboard-link token generation failed:', tokenErr.message);
+        }
+      }
+      if (token) {
+        const name    = user.name || 'there';
+        const dashUrl = `textcalio.com?u=${token}`;
+        const msg     = `Hi ${name}! Here's your Calio dashboard link:\n${dashUrl}\n\nTap to view your nutrition data. — Calio 💙`;
+        await client.messages.create({ body: msg, from: FROM, to: normalized });
+      }
     }
 
     // Always return success (don't reveal whether phone exists)
