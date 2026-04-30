@@ -83,7 +83,7 @@ html, body {
 .logo-wrap {
   display: flex; align-items: center; gap: 10px;
 }
-.logo-mark { width: 32px; height: 32px; }
+.logo-mark { height: 32px; width: auto; }
 .logo-text {
   font-size: 17px; font-weight: 700; color: var(--black);
   letter-spacing: -0.3px;
@@ -121,7 +121,7 @@ html, body {
 
 /* Welcome screen */
 .welcome-logo {
-  width: 72px; height: 72px; margin-bottom: 32px;
+  width: 72px; height: 72px; margin-bottom: 32px; object-fit: contain;
 }
 .welcome-tagline {
   font-size: 11px; font-weight: 600; color: var(--blue);
@@ -328,7 +328,7 @@ html, body {
   text-align: center;
   padding: 24px 0;
 }
-.calc-logo { margin: 0 auto 32px; width: 64px; height: 64px; }
+.calc-logo { margin: 0 auto 32px; width: 64px; height: 64px; object-fit: contain; }
 .calc-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
 .calc-sub { font-size: 15px; color: var(--gray); margin-bottom: 40px; }
 .calc-steps { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
@@ -496,8 +496,7 @@ html, body {
       Back
     </button>
     <div class="logo-wrap" id="nav-logo" style="display:none">
-      <svg class="logo-mark" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/><circle cx="82" cy="32" r="7" fill="#0096FF"/><circle cx="82" cy="56" r="7" fill="#0096FF"/></svg>
-      <span class="logo-text">TextCalio</span>
+      <img class="logo-mark" src="/icons/textcalio-horizontal-logo.png" alt="TextCalio">
     </div>
     <span class="step-indicator" id="step-indicator"></span>
   </div>
@@ -507,7 +506,7 @@ html, body {
 
     <!-- ── SCREEN 0: Welcome ─────────────────────────────────────────────── -->
     <div class="screen active" id="screen-0">
-      <svg class="welcome-logo" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/><circle cx="82" cy="32" r="7" fill="#0096FF"/><circle cx="82" cy="56" r="7" fill="#0096FF"/></svg>
+      <img class="welcome-logo" src="/icons/textcalio-icon.png" alt="TextCalio">
       <p class="welcome-tagline">TextCalio — Meet Calio</p>
       <h1 class="welcome-h1">Your AI nutrition coach, <em>by text.</em></h1>
       <p class="welcome-sub">Text Calio what you eat. Get instant calories and macros — no app needed, no manual logging.</p>
@@ -692,7 +691,7 @@ html, body {
     <!-- ── SCREEN 10: Calculating ─────────────────────────────────────── -->
     <div class="screen" id="screen-10">
       <div class="calc-wrap">
-        <svg class="calc-logo" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/><circle cx="82" cy="32" r="7" fill="#0096FF"/><circle cx="82" cy="56" r="7" fill="#0096FF"/></svg>
+        <img class="calc-logo" src="/icons/textcalio-icon.png" alt="TextCalio">
         <h2 class="calc-title">Building your plan...</h2>
         <p class="calc-sub">Calio is crunching your numbers</p>
         <div class="calc-steps">

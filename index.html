@@ -57,7 +57,7 @@
   pointer-events: none;
 }
 #splash.done { display: none; }
-.splash-logo { width: 80px; height: 76px; animation: splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
+.splash-logo { width: 80px; height: auto; animation: splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
 .splash-name  { font-family: 'DM Sans', sans-serif; font-size: 20px; font-weight: 700; color: var(--black); letter-spacing: -0.4px; opacity: 0; animation: splashFadeIn 0.4s ease 0.6s forwards; }
 .splash-dot-top { transform-origin: center; animation: dotWink 0.35s ease 1.1s both; }
 
@@ -94,7 +94,7 @@
   border-bottom: 0.5px solid rgba(0,0,0,0.07);
 }
 .l-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.l-logo-mark { width: 30px; height: 28px; }
+.l-logo-mark { height: 28px; width: auto; }
 .l-logo-text { font-size: 17px; font-weight: 700; color: var(--black); letter-spacing: -0.3px; }
 .l-nav-links { display: flex; align-items: center; gap: 8px; }
 .l-nav-login {
@@ -211,7 +211,7 @@
   width: 34px; height: 34px; border-radius: 50%;
   background: var(--blue); display: flex; align-items: center; justify-content: center;
 }
-.l-phone-avatar svg { width: 20px; height: 19px; }
+.l-phone-avatar svg, .l-phone-avatar img { width: 20px; height: 20px; object-fit: contain; }
 .l-phone-contact { flex: 1; }
 .l-phone-contact-name { font-size: 13px; font-weight: 600; color: var(--black); }
 .l-phone-contact-status { font-size: 11px; color: #34C759; }
@@ -318,6 +318,7 @@
 }
 .l-footer-inner { max-width: 1100px; margin: 0 auto; }
 .l-footer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.l-footer-logo-img { height: 22px; width: auto; filter: brightness(0) invert(1); }
 .l-footer-tagline { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 32px; }
 .l-footer-links { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 32px; }
 .l-footer-links a { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; }
@@ -682,11 +683,7 @@ main { padding: 20px 0 60px; }
      SPLASH / LOGO ANIMATION
 ═══════════════════════════════════════════════ -->
 <div id="splash">
-  <svg class="splash-logo" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/>
-    <circle class="splash-dot-top" cx="82" cy="32" r="7" fill="#0096FF"/>
-    <circle cx="82" cy="56" r="7" fill="#0096FF"/>
-  </svg>
+  <img class="splash-logo" src="/icons/textcalio-icon.png" alt="TextCalio">
   <span class="splash-name">TextCalio</span>
 </div>
 
@@ -699,12 +696,7 @@ main { padding: 20px 0 60px; }
   <div class="l-nav-outer">
     <nav class="l-nav">
       <a class="l-logo" href="/">
-        <svg class="l-logo-mark" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/>
-          <circle cx="82" cy="32" r="7" fill="#0096FF"/>
-          <circle cx="82" cy="56" r="7" fill="#0096FF"/>
-        </svg>
-        <span class="l-logo-text">TextCalio</span>
+        <img class="l-logo-mark" src="/icons/textcalio-horizontal-logo.png" alt="TextCalio">
       </a>
       <div class="l-nav-links">
         <button class="l-nav-login" onclick="showLoginModal()">Login</button>
@@ -761,11 +753,7 @@ main { padding: 20px 0 60px; }
         <div class="l-phone-screen">
           <div class="l-phone-header">
             <div class="l-phone-avatar">
-              <svg viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="white"/>
-                <circle cx="82" cy="32" r="7" fill="white"/>
-                <circle cx="82" cy="56" r="7" fill="white"/>
-              </svg>
+              <img src="/icons/textcalio-icon.png" alt="Calio">
             </div>
             <div class="l-phone-contact">
               <div class="l-phone-contact-name">Calio</div>
@@ -899,12 +887,7 @@ main { padding: 20px 0 60px; }
   <footer class="l-footer">
     <div class="l-footer-inner">
       <div class="l-footer-logo">
-        <svg width="26" height="25" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="white"/>
-          <circle cx="82" cy="32" r="7" fill="white"/>
-          <circle cx="82" cy="56" r="7" fill="white"/>
-        </svg>
-        <span style="font-size:16px;font-weight:700;color:white">TextCalio</span>
+        <img class="l-footer-logo-img" src="/icons/textcalio-horizontal-logo.png" alt="TextCalio">
       </div>
       <p class="l-footer-tagline">Conversations that care. Wellness that lasts.</p>
       <div class="l-footer-links">
