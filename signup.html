@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0096FF">
 <title>Get Started — TextCalio</title>
+<meta property="og:title" content="Get Started Free — TextCalio">
+<meta property="og:description" content="Start your 7-day free trial. Get personalized calorie and macro targets in 2 minutes.">
+<meta property="og:image" content="https://textcalio.com/icons/icon-512.png">
+<meta property="og:url" content="https://textcalio.com/signup">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Get Started Free — TextCalio">
+<meta name="twitter:description" content="Start your 7-day free trial. Get personalized calorie and macro targets in 2 minutes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -187,7 +195,8 @@ html, body {
   gap: 12px;
   margin-bottom: 8px;
 }
-.cards-grid.two-col { grid-template-columns: 1fr 1fr; }
+.cards-grid.two-col   { grid-template-columns: 1fr 1fr; }
+.cards-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
 .cards-grid.one-col { grid-template-columns: 1fr; }
 
 .card {
@@ -508,7 +517,7 @@ html, body {
     <div class="screen active" id="screen-0">
       <img class="welcome-logo" src="/icons/textcalio-icon.png" alt="TextCalio">
       <p class="welcome-tagline">TextCalio — Meet Calio</p>
-      <h1 class="welcome-h1">Your AI nutrition coach, <em>by text.</em></h1>
+      <h1 class="welcome-h1">Your AI nutrition tracker, <em>by text.</em></h1>
       <p class="welcome-sub">Text Calio what you eat. Get instant calories and macros — no app needed, no manual logging.</p>
       <div class="social-proof">
         <p class="proof-text" style="color:var(--gray)">Now onboarding early users.</p>
@@ -549,9 +558,9 @@ html, body {
       <p class="q-label">Step 2 of 8</p>
       <h2 class="q-title">What's your biological sex?</h2>
       <p class="q-sub">Used for the calorie formula — nothing else.</p>
-      <div class="cards-grid two-col">
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:28px 16px 20px;" data-value="male" onclick="selectCard('gender', 'male', this)">
-          <svg width="56" height="88" viewBox="0 0 56 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:14px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
+      <div class="cards-grid three-col">
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:22px 10px 16px;" data-value="male" onclick="selectCard('gender', 'male', this)">
+          <svg width="44" height="70" viewBox="0 0 56 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:12px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
             <circle cx="28" cy="13" r="11" fill="#0096FF"/>
             <rect x="24" y="22" width="8" height="7" rx="3" fill="#0096FF"/>
             <path d="M8 32 Q28 27 48 32 L46 64 H38 L36 51 H20 L18 64 H10 Z" fill="#0096FF"/>
@@ -559,10 +568,10 @@ html, body {
             <rect x="32" y="64" width="14" height="22" rx="5" fill="#0096FF"/>
           </svg>
           <div class="card-name">Male</div>
-          <div class="card-check" style="margin:10px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:28px 16px 20px;" data-value="female" onclick="selectCard('gender', 'female', this)">
-          <svg width="50" height="88" viewBox="0 0 50 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:14px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:22px 10px 16px;" data-value="female" onclick="selectCard('gender', 'female', this)">
+          <svg width="40" height="70" viewBox="0 0 50 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:12px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
             <circle cx="25" cy="13" r="11" fill="#0096FF"/>
             <rect x="21" y="22" width="8" height="7" rx="3" fill="#0096FF"/>
             <path d="M12 32 Q25 27 38 32 Q35 43 32 50 Q38 57 40 68 Q33 72 25 72 Q17 72 10 68 Q12 57 18 50 Q15 43 12 32 Z" fill="#0096FF"/>
@@ -570,7 +579,17 @@ html, body {
             <rect x="28" y="68" width="12" height="20" rx="5" fill="#0096FF"/>
           </svg>
           <div class="card-name">Female</div>
-          <div class="card-check" style="margin:10px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+        </div>
+        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:22px 10px 16px;" data-value="other" onclick="selectCard('gender', 'other', this)">
+          <svg width="40" height="70" viewBox="0 0 50 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:12px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
+            <circle cx="25" cy="13" r="11" fill="#0096FF"/>
+            <path d="M10 32 Q25 27 40 32 L38 68 H12 Z" fill="#0096FF"/>
+            <rect x="13" y="68" width="11" height="20" rx="5" fill="#0096FF"/>
+            <rect x="26" y="68" width="11" height="20" rx="5" fill="#0096FF"/>
+          </svg>
+          <div class="card-name" style="font-size:12px">Prefer not to say</div>
+          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
       </div>
     </div>
@@ -760,8 +779,7 @@ html, body {
       <h2 class="q-title" id="account-title">Create your account</h2>
       <p class="q-sub">Your dashboard and SMS access link to your phone number.</p>
       <input class="text-input" id="phone-input" type="tel" inputmode="tel" placeholder="Your mobile number" autocomplete="tel" oninput="onTextChange('phone', this.value)">
-      <input class="text-input" id="email-input" type="email" inputmode="email" placeholder="your@email.com" autocomplete="email" oninput="onTextChange('email', this.value)">
-      <div class="error-msg" id="account-error">Please enter a valid phone number and email.</div>
+      <div class="error-msg" id="account-error">Please enter a valid mobile number.</div>
     </div>
 
     <!-- ── SCREEN 13: Plan selection ──────────────────────────────────── -->
@@ -838,7 +856,7 @@ const TOTAL_QUESTIONS = 8; // screens 1-9 (excl. target for maintain/recomp)
 // Dynamic: screen 8 (target weight) may be skipped
 function getScreenFlow() {
   const skipTarget = data.goal === 'maintain' || data.goal === 'recomp';
-  return [0, 1, 2, 3, 4, 5, 6, 7, skipTarget ? null : 8, 9, 10, 11, 12, 13].filter(n => n !== null);
+  return [0, 1, 2, 4, 5, 6, 7, skipTarget ? null : 8, 9, 10, 11, 3, 12, 13].filter(n => n !== null);
 }
 
 function getQuestionScreens() {
@@ -1035,9 +1053,7 @@ function validate(screenId) {
     case 9: return data.activityLevel ? true : err('', '');
     case 12:
       const phoneDigits = data.phone.replace(/\D/g, '');
-      const validPhone  = phoneDigits.length >= 10;
-      const validEmail  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
-      return (validPhone && validEmail) ? true : err('account-error', 'Please enter a valid phone number and email address.');
+      return phoneDigits.length >= 10 ? true : err('account-error', 'Please enter a valid mobile number.');
     case 13:
       return data.plan ? true : err('plan-error', 'Please select a plan to continue.');
     default: return true;
@@ -1084,6 +1100,11 @@ function calculatePlan() {
   let bmr = gender === 'male'
     ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
     : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  if (data.gender === 'other') {
+    const bmrMale   = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+    const bmrFemale = 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+    bmr = (bmrMale + bmrFemale) / 2;
+  }
   const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
   const tdee = bmr * mult[activityLevel];
   let calories = goal === 'lose' ? tdee - 500 : goal === 'gain' ? tdee + 300 : tdee;
@@ -1128,7 +1149,7 @@ function animateCount(el, target, duration) {
 
 function animateReveal(cal, prot, carbs, fat) {
   const goalLabels = { lose:'fat loss',gain:'muscle gain',maintain:'maintenance',recomp:'body recomp' };
-  document.getElementById('reveal-title').textContent = `${data.name}'s ${goalLabels[data.goal]} plan`;
+  document.getElementById('reveal-title').textContent = `Your ${goalLabels[data.goal]} plan`;
   document.getElementById('reveal-label').textContent = `Daily calorie target for ${goalLabels[data.goal]}`;
 
   setTimeout(() => {
@@ -1214,8 +1235,9 @@ async function createCheckout() {
 function init() {
   const screens = getScreenFlow();
   currentScreen = 0;
-  // Pre-select yearly plan
   selectPlan('yearly');
+  const urlPlan = new URLSearchParams(location.search).get('plan');
+  if (urlPlan === 'monthly') selectPlan('monthly');
   updateUI(0, 0);
 }
 

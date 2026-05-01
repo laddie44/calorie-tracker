@@ -31,8 +31,8 @@ module.exports = async (req, res) => {
       targetWeight
     } = body;
 
-    // Validate required fields
-    if (!phone || !email || !priceId) {
+    // Validate required fields (email is optional — not collected in signup form)
+    if (!phone || !priceId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -48,16 +48,15 @@ module.exports = async (req, res) => {
 
     // Create or retrieve Stripe customer
     let customerId;
-    const existingCustomers = await stripe.customers.list({ email, limit: 1 });
+    const existingCustomers = email
+      ? await stripe.customers.list({ email, limit: 1 })
+      : { data: [] };
     if (existingCustomers.data.length > 0) {
       customerId = existingCustomers.data[0].id;
     } else {
-      const customer = await stripe.customers.create({
-        email,
-        name,
-        phone: normalized,
-        metadata: { phone: normalized }
-      });
+      const customerData = { name, phone: normalized, metadata: { phone: normalized } };
+      if (email) customerData.email = email;
+      const customer = await stripe.customers.create(customerData);
       customerId = customer.id;
     }
 

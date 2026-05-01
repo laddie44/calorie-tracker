@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
       }
       if (token) {
         const name    = user.name || 'there';
-        const dashUrl = `https://www.textcalio.com?u=${token}`;
+        const dashUrl = `https://www.textcalio.com/dashboard?u=${token}`;
         const msg     = `Hi ${name}! Here's your Calio dashboard link:\n${dashUrl}\n\nTap to view your nutrition data. — Calio 💙`;
         await client.messages.create({ body: msg, from: FROM, to: normalized });
       }

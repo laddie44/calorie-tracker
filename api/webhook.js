@@ -313,7 +313,7 @@ async function handleOnboarding(phone, message, isNewUser) {
       }).eq('phone', phone);
 
       const goalLabels = { lose: 'fat loss', gain: 'muscle gain', maintain: 'maintenance', recomp: 'body recomp' };
-      const dashUrl    = `https://www.textcalio.com?u=${token}`;
+      const dashUrl    = `https://www.textcalio.com/dashboard?u=${token}`;
 
       const confirm = `You're all set, ${p.name}! 🎉\n\nYour ${goalLabels[p.goal] || p.goal} targets:\n• ${macros.calories} cal/day\n• ${macros.protein}g protein\n• ${macros.carbs}g carbs\n• ${macros.fat}g fat\n\nYour dashboard:\n${dashUrl}\n\nNow just text me anything you eat and I'll log it. You can also send a photo! 📸`;
       await saveMessage(phone, 'assistant', confirm);
@@ -926,7 +926,7 @@ async function handleFoodLog(phone, message, user) {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "delete account" → remove all your data\n• "weight" → see your weight history\n• "help" → this list\n\nhttps://www.textcalio.com?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
+    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "delete account" → remove all your data\n• "weight" → see your weight history\n• "help" → this list\n\nhttps://www.textcalio.com/dashboard?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
   }
 
   if (lower === 'my targets' || lower === 'my goals' || lower === 'targets' || lower === 'my macros') {
@@ -995,7 +995,7 @@ async function handleFoodLog(phone, message, user) {
       tracked.includes('fat')     ? `${Math.round(t.f)}g F` : null
     ].filter(Boolean).join(' · ');
 
-    return `${icon} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining${macroLine ? '\n' + macroLine : ''}${streakLine}\n\nhttps://www.textcalio.com?u=${user.dashboard_token}`;
+    return `${icon} Today: ${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)\n${left} cal remaining${macroLine ? '\n' + macroLine : ''}${streakLine}\n\nhttps://www.textcalio.com/dashboard?u=${user.dashboard_token}`;
   }
 
   if (lower === 'delete last') {

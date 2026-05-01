@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
             console.error(`Failed to generate token for ${user.phone}:`, tokenErr.message);
           }
         }
-        const dashLine = dashToken ? `\n\nhttps://www.textcalio.com?u=${dashToken}` : '';
+        const dashLine = dashToken ? `\n\nhttps://www.textcalio.com/dashboard?u=${dashToken}` : '';
         const msg = `${emoji} Day summary, ${user.name}!\n\n${Math.round(t.cal)}/${user.daily_calorie_target} cal (${pct}%)${macroLine}\n${left > 0 ? `${left} cal remaining` : 'Goal hit! 💪'}${streakLine}${dashLine}`;
 
         await client.messages.create({ body: msg, from: FROM_NUMBER, to: user.phone });

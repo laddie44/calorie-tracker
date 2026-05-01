@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#FBF7EF">
+<title>Free TDEE Calculator — How Many Calories Should I Eat? | TextCalio</title>
+<meta name="description" content="Calculate your exact daily calorie needs in 30 seconds. Enter your height, weight, age, and activity level. Free calorie calculator by TextCalio.">
+<meta property="og:title" content="Free TDEE Calculator — TextCalio">
+<meta property="og:description" content="Calculate your exact daily calorie needs in 30 seconds. Free calorie and macro calculator.">
+<meta property="og:image" content="https://textcalio.com/icons/icon-512.png">
+<meta property="og:url" content="https://textcalio.com/tdee-calculator">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://textcalio.com/tdee-calculator">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cream:   #FBF7EF;
+  --blue:    #0096FF;
+  --blue-dk: #007ACC;
+  --black:   #111111;
+  --navy:    #0B1F33;
+  --gray:    #6B7280;
+  --gray-lt: #E5E7EB;
+  --white:   #FFFFFF;
+}
+
+html, body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+}
+
+.nav-outer { background: rgba(251,247,239,0.92); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(0,0,0,0.07); position: sticky; top: 0; z-index: 100; }
+.nav { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.nav-logo img { height: 28px; width: auto; }
+.nav-cta { background: var(--blue); color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 100px; text-decoration: none; transition: background 0.15s; }
+.nav-cta:hover { background: var(--blue-dk); }
+
+.hero { text-align: center; padding: 56px 24px 40px; }
+.hero-badge { display: inline-block; font-size: 12px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; background: rgba(0,150,255,0.08); padding: 5px 12px; border-radius: 100px; }
+.hero h1 { font-size: clamp(26px, 5vw, 44px); font-weight: 700; letter-spacing: -1px; line-height: 1.15; margin-bottom: 14px; }
+.hero p { font-size: 17px; color: var(--gray); line-height: 1.65; max-width: 520px; margin: 0 auto; }
+
+/* Calculator */
+.calc-wrap { max-width: 680px; margin: 0 auto; padding: 0 24px 40px; }
+
+.field-group { margin-bottom: 28px; }
+.field-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+
+/* Toggle */
+.toggle-row { display: flex; gap: 8px; background: white; border-radius: 12px; padding: 5px; border: 1px solid var(--gray-lt); width: fit-content; }
+.toggle-btn { padding: 8px 20px; border-radius: 8px; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--gray); cursor: pointer; transition: all 0.15s; }
+.toggle-btn.active { background: var(--blue); color: white; }
+
+/* Cards */
+.cards-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.sel-card { flex: 1; min-width: 120px; background: white; border: 1.5px solid var(--gray-lt); border-radius: 12px; padding: 14px 12px; text-align: center; cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+.sel-card:hover { border-color: var(--blue); }
+.sel-card.active { border-color: var(--blue); background: rgba(0,150,255,0.05); }
+.sel-card-icon { font-size: 22px; margin-bottom: 6px; }
+.sel-card-label { font-size: 13px; font-weight: 600; color: var(--black); }
+.sel-card-sub { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+/* Number input */
+.num-field { position: relative; }
+.num-field input { width: 100%; padding: 14px 60px 14px 16px; font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 500; border: 1.5px solid var(--gray-lt); border-radius: 12px; background: white; color: var(--black); outline: none; transition: border-color 0.15s; }
+.num-field input:focus { border-color: var(--blue); }
+.num-field .unit { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--gray); font-weight: 500; pointer-events: none; }
+
+/* Calculate button */
+.calc-btn { width: 100%; background: var(--blue); color: white; font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 600; padding: 17px 24px; border: none; border-radius: 14px; cursor: pointer; transition: all 0.18s; margin-top: 8px; }
+.calc-btn:hover { background: var(--blue-dk); transform: translateY(-1px); }
+.calc-btn:active { transform: translateY(0); }
+
+/* Results */
+#results { display: none; margin-top: 32px; }
+.results-card { background: var(--navy); color: white; border-radius: 20px; padding: 28px 24px; text-align: center; margin-bottom: 16px; }
+.results-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.results-cal { font-size: 64px; font-weight: 700; letter-spacing: -2px; color: var(--blue); line-height: 1; }
+.results-unit { font-size: 18px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+.results-note { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 12px; line-height: 1.5; }
+.macros-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.macro-card { background: white; border-radius: 14px; padding: 16px; text-align: center; }
+.macro-num { font-size: 28px; font-weight: 700; color: var(--blue); letter-spacing: -0.5px; }
+.macro-unit { font-size: 12px; color: var(--gray); }
+.macro-label { font-size: 13px; font-weight: 500; margin-top: 4px; }
+
+/* CTA after results */
+.after-results { background: white; border-radius: 20px; border: 1px solid var(--gray-lt); padding: 28px 24px; text-align: center; margin-bottom: 24px; }
+.after-results h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 8px; }
+.after-results p { font-size: 14px; color: var(--gray); line-height: 1.6; margin-bottom: 20px; }
+.cta-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--blue); color: white; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; padding: 14px 24px; border-radius: 100px; text-decoration: none; transition: background 0.15s; }
+.cta-btn:hover { background: var(--blue-dk); }
+
+/* SMS capture */
+.sms-capture { background: white; border-radius: 16px; border: 1px solid var(--gray-lt); padding: 22px 20px; }
+.sms-capture p { font-size: 14px; color: var(--gray); margin-bottom: 12px; line-height: 1.5; }
+.sms-row { display: flex; gap: 10px; }
+.sms-row input { flex: 1; padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; border: 1.5px solid var(--gray-lt); border-radius: 10px; outline: none; transition: border-color 0.15s; }
+.sms-row input:focus { border-color: var(--blue); }
+.sms-row button { background: var(--black); color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+.sms-row button:hover { opacity: 0.8; }
+.sms-success { font-size: 14px; color: #16a34a; font-weight: 500; text-align: center; padding: 8px 0; display: none; }
+.sms-err { font-size: 13px; color: var(--gray); text-align: center; padding: 8px 0; display: none; }
+
+/* Info section */
+.info-section { max-width: 680px; margin: 0 auto; padding: 40px 24px 64px; }
+.info-section h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 14px; }
+.info-section p { font-size: 15px; color: var(--gray); line-height: 1.75; margin-bottom: 14px; }
+
+footer { background: var(--navy); padding: 40px 24px; text-align: center; }
+.footer-inner { max-width: 900px; margin: 0 auto; }
+.footer-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+.footer-links a { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; }
+.footer-links a:hover { color: white; }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
+</style>
+</head>
+<body>
+
+<div class="nav-outer">
+  <nav class="nav">
+    <a class="nav-logo" href="/"><img src="/icons/textcalio-horizontal-logo.png" alt="TextCalio"></a>
+    <a class="nav-cta" href="/signup.html">Start free trial</a>
+  </nav>
+</div>
+
+<div class="hero">
+  <div class="hero-badge">Free Calculator</div>
+  <h1>How many calories<br>should you eat per day?</h1>
+  <p>Calculate your TDEE and personalized macro targets in 30 seconds using the Mifflin-St Jeor equation — the same formula used by registered dietitians.</p>
+</div>
+
+<div class="calc-wrap">
+
+  <!-- Goal -->
+  <div class="field-group">
+    <label>What's your goal?</label>
+    <div class="cards-row">
+      <div class="sel-card" data-field="goal" data-value="lose" onclick="select('goal','lose',this)">
+        <div class="sel-card-icon">🔥</div>
+        <div class="sel-card-label">Lose fat</div>
+      </div>
+      <div class="sel-card" data-field="goal" data-value="gain" onclick="select('goal','gain',this)">
+        <div class="sel-card-icon">💪</div>
+        <div class="sel-card-label">Build muscle</div>
+      </div>
+      <div class="sel-card" data-field="goal" data-value="maintain" onclick="select('goal','maintain',this)">
+        <div class="sel-card-icon">⚖️</div>
+        <div class="sel-card-label">Maintain</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender -->
+  <div class="field-group">
+    <label>Biological sex</label>
+    <div class="cards-row">
+      <div class="sel-card" data-field="gender" data-value="male" onclick="select('gender','male',this)">
+        <div class="sel-card-label">Male</div>
+      </div>
+      <div class="sel-card" data-field="gender" data-value="female" onclick="select('gender','female',this)">
+        <div class="sel-card-label">Female</div>
+      </div>
+      <div class="sel-card" data-field="gender" data-value="other" onclick="select('gender','other',this)">
+        <div class="sel-card-label">Prefer not to say</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Units -->
+  <div class="field-group">
+    <label>Units</label>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="btn-metric" onclick="setUnits('metric')">Metric (kg, cm)</button>
+      <button class="toggle-btn" id="btn-imperial" onclick="setUnits('imperial')">Imperial (lbs, in)</button>
+    </div>
+  </div>
+
+  <!-- Age -->
+  <div class="field-group">
+    <label>Age</label>
+    <div class="num-field">
+      <input type="number" id="age" inputmode="numeric" placeholder="28" min="16" max="100">
+      <span class="unit">yrs</span>
+    </div>
+  </div>
+
+  <!-- Weight -->
+  <div class="field-group">
+    <label>Current weight</label>
+    <div class="num-field">
+      <input type="number" id="weight" inputmode="decimal" placeholder="75">
+      <span class="unit" id="weight-unit">kg</span>
+    </div>
+  </div>
+
+  <!-- Height -->
+  <div class="field-group">
+    <label id="height-label">Height</label>
+    <div class="num-field">
+      <input type="number" id="height" inputmode="decimal" placeholder="175">
+      <span class="unit" id="height-unit">cm</span>
+    </div>
+  </div>
+
+  <!-- Activity -->
+  <div class="field-group">
+    <label>Activity level</label>
+    <div class="cards-row" style="flex-direction:column;gap:8px;">
+      <div class="sel-card" style="text-align:left;display:flex;align-items:center;gap:14px;min-width:unset;" data-field="activity" data-value="1" onclick="select('activity','1',this)">
+        <span style="font-size:22px">🖥️</span>
+        <div><div class="sel-card-label">Sedentary</div><div class="sel-card-sub">Desk job, little or no exercise</div></div>
+      </div>
+      <div class="sel-card" style="text-align:left;display:flex;align-items:center;gap:14px;min-width:unset;" data-field="activity" data-value="2" onclick="select('activity','2',this)">
+        <span style="font-size:22px">🚶</span>
+        <div><div class="sel-card-label">Lightly active</div><div class="sel-card-sub">Light exercise 1–3 days/week</div></div>
+      </div>
+      <div class="sel-card" style="text-align:left;display:flex;align-items:center;gap:14px;min-width:unset;" data-field="activity" data-value="3" onclick="select('activity','3',this)">
+        <span style="font-size:22px">🏃</span>
+        <div><div class="sel-card-label">Moderately active</div><div class="sel-card-sub">Moderate exercise 3–5 days/week</div></div>
+      </div>
+      <div class="sel-card" style="text-align:left;display:flex;align-items:center;gap:14px;min-width:unset;" data-field="activity" data-value="4" onclick="select('activity','4',this)">
+        <span style="font-size:22px">🏋️</span>
+        <div><div class="sel-card-label">Very active</div><div class="sel-card-sub">Hard exercise 6–7 days/week</div></div>
+      </div>
+    </div>
+  </div>
+
+  <p id="calc-error" style="color:#dc2626;font-size:14px;display:none;margin-bottom:12px;">Please fill in all fields before calculating.</p>
+  <button class="calc-btn" onclick="calculate()">Calculate my calories →</button>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-card">
+      <div class="results-label">Your daily calorie target</div>
+      <div class="results-cal" id="res-cal">—</div>
+      <div class="results-unit">calories / day</div>
+      <div class="results-note" id="res-note"></div>
+    </div>
+    <div class="macros-row">
+      <div class="macro-card">
+        <div class="macro-num" id="res-prot">—</div>
+        <div class="macro-unit">grams</div>
+        <div class="macro-label">Protein</div>
+      </div>
+      <div class="macro-card">
+        <div class="macro-num" id="res-carbs">—</div>
+        <div class="macro-unit">grams</div>
+        <div class="macro-label">Carbs</div>
+      </div>
+      <div class="macro-card">
+        <div class="macro-num" id="res-fat">—</div>
+        <div class="macro-unit">grams</div>
+        <div class="macro-label">Fat</div>
+      </div>
+    </div>
+
+    <div class="after-results">
+      <h3>Want Calio to track these for you automatically — by text?</h3>
+      <p>TextCalio uses these exact targets. Text what you ate each day and Calio logs your calories and macros in seconds. No app needed.</p>
+      <a class="cta-btn" id="cta-link" href="/signup.html">
+        Start free 7-day trial →
+      </a>
+    </div>
+
+    <div class="sms-capture">
+      <p><strong>Want Calio to text you your targets right now?</strong> Enter your number and we'll send them over.</p>
+      <div class="sms-row">
+        <input type="tel" id="sms-phone" inputmode="tel" placeholder="+1 (647) 000-0000">
+        <button onclick="sendTargets()">Send my targets</button>
+      </div>
+      <div class="sms-success" id="sms-success">Sent! Check your phone. 📱</div>
+      <div class="sms-err" id="sms-err">We'll send it after you sign up.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="info-section">
+  <h2>What is TDEE?</h2>
+  <p>TDEE stands for Total Daily Energy Expenditure — the total number of calories your body burns in a day, including exercise and daily activity. Eating at your TDEE maintains your current weight. Eating below it causes fat loss; eating above it causes weight gain.</p>
+  <h2 style="margin-top:32px;">How is this calculated?</h2>
+  <p>This calculator uses the <strong>Mifflin-St Jeor equation</strong> — the same formula used by registered dietitians and the most accurate TDEE model for the general population. It calculates your Basal Metabolic Rate (BMR) from your height, weight, age, and sex, then multiplies by an activity factor to get your full TDEE.</p>
+  <p>Macro targets (protein, carbs, fat) are set based on your goal: high protein for fat loss and muscle gain, balanced for maintenance.</p>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">
+      <svg width="24" height="22" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="white"/>
+        <circle cx="82" cy="32" r="7" fill="white"/>
+        <circle cx="82" cy="56" r="7" fill="white"/>
+      </svg>
+      <span style="font-size:16px;font-weight:700;color:white;letter-spacing:-0.3px">TextCalio</span>
+    </div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/signup.html">Get started</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+      <a href="mailto:support@textcalio.com">Support</a>
+    </div>
+    <p class="footer-copy">© 2026 TextCalio Inc. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+const state = { goal: null, gender: null, activity: null, units: 'metric' };
+
+function select(field, value, el) {
+  state[field] = value;
+  document.querySelectorAll(`[data-field="${field}"]`).forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setUnits(u) {
+  state.units = u;
+  document.getElementById('btn-metric').classList.toggle('active', u === 'metric');
+  document.getElementById('btn-imperial').classList.toggle('active', u === 'imperial');
+  document.getElementById('weight-unit').textContent = u === 'imperial' ? 'lbs' : 'kg';
+  document.getElementById('height-unit').textContent = u === 'imperial' ? 'in' : 'cm';
+  document.getElementById('weight').placeholder = u === 'imperial' ? '165' : '75';
+  document.getElementById('height').placeholder = u === 'imperial' ? '70' : '175';
+  document.getElementById('height-label').textContent = u === 'imperial' ? 'Height (total inches — e.g. 5\'10" = 70)' : 'Height';
+}
+
+function calculate() {
+  const age = parseFloat(document.getElementById('age').value);
+  const weight = parseFloat(document.getElementById('weight').value);
+  const height = parseFloat(document.getElementById('height').value);
+
+  document.getElementById('calc-error').style.display = 'none';
+  if (!state.goal || !state.gender || !state.activity || !age || !weight || !height) {
+    document.getElementById('calc-error').style.display = 'block';
+    return;
+  }
+
+  const weightKg = state.units === 'imperial' ? weight * 0.453592 : weight;
+  const heightCm = state.units === 'imperial' ? height * 2.54 : height;
+
+  let bmr;
+  if (state.gender === 'male') {
+    bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+  } else if (state.gender === 'female') {
+    bmr = 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  } else {
+    bmr = ((10 * weightKg + 6.25 * heightCm - 5 * age + 5) + (10 * weightKg + 6.25 * heightCm - 5 * age - 161)) / 2;
+  }
+
+  const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
+  const tdee = bmr * mult[state.activity];
+  let calories = state.goal === 'lose' ? tdee - 500 : state.goal === 'gain' ? tdee + 300 : tdee;
+  calories = Math.max(Math.round(calories), 1200);
+  const protein = Math.round(weightKg * (state.goal === 'gain' ? 2.2 : state.goal === 'lose' ? 2.0 : 1.8));
+  const fat = Math.round((calories * 0.25) / 9);
+  const carbs = Math.max(Math.round((calories - protein * 4 - fat * 9) / 4), 50);
+
+  document.getElementById('res-cal').textContent = calories.toLocaleString();
+  document.getElementById('res-prot').textContent = protein;
+  document.getElementById('res-carbs').textContent = carbs;
+  document.getElementById('res-fat').textContent = fat;
+
+  const notes = {
+    lose: 'At this rate, you could lose ~0.5 kg (1 lb) per week.',
+    gain: 'A moderate surplus to support muscle growth.',
+    maintain: 'This keeps your weight stable at your current activity level.'
+  };
+  document.getElementById('res-note').textContent = notes[state.goal];
+
+  const plan = state.goal === 'lose' ? 'yearly' : 'yearly';
+  document.getElementById('cta-link').href = `/signup.html?plan=${plan}`;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function sendTargets() {
+  const phone = document.getElementById('sms-phone').value;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 10) return;
+
+  const btn = document.querySelector('.sms-row button');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/send-dashboard-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    if (res.ok) {
+      document.getElementById('sms-success').style.display = 'block';
+    } else {
+      throw new Error();
+    }
+  } catch {
+    document.getElementById('sms-err').style.display = 'block';
+  } finally {
+    btn.textContent = 'Send my targets';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

@@ -3,7 +3,11 @@
     { "source": "/signup", "destination": "/signup.html" },
     { "source": "/success", "destination": "/success.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/terms", "destination": "/terms.html" }
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/myfitnesspal-alternative", "destination": "/myfitnesspal-alternative.html" },
+    { "source": "/cal-ai-alternative", "destination": "/cal-ai-alternative.html" },
+    { "source": "/tdee-calculator", "destination": "/tdee-calculator.html" }
   ],
   "functions": {
     "api/*.js": { "maxDuration": 30 }
