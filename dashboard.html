@@ -105,9 +105,9 @@ main { padding: 20px 0 60px; }
 .chart-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
 .chart-title  { font-size: 14px; font-weight: 600; }
 .chart-avg    { font-size: 12px; color: var(--text2); }
-.chart-bars   { display: flex; gap: 6px; align-items: flex-end; height: 80px; }
+.chart-bars   { display: flex; gap: 6px; align-items: flex-end; }
 .chart-col    { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-.bar-wrap     { flex: 1; width: 100%; display: flex; align-items: flex-end; position: relative; }
+.bar-wrap     { flex: 1; width: 100%; height: 64px; display: flex; align-items: flex-end; position: relative; }
 .bar-bg       { position: absolute; inset: 0; background: var(--bg3); border-radius: 5px; }
 .bar-fill     { width: 100%; border-radius: 5px; position: relative; z-index: 1; min-height: 3px; animation: growBar 0.6s cubic-bezier(0.22,1,0.36,1) both; }
 .bar-fill.today { background: #0096FF; }
@@ -149,10 +149,20 @@ main { padding: 20px 0 60px; }
 .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
 .empty-sub   { font-size: 13px; color: var(--text2); line-height: 1.5; }
 
-.sms-card { background: var(--bg2); border-radius: var(--radius); padding: 18px; display: flex; align-items: center; gap: 14px; }
-.sms-icon { font-size: 28px; flex-shrink: 0; }
-.sms-num  { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
-.sms-lbl  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+/* ── Log a meal CTA card ── */
+.log-cta-card  { background: #0B1F33; border-radius: var(--radius); padding: 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: #fff; transition: opacity 0.15s; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+.log-cta-card:active { opacity: 0.75; }
+.log-cta-icon  { font-size: 26px; flex-shrink: 0; }
+.log-cta-body  { flex: 1; }
+.log-cta-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: #fff; }
+.log-cta-sub   { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+.log-cta-arrow { font-size: 18px; color: rgba(255,255,255,0.35); flex-shrink: 0; }
+.log-cta-num   { text-align: center; font-size: 12px; color: var(--text3); margin-top: 8px; letter-spacing: 0.2px; }
+
+/* ── Weight single-entry state ── */
+.weight-single      { padding: 10px 0 4px; }
+.weight-single-date { font-size: 13px; color: var(--text2); }
+.weight-single-hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
 
 .overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0); pointer-events: none; transition: background 0.2s; display: flex; align-items: flex-end; justify-content: center; }
 .overlay.open { background: rgba(0,0,0,0.35); pointer-events: all; }
@@ -311,6 +321,12 @@ function ring(pct) {
 }
 
 function buildWeightCard(weightData, units) {
+  const useImperial = units === 'imperial';
+  const toDisplay   = kg => useImperial ? +(kg * 2.20462).toFixed(1) : +kg.toFixed(1);
+  const unitLabel   = useImperial ? 'lbs' : 'kg';
+  const fmt         = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  // ── 0 entries ───────────────────────────────────────────────────────────────
   if (!weightData || weightData.length === 0) {
     return `<div class="section fade-up d3b">
       <div class="weight-card">
@@ -322,38 +338,76 @@ function buildWeightCard(weightData, units) {
       </div>
     </div>`;
   }
-  const useImperial = units === 'imperial';
-  const toDisplay   = kg => useImperial ? +(kg * 2.20462).toFixed(1) : +kg.toFixed(1);
-  const unitLabel   = useImperial ? 'lbs' : 'kg';
-  const points  = weightData.map(w => ({ date: w.logged_date, val: toDisplay(w.weight_kg) }));
-  const vals    = points.map(p => p.val);
-  const minVal  = Math.min(...vals);
-  const maxVal  = Math.max(...vals);
-  const range   = maxVal - minVal || 1;
-  const first   = vals[0];
-  const last    = vals[vals.length - 1];
-  const diff    = +(last - first).toFixed(1);
-  const absDiff = Math.abs(diff);
+
+  const points    = weightData.map(w => ({ date: w.logged_date, val: toDisplay(w.weight_kg) }));
+  const currentW  = `${points[points.length - 1].val}${unitLabel}`;
+
+  // ── 1 entry — show first weight + prompt to weigh in again ─────────────────
+  if (points.length === 1) {
+    return `<div class="section fade-up d3b">
+      <div class="weight-card">
+        <div class="weight-header">
+          <div class="weight-title">Weight <span style="font-size:13px;font-weight:400;color:var(--text2)">${currentW}</span></div>
+          <div class="weight-delta" style="color:var(--text3)">First logged</div>
+        </div>
+        <div class="weight-single">
+          <div class="weight-single-date">Logged ${fmt(points[0].date)}</div>
+          <div class="weight-single-hint">Weigh in again to see your trend</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── 2+ entries — trend chart + delta vs previous weigh-in ──────────────────
+  const vals     = points.map(p => p.val);
+  const first    = vals[0];
+  const last     = vals[vals.length - 1];
+  const prev     = vals[vals.length - 2];
+
+  // Recent change: current vs previous entry
+  const recentDiff = +(last - prev).toFixed(1);
+  const recentAbs  = Math.abs(recentDiff);
+
+  // Overall change: first → current
+  const totalDiff  = +(last - first).toFixed(1);
+  const totalAbs   = Math.abs(totalDiff);
+
   let deltaText, deltaColor;
-  if (absDiff < 0.1) { deltaText = 'Holding steady'; deltaColor = 'var(--text2)'; }
-  else if (diff < 0) { deltaText = `↓ ${absDiff}${unitLabel} in ${points.length} logs`; deltaColor = '#27ae60'; }
-  else               { deltaText = `↑ ${absDiff}${unitLabel} in ${points.length} logs`; deltaColor = '#e74c3c'; }
+  if (recentAbs < 0.1) {
+    deltaText = 'Holding steady'; deltaColor = 'var(--text2)';
+  } else if (recentDiff < 0) {
+    deltaText = `↓ ${recentAbs}${unitLabel} since last`; deltaColor = '#27ae60';
+  } else {
+    deltaText = `↑ ${recentAbs}${unitLabel} since last`; deltaColor = 'var(--text2)';
+  }
+
+  // Bottom label: start → now with overall delta
+  let startLabel;
+  if (totalAbs < 0.1)   startLabel = `${first}${unitLabel} → ${last}${unitLabel}`;
+  else if (totalDiff < 0) startLabel = `${first}${unitLabel} → ${last}${unitLabel} · Down ${totalAbs}${unitLabel}`;
+  else                    startLabel = `${first}${unitLabel} → ${last}${unitLabel} · Up ${totalAbs}${unitLabel}`;
+
+  // SVG trend line
   const chartH = 56, dotR = 3.5;
-  const pct  = v => ((v - minVal) / range);
-  const yPos = v => chartH - dotR - (pct(v) * (chartH - dotR * 2));
-  const n = points.length;
+  const minVal = Math.min(...vals);
+  const maxVal = Math.max(...vals);
+  const range  = maxVal - minVal || 1;
+  const yPos   = v => chartH - dotR - (((v - minVal) / range) * (chartH - dotR * 2));
+  const n      = points.length;
   const dotPositions = points.map((p, i) => ({
     x: n === 1 ? 50 : (i / (n - 1)) * 100,
-    y: yPos(p.val), val: p.val, date: p.date, isLatest: i === n - 1
+    y: yPos(p.val),
+    isLatest: i === n - 1
   }));
-  const pathD = dotPositions.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)}% ${p.y.toFixed(1)}px`).join(' ');
-  const dotsHTML = dotPositions.map(p => `<circle cx="${p.x.toFixed(1)}%" cy="${p.y.toFixed(1)}px" r="${p.isLatest ? 5 : 3}" fill="${p.isLatest ? 'var(--text)' : 'var(--text3)'}" stroke="var(--bg2)" stroke-width="1.5"/>`).join('');
-  const fmt = d => { const dt = new Date(d + 'T12:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
-  const currentWeight = `${last}${unitLabel}`, startWeight = `${first}${unitLabel}`;
+  const pathD    = dotPositions.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)}% ${p.y.toFixed(1)}px`).join(' ');
+  const dotsHTML = dotPositions.map(p =>
+    `<circle cx="${p.x.toFixed(1)}%" cy="${p.y.toFixed(1)}px" r="${p.isLatest ? 5 : 3}" fill="${p.isLatest ? 'var(--text)' : 'var(--text3)'}" stroke="var(--bg2)" stroke-width="1.5"/>`
+  ).join('');
+
   return `<div class="section fade-up d3b">
     <div class="weight-card">
       <div class="weight-header">
-        <div class="weight-title">Weight <span style="font-size:13px;font-weight:400;color:var(--text2)">${currentWeight}</span></div>
+        <div class="weight-title">Weight <span style="font-size:13px;font-weight:400;color:var(--text2)">${currentW}</span></div>
         <div class="weight-delta" style="color:${deltaColor}">${deltaText}</div>
       </div>
       <div style="position:relative;height:${chartH}px;width:100%;">
@@ -364,22 +418,63 @@ function buildWeightCard(weightData, units) {
       </div>
       <div class="weight-labels">
         <span class="w-label">${fmt(points[0].date)}</span>
-        <span class="w-label">${startWeight} → ${currentWeight}</span>
-        <span class="w-label">${fmt(points[points.length-1].date)}</span>
+        <span class="w-label">${startLabel}</span>
+        <span class="w-label">${fmt(points[points.length - 1].date)}</span>
       </div>
     </div>
   </div>`;
+}
+
+// ── Food display name formatter ───────────────────────────────────────────────
+// Cleans raw food_description for display only. Does NOT modify database data.
+// Strips verbose prefixes, applies title case, shortens multi-ingredient entries.
+// Max ~32 chars to keep the log list tidy.
+function formatFoodDisplayName(desc) {
+  if (!desc) return 'Food item';
+
+  // Strip common verbal logging prefixes ("I had", "I actually had", etc.)
+  let name = desc.trim()
+    .replace(/^(I\s+(actually\s+|just\s+)?(had\s+a\s+|ate\s+a\s+|had\s+an\s+|ate\s+an\s+|had\s+|ate\s+|have\s+|ordered\s+|got\s+))/i, '')
+    .replace(/^(it was\s+|that was\s+|make that\s+|actually\s+a\s+|actually\s+an\s+|actually\s+)/i, '')
+    .replace(/^(a |an )/i, '')
+    .trim();
+
+  // Title case helper
+  const titleCase = s => s.toLowerCase().replace(/(^|[\s\-\/])\S/g, c => c.toUpperCase());
+
+  // Short and clean — just title case it
+  if (name.length <= 32) return titleCase(name);
+
+  // Long multi-ingredient description — shorten to first two parts + "& more"
+  const parts = name.split(/\s*[,+&]\s*|\s+and\s+/i).map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 3) {
+    const two = titleCase(parts.slice(0, 2).join(', '));
+    return two.length <= 26 ? two + ' & more' : titleCase(parts[0]).slice(0, 26) + ' & more';
+  }
+
+  // Truncate cleanly at 30 chars
+  return titleCase(name.slice(0, 30).trimEnd()) + '…';
 }
 
 let weeklyDataStore = [];
 
 function buildChart(weeklyData, goal) {
   weeklyDataStore = weeklyData;
-  const maxCal  = Math.max(...weeklyData.map(d => d.calories), goal, 1);
-  const avgCal  = Math.round(weeklyData.filter(d => d.calories > 0).reduce((s, d) => s + d.calories, 0) / Math.max(weeklyData.filter(d => d.calories > 0).length, 1));
-  const goalPct = (goal / maxCal) * 100;
+  // CHART_H must match .bar-wrap height in CSS (64px).
+  // Using px instead of % because bar-wrap has a fixed height —
+  // percentage heights require a defined parent height to resolve correctly.
+  const CHART_H      = 64;
+  const maxCal       = Math.max(...weeklyData.map(d => d.calories), goal, 1);
+  const daysWithData = weeklyData.filter(d => d.calories > 0);
+  const avgCal       = daysWithData.length > 0
+    ? Math.round(daysWithData.reduce((s, d) => s + d.calories, 0) / daysWithData.length)
+    : 0;
+  // Goal line position in px from bottom
+  const goalLinePx   = Math.round((goal / maxCal) * CHART_H);
+
   const cols = weeklyData.map((d, i) => {
-    const pct    = (d.calories / maxCal) * 100;
+    // Bar height in px — min 4px so logged days are always visible
+    const px     = d.calories > 0 ? Math.max(Math.round((d.calories / maxCal) * CHART_H), 4) : 0;
     const isOver = d.calories > goal * 1.05;
     const cls    = d.isToday ? 'today' : isOver ? 'over' : 'past';
     const delay  = `animation-delay:${i * 0.06}s`;
@@ -390,13 +485,15 @@ function buildChart(weeklyData, goal) {
     return `<div class="chart-col">
       <div class="bar-wrap" ${tap} style="${cursor}">
         <div class="bar-bg"></div>
-        <div class="goal-line" style="bottom:${goalPct}%"></div>
-        <div class="bar-fill ${cls}" style="height:${Math.max(pct,0)}%;${delay}"></div>
+        <div class="goal-line" style="bottom:${goalLinePx}px"></div>
+        <div class="bar-fill ${cls}" style="height:${px}px;${delay}"></div>
       </div>
       <div class="bar-day ${d.isToday ? 'today' : ''}">${label}</div>
     </div>`;
   }).join('');
-  const avgLine = avgCal > 0 ? `<span style="font-weight:500;color:var(--text)">${avgCal.toLocaleString()}</span> cal avg` : 'No data yet';
+  const avgLine = avgCal > 0
+    ? `<span style="font-weight:500;color:var(--text)">${avgCal.toLocaleString()}</span> cal avg`
+    : 'No data yet';
   return `<div class="chart-card fade-up d3">
     <div class="chart-header"><div class="chart-title">This week</div><div class="chart-avg">${avgLine}</div></div>
     <div class="chart-bars">${cols}</div>
@@ -457,11 +554,22 @@ function render(data) {
   }
 
   const logInner = logs.length === 0
-    ? `<div class="empty"><div class="empty-emoji">🍽️</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals or send a photo to the number below.</div></div>`
-    : `<div class="log-list">${logs.map(l => `<div class="log-item" id="li-${l.id}"><div class="log-food-wrap"><div class="log-food-name">${l.food_description||'Food item'}</div><div class="log-food-macros">${macroLine(l)}</div></div><div class="log-cal-wrap"><div class="log-cal-num">${l.calories||0}</div><div class="log-cal-lbl">cal</div></div><div class="log-actions"><button class="act-btn edit" onclick='openEdit(${JSON.stringify(l)})' aria-label="Edit">${ICON_EDIT}</button><button class="act-btn trash" onclick="deleteLog('${l.id}')" aria-label="Delete">${ICON_TRASH}</button></div></div>`).join('')}</div>`;
+    ? `<div class="empty"><div class="empty-emoji">🍽️</div><div class="empty-title">Nothing logged yet</div><div class="empty-sub">Text your meals or send a photo to Calio.</div></div>`
+    : `<div class="log-list">${logs.map(l => `<div class="log-item" id="li-${l.id}"><div class="log-food-wrap"><div class="log-food-name">${formatFoodDisplayName(l.food_description)}</div><div class="log-food-macros">${macroLine(l)}</div></div><div class="log-cal-wrap"><div class="log-cal-num">${l.calories||0}</div><div class="log-cal-lbl">cal</div></div><div class="log-actions"><button class="act-btn edit" onclick='openEdit(${JSON.stringify(l)})' aria-label="Edit">${ICON_EDIT}</button><button class="act-btn trash" onclick="deleteLog('${l.id}')" aria-label="Delete">${ICON_TRASH}</button></div></div>`).join('')}</div>`;
 
   const logSection = `<div class="section fade-up d5"><div class="section-label">Today's log</div>${logInner}</div>`;
-  const cta = `<div class="section fade-up d6"><div class="sms-card"><div class="sms-icon">💬</div><div class="sms-text"><div class="sms-num">+1 (647) 424-4438</div><div class="sms-lbl">Text or send a photo — Calio logs it instantly</div></div></div></div>`;
+  // "Log a meal" CTA — tapping opens the SMS app pre-addressed to Calio's number
+  const cta = `<div class="section fade-up d6">
+    <a class="log-cta-card" href="sms:+16474244438" target="_self">
+      <div class="log-cta-icon">💬</div>
+      <div class="log-cta-body">
+        <div class="log-cta-title">Log a meal</div>
+        <div class="log-cta-sub">Text or send a photo — Calio logs it instantly</div>
+      </div>
+      <div class="log-cta-arrow">↗</div>
+    </a>
+    <div class="log-cta-num">+1 (647) 424-4438</div>
+  </div>`;
 
   $('username').textContent = user.name || 'Calio';
   $('main').innerHTML = calCard + pillRow + chartSection + weightSection + macroSection + logSection + cta;
@@ -506,7 +614,7 @@ function openHistorySheet(dayIndex) {
   function macroLine(l) {
     return [tracked.includes('protein')?`${Math.round(l.protein_g||0)}g P`:null, tracked.includes('carbs')?`${Math.round(l.carbs_g||0)}g C`:null, tracked.includes('fat')?`${Math.round(l.fat_g||0)}g F`:null].filter(Boolean).join(' · ');
   }
-  const rows = day.logs.map(l => `<div class="hist-item"><div class="hist-item-left"><div class="hist-item-name">${l.food_description||'Food item'}</div><div class="hist-item-macros">${macroLine(l)}</div></div><div class="hist-item-cal">${l.calories||0}<span> cal</span></div></div>`).join('');
+  const rows = day.logs.map(l => `<div class="hist-item"><div class="hist-item-left"><div class="hist-item-name">${formatFoodDisplayName(l.food_description)}</div><div class="hist-item-macros">${macroLine(l)}</div></div><div class="hist-item-cal">${l.calories||0}<span> cal</span></div></div>`).join('');
   $('hist-body').innerHTML = `<div class="hist-list">${rows}</div>`;
   $('hist-overlay').classList.add('open');
 }

@@ -565,6 +565,15 @@ async function handleWeightHistory(phone, user) {
   return `📊 Your weight (last ${logs.length} entries):\n\n${lines.join('\n')}\n\n${trend}`;
 }
 
+// ── Natural correction detection ─────────────────────────────────────────────
+// Returns true when the message reads like a correction to a recent food log,
+// e.g. "actually I had half an apple" or "I meant a small coffee".
+// Used in handleFoodLog to route to handleEditLast before creating a new entry.
+function isNaturalCorrection(message) {
+  const lower = message.toLowerCase().trim();
+  return /\b(actually|i meant|correction|edit that|change that(?: to)?|make that|it was actually|scratch that|not a full|not the whole|i meant to say|wait[,.]?\s*i|sorry[,.]?\s*(i had|it was)|that was wrong|wrong[,.]?\s*(it was|i had))\b/.test(lower);
+}
+
 // ── Edit Entry ────────────────────────────────────────────────────────────────
 
 const EDIT_PROMPT = `You are Calio, an AI nutrition assistant. The user wants to correct their most recent food log entry.
@@ -1038,6 +1047,28 @@ async function handleFoodLog(phone, message, user) {
   // Auto-detect weight entry (e.g. "75kg", "165 lbs", "weighed 180")
   const weightResult = await handleWeightLog(phone, message, user);
   if (weightResult !== null) return weightResult;
+
+  // ── Natural correction: update the previous log instead of creating a new one ─
+  // If the message contains correction language ("actually", "I meant", etc.)
+  // AND the user logged something within the last 15 minutes,
+  // route to handleEditLast so the previous entry is updated, not duplicated.
+  if (isNaturalCorrection(message)) {
+    const CORRECTION_WINDOW_MS = 15 * 60 * 1000; // 15-minute window
+    const { data: recentLog } = await supabase
+      .from('food_logs')
+      .select('id, food_description, created_at')
+      .eq('user_phone', phone)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (recentLog && (Date.now() - new Date(recentLog.created_at).getTime()) < CORRECTION_WINDOW_MS) {
+      // Recent log found within window — treat this as an edit, not a new log
+      console.log(`Natural correction detected for ${phone}: updating "${recentLog.food_description}"`);
+      return handleEditLast(phone, message, user);
+    }
+    // No recent log within window — fall through to normal food logging below
+  }
 
   // ── AI food logging — smart dual path ───────────────────────────────────────
 
