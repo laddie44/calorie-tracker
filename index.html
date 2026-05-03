@@ -290,6 +290,154 @@
 @keyframes msgIn { from { opacity:0; transform:translateY(6px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
 .l-msg-anim { animation: msgIn 0.28s cubic-bezier(0.22,1,0.36,1) both; }
 
+/* ════════════════════════════════════════════════════════════════
+   DASHBOARD PREVIEW SECTION
+   Shows what the dashboard looks like inside an iPhone-style frame.
+════════════════════════════════════════════════════════════════ */
+.l-dash-section {
+  padding: 80px 24px;
+  background: #FAFBFC;
+  border-top: 0.5px solid var(--gray-lt);
+  border-bottom: 0.5px solid var(--gray-lt);
+}
+.l-dash-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; gap: 64px;
+  align-items: center; flex-wrap: wrap;
+  justify-content: center;
+}
+.l-dash-text { flex: 1; min-width: 280px; max-width: 460px; }
+.l-dash-label { font-size: 12px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+.l-dash-h2 { font-size: clamp(26px,4vw,38px); font-weight: 700; letter-spacing: -1px; line-height: 1.15; color: var(--black); margin-bottom: 16px; }
+.l-dash-p { font-size: 15px; color: var(--gray); line-height: 1.75; margin-bottom: 26px; }
+.l-dash-features { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+.l-dash-feat { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--black); line-height: 1.5; }
+.l-dash-feat-icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,150,255,0.1); color: var(--blue);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  margin-top: 1px;
+}
+.l-dash-feat-icon svg { width: 11px; height: 11px; }
+
+.l-dash-phone-wrap { flex-shrink: 0; display: flex; justify-content: center; }
+
+/* Dashboard mockup that lives INSIDE .l-phone-screen */
+.l-dash-mock {
+  flex: 1;
+  background: white;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+}
+.l-dash-mock-header {
+  padding: 8px 14px 12px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 0.5px solid rgba(0,0,0,0.06);
+}
+.l-dash-mock-greeting { font-size: 9px; color: #6e6e73; line-height: 1.2; letter-spacing: 0.1px; }
+.l-dash-mock-name { font-size: 17px; font-weight: 700; letter-spacing: -0.5px; color: var(--black); line-height: 1.1; margin-top: 2px; }
+.l-dash-mock-date { font-size: 9px; color: #6e6e73; background: #f5f5f7; padding: 4px 9px; border-radius: 10px; white-space: nowrap; margin-top: 4px; }
+
+.l-dash-mock-body {
+  flex: 1;
+  padding: 12px 12px 0;
+  display: flex; flex-direction: column; gap: 10px;
+  overflow: hidden; position: relative;
+}
+/* Soft fade at the bottom — implies the dashboard continues */
+.l-dash-mock-body::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 38px;
+  background: linear-gradient(to bottom, transparent, white);
+  pointer-events: none;
+}
+
+/* Mini calorie card */
+.l-dash-cal-card {
+  background: white; border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px; padding: 12px 14px;
+  box-shadow: 0 2px 8px rgba(0,150,255,0.05);
+}
+.l-dash-cal-top { display: flex; align-items: center; gap: 12px; }
+.l-dash-ring { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.l-dash-ring svg { width: 64px; height: 64px; display: block; }
+.l-dash-ring-pct {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px; font-weight: 700; color: #0096FF;
+  line-height: 1;
+}
+.l-dash-cal-info { flex: 1; min-width: 0; }
+.l-dash-cal-label { font-size: 9px; color: #6e6e73; font-weight: 500; }
+.l-dash-cal-num { font-size: 26px; font-weight: 700; color: #111; letter-spacing: -1px; line-height: 1.1; }
+.l-dash-cal-unit { font-size: 10px; color: #6e6e73; font-weight: 400; margin-left: 2px; }
+.l-dash-cal-sub { font-size: 9px; color: #aeaeb2; margin-top: 3px; }
+
+/* Mini pills row (streak + goal) */
+.l-dash-pills { display: flex; gap: 6px; }
+.l-dash-pill {
+  flex: 1; background: #f5f5f7; border-radius: 10px;
+  padding: 9px 10px; display: flex; align-items: center; gap: 7px;
+}
+.l-dash-pill-val { font-size: 12px; font-weight: 700; line-height: 1.1; color: var(--black); }
+.l-dash-pill-lbl { font-size: 8px; color: #6e6e73; margin-top: 2px; }
+
+/* Mini weekly chart */
+.l-dash-chart {
+  background: #f5f5f7; border-radius: 12px;
+  padding: 10px 10px 8px;
+}
+.l-dash-chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.l-dash-chart-title { font-size: 10px; font-weight: 600; color: var(--black); }
+.l-dash-chart-avg   { font-size: 9px;  color: #6e6e73; }
+.l-dash-chart-avg strong { color: var(--black); font-weight: 600; }
+.l-dash-chart-bars  { display: flex; gap: 4px; align-items: flex-end; }
+.l-dash-chart-col   { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.l-dash-chart-bar-wrap {
+  width: 100%; height: 38px; background: #e8e8ed; border-radius: 3px;
+  display: flex; align-items: flex-end; overflow: hidden;
+}
+.l-dash-chart-bar { width: 100%; background: #CCE8FF; border-radius: 3px; min-height: 3px; }
+.l-dash-chart-bar.today { background: #0096FF; }
+.l-dash-chart-day { font-size: 7px; color: #aeaeb2; }
+.l-dash-chart-day.today { color: #0096FF; font-weight: 600; }
+
+/* Mini macros */
+.l-dash-macros { background: #f5f5f7; border-radius: 12px; overflow: hidden; }
+.l-dash-macro { padding: 8px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.06); }
+.l-dash-macro:last-child { border-bottom: none; }
+.l-dash-macro-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.l-dash-macro-name { font-size: 10px; font-weight: 500; color: var(--black); }
+.l-dash-macro-nums { font-size: 9px; color: #6e6e73; }
+.l-dash-macro-nums .lbl { color: #aeaeb2; }
+.l-dash-macro-bar { height: 3px; background: #e8e8ed; border-radius: 2px; overflow: hidden; }
+.l-dash-macro-bar > div { height: 100%; border-radius: 2px; }
+
+/* Mini food log list */
+.l-dash-logs { background: #f5f5f7; border-radius: 12px; overflow: hidden; }
+.l-dash-log {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.06);
+}
+.l-dash-log:last-child { border-bottom: none; }
+.l-dash-log-info { flex: 1; min-width: 0; }
+.l-dash-log-name {
+  font-size: 11px; font-weight: 500; color: var(--black);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.l-dash-log-macros { font-size: 8px; color: #aeaeb2; margin-top: 1px; }
+.l-dash-log-cal { font-size: 12px; font-weight: 600; color: var(--black); letter-spacing: -0.2px; flex-shrink: 0; }
+.l-dash-log-cal small { font-size: 8px; font-weight: 400; color: #aeaeb2; margin-left: 1px; }
+
+/* Mobile adjustments */
+@media (max-width: 760px) {
+  .l-dash-section { padding: 60px 24px 64px; }
+  .l-dash-inner { gap: 36px; }
+  .l-dash-text { text-align: center; max-width: 520px; }
+  .l-dash-features { align-items: flex-start; max-width: 320px; margin-left: auto; margin-right: auto; }
+}
+
 /* ── Features ── */
 .l-features {
   padding: 80px 24px; background: white;
@@ -528,6 +676,165 @@
           <div class="l-phone-timestamp"><strong>Today</strong> 9:41 AM</div>
           <!-- Conversation -->
           <div class="l-phone-convo" id="phone-convo"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard preview — what the dashboard looks like after meals are logged -->
+  <div class="l-dash-section">
+    <div class="l-dash-inner">
+      <div class="l-dash-text">
+        <p class="l-dash-label">Your dashboard</p>
+        <h2 class="l-dash-h2">See your day at a glance</h2>
+        <p class="l-dash-p">Calories, macros, streaks, and progress — all updated automatically as you text Calio. Open your dashboard from any device, no app required.</p>
+        <div class="l-dash-features">
+          <div class="l-dash-feat">
+            <div class="l-dash-feat-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            <span>Live calorie ring and macro progress</span>
+          </div>
+          <div class="l-dash-feat">
+            <div class="l-dash-feat-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            <span>Weekly chart with today highlighted</span>
+          </div>
+          <div class="l-dash-feat">
+            <div class="l-dash-feat-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+            <span>Edit logs and track your weight trend</span>
+          </div>
+        </div>
+        <a class="l-hero-cta" href="/signup.html">
+          Try TextCalio free
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+      <div class="l-dash-phone-wrap">
+        <div class="l-phone">
+          <div class="l-phone-notch"></div>
+          <div class="l-phone-screen">
+            <!-- iOS-style status bar (matches the SMS phone for consistency) -->
+            <div class="l-phone-statusbar">
+              <span>9:41</span>
+              <div class="l-phone-statusbar-right">
+                <svg viewBox="0 0 18 18" fill="currentColor"><rect x="0" y="13" width="3" height="5" rx="0.5"/><rect x="5" y="9" width="3" height="9" rx="0.5"/><rect x="10" y="5" width="3" height="13" rx="0.5"/><rect x="15" y="1" width="3" height="17" rx="0.5"/></svg>
+                <svg viewBox="0 0 18 14" fill="currentColor"><path d="M9 14l-2.5-3a3 3 0 015 0L9 14zM3 7.4a8.5 8.5 0 0112 0l-1.5 1.8a6 6 0 00-9 0L3 7.4zM0 4.2a13 13 0 0118 0L16.5 6a10.5 10.5 0 00-15 0L0 4.2z"/></svg>
+                <svg viewBox="0 0 24 12" fill="none"><rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="17" height="8" rx="1.2" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.6" fill="currentColor"/></svg>
+              </div>
+            </div>
+            <!-- Dashboard mockup -->
+            <div class="l-dash-mock">
+              <!-- Header (greeting + date pill) -->
+              <div class="l-dash-mock-header">
+                <div>
+                  <div class="l-dash-mock-greeting">Good afternoon</div>
+                  <div class="l-dash-mock-name">Sarah</div>
+                </div>
+                <div class="l-dash-mock-date">Wed, Mar 12</div>
+              </div>
+              <!-- Body -->
+              <div class="l-dash-mock-body">
+                <!-- Calorie card with blue ring (62% eaten) -->
+                <div class="l-dash-cal-card">
+                  <div class="l-dash-cal-top">
+                    <div class="l-dash-ring">
+                      <svg viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="32" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+                        <circle cx="40" cy="40" r="32" fill="none" stroke="#0096FF" stroke-width="6"
+                          stroke-dasharray="124.6 200.7" stroke-linecap="round"
+                          transform="rotate(-90 40 40)"/>
+                      </svg>
+                      <div class="l-dash-ring-pct">62%</div>
+                    </div>
+                    <div class="l-dash-cal-info">
+                      <div class="l-dash-cal-label">Remaining</div>
+                      <div class="l-dash-cal-num">760<span class="l-dash-cal-unit">cal</span></div>
+                      <div class="l-dash-cal-sub">1,240 eaten · 2,000 goal</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Streak + goal pills -->
+                <div class="l-dash-pills">
+                  <div class="l-dash-pill">
+                    <span style="font-size:16px">🔥</span>
+                    <div>
+                      <div class="l-dash-pill-val">12</div>
+                      <div class="l-dash-pill-lbl">day streak</div>
+                    </div>
+                  </div>
+                  <div class="l-dash-pill">
+                    <span style="font-size:16px">🎯</span>
+                    <div>
+                      <div class="l-dash-pill-val">Fat loss</div>
+                      <div class="l-dash-pill-lbl">Current goal</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Weekly chart preview -->
+                <div class="l-dash-chart">
+                  <div class="l-dash-chart-head">
+                    <span class="l-dash-chart-title">This week</span>
+                    <span class="l-dash-chart-avg"><strong>1,820</strong> cal avg</span>
+                  </div>
+                  <div class="l-dash-chart-bars">
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar" style="height:91%"></div></div><span class="l-dash-chart-day">Thu</span></div>
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar" style="height:100%"></div></div><span class="l-dash-chart-day">Fri</span></div>
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar" style="height:85%"></div></div><span class="l-dash-chart-day">Sat</span></div>
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar" style="height:96%"></div></div><span class="l-dash-chart-day">Sun</span></div>
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar" style="height:93%"></div></div><span class="l-dash-chart-day">Mon</span></div>
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar" style="height:90%"></div></div><span class="l-dash-chart-day">Tue</span></div>
+                    <div class="l-dash-chart-col"><div class="l-dash-chart-bar-wrap"><div class="l-dash-chart-bar today" style="height:62%"></div></div><span class="l-dash-chart-day today">Today</span></div>
+                  </div>
+                </div>
+                <!-- Macros (3 progress bars) -->
+                <div class="l-dash-macros">
+                  <div class="l-dash-macro">
+                    <div class="l-dash-macro-top">
+                      <span class="l-dash-macro-name">Protein</span>
+                      <span class="l-dash-macro-nums">95g <span class="lbl">/ 140g</span></span>
+                    </div>
+                    <div class="l-dash-macro-bar"><div style="width:68%;background:#0096FF"></div></div>
+                  </div>
+                  <div class="l-dash-macro">
+                    <div class="l-dash-macro-top">
+                      <span class="l-dash-macro-name">Carbs</span>
+                      <span class="l-dash-macro-nums">112g <span class="lbl">/ 180g</span></span>
+                    </div>
+                    <div class="l-dash-macro-bar"><div style="width:62%;background:#66C0FF"></div></div>
+                  </div>
+                  <div class="l-dash-macro">
+                    <div class="l-dash-macro-top">
+                      <span class="l-dash-macro-name">Fat</span>
+                      <span class="l-dash-macro-nums">38g <span class="lbl">/ 60g</span></span>
+                    </div>
+                    <div class="l-dash-macro-bar"><div style="width:63%;background:#B3DEFF"></div></div>
+                  </div>
+                </div>
+                <!-- Recent food logs (fades out at the bottom) -->
+                <div class="l-dash-logs">
+                  <div class="l-dash-log">
+                    <div class="l-dash-log-info">
+                      <div class="l-dash-log-name">Greek Yogurt &amp; Berries</div>
+                      <div class="l-dash-log-macros">18g P · 22g C · 4g F</div>
+                    </div>
+                    <div class="l-dash-log-cal">220<small>cal</small></div>
+                  </div>
+                  <div class="l-dash-log">
+                    <div class="l-dash-log-info">
+                      <div class="l-dash-log-name">Chick-fil-A Sandwich</div>
+                      <div class="l-dash-log-macros">28g P · 41g C · 18g F</div>
+                    </div>
+                    <div class="l-dash-log-cal">440<small>cal</small></div>
+                  </div>
+                  <div class="l-dash-log">
+                    <div class="l-dash-log-info">
+                      <div class="l-dash-log-name">Chicken Caesar Salad</div>
+                      <div class="l-dash-log-macros">42g P · 8g C · 24g F</div>
+                    </div>
+                    <div class="l-dash-log-cal">580<small>cal</small></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
