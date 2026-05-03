@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#FFFFFF">
 <title>Privacy Policy — TextCalio</title>
 <meta property="og:title" content="Privacy Policy — TextCalio">
 <meta property="og:description" content="How TextCalio collects, uses, and protects your personal information.">
@@ -58,25 +58,29 @@ nav {
 }
 .nav-back:hover { color: var(--text); }
 
-/* ── Hero ────────────────────────────────────────────────────────────────── */
+/* ── Hero — clean white with blue badge ────────────────────────────────── */
 .hero {
-  background: #0B1F33;
-  color: #fff;
+  background: white;
+  color: var(--text);
   padding: 56px 24px 48px;
   text-align: center;
+  border-bottom: 0.5px solid var(--border);
 }
 .hero-badge {
-  display: inline-block; font-size: 11px; font-weight: 500;
+  display: inline-block; font-size: 11px; font-weight: 600;
   letter-spacing: 0.8px; text-transform: uppercase;
-  color: rgba(255,255,255,0.5); margin-bottom: 14px;
+  color: #0096FF; background: rgba(0,150,255,0.08);
+  padding: 5px 12px; border-radius: 100px;
+  margin-bottom: 14px;
 }
 .hero h1 {
   font-size: clamp(28px, 6vw, 40px);
   font-weight: 700; letter-spacing: -1.2px; line-height: 1.1;
   margin-bottom: 14px;
+  color: var(--text);
 }
 .hero-meta {
-  font-size: 13px; color: rgba(255,255,255,0.45);
+  font-size: 13px; color: var(--text2);
 }
 
 /* ── TOC ─────────────────────────────────────────────────────────────────── */
@@ -136,12 +140,15 @@ li strong { color: var(--text); }
 .highlight p { margin-bottom: 0; font-size: 14px; }
 
 .contact-card {
-  background: #0B1F33; color: #fff; border-radius: 16px;
+  background: rgba(0,150,255,0.05);
+  border: 1px solid rgba(0,150,255,0.18);
+  color: var(--text); border-radius: 16px;
   padding: 24px; margin-top: 24px;
 }
-.contact-card h3 { color: #fff; margin-top: 0; margin-bottom: 8px; }
-.contact-card p { color: rgba(255,255,255,0.6); margin-bottom: 8px; }
-.contact-card a { color: #fff; font-weight: 500; }
+.contact-card h3 { color: var(--text); margin-top: 0; margin-bottom: 8px; }
+.contact-card p { color: var(--text2); margin-bottom: 8px; }
+.contact-card a { color: #0096FF; font-weight: 500; text-decoration: none; }
+.contact-card a:hover { text-decoration: underline; }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 footer {
@@ -156,7 +163,7 @@ footer a:hover { color: var(--text); }
 <body>
 
 <nav>
-  <a class="nav-logo" href="/"><img src="/icons/textcalio-horizontal-logo.png" alt="" style="height:28px;width:auto;"></a>
+  <a class="nav-logo" href="/"><img src="/icons/textcalio-horizontal-logo.png" alt="TextCalio" style="height:38px;width:auto;"></a>
   <a class="nav-back" href="/">← Back</a>
 </nav>
 

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#FBF7EF">
+<meta name="theme-color" content="#FFFFFF">
 <title>Free TDEE Calculator — How Many Calories Should I Eat? | TextCalio</title>
-<meta name="description" content="Calculate your exact daily calorie needs in 30 seconds. Enter your height, weight, age, and activity level. Free calorie calculator by TextCalio.">
+<meta name="description" content="Estimate your daily calorie needs in 30 seconds. Enter your height, weight, age, and activity level. Free calorie calculator by TextCalio.">
 <meta property="og:title" content="Free TDEE Calculator — TextCalio">
-<meta property="og:description" content="Calculate your exact daily calorie needs in 30 seconds. Free calorie and macro calculator.">
+<meta property="og:description" content="Estimate your daily calorie needs in 30 seconds. Free calorie and macro calculator.">
 <meta property="og:image" content="https://textcalio.com/icons/icon-512.png">
 <meta property="og:url" content="https://textcalio.com/tdee-calculator">
 <meta property="og:type" content="website">
@@ -32,14 +32,14 @@
 
 html, body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
+  background: var(--white);
   color: var(--black);
   -webkit-font-smoothing: antialiased;
 }
 
-.nav-outer { background: rgba(251,247,239,0.92); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(0,0,0,0.07); position: sticky; top: 0; z-index: 100; }
-.nav { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-.nav-logo img { height: 28px; width: auto; }
+.nav-outer { background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100; }
+.nav { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+.nav-logo img { height: 38px; width: auto; }
 .nav-cta { background: var(--blue); color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 100px; text-decoration: none; transition: background 0.15s; }
 .nav-cta:hover { background: var(--blue-dk); }
 
@@ -79,18 +79,26 @@ html, body {
 .calc-btn:hover { background: var(--blue-dk); transform: translateY(-1px); }
 .calc-btn:active { transform: translateY(0); }
 
-/* Results */
+/* Results — clean white card with blue accent */
 #results { display: none; margin-top: 32px; }
-.results-card { background: var(--navy); color: white; border-radius: 20px; padding: 28px 24px; text-align: center; margin-bottom: 16px; }
-.results-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.results-card {
+  background: white;
+  border: 1.5px solid rgba(0,150,255,0.18);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 28px rgba(0,150,255,0.08);
+}
+.results-label { font-size: 12px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
 .results-cal { font-size: 64px; font-weight: 700; letter-spacing: -2px; color: var(--blue); line-height: 1; }
-.results-unit { font-size: 18px; color: rgba(255,255,255,0.6); margin-top: 4px; }
-.results-note { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 12px; line-height: 1.5; }
+.results-unit { font-size: 16px; color: var(--gray); margin-top: 4px; }
+.results-note { font-size: 14px; color: var(--gray); margin-top: 14px; line-height: 1.55; }
 .macros-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-.macro-card { background: white; border-radius: 14px; padding: 16px; text-align: center; }
+.macro-card { background: white; border: 1px solid var(--gray-lt); border-radius: 14px; padding: 16px; text-align: center; }
 .macro-num { font-size: 28px; font-weight: 700; color: var(--blue); letter-spacing: -0.5px; }
 .macro-unit { font-size: 12px; color: var(--gray); }
-.macro-label { font-size: 13px; font-weight: 500; margin-top: 4px; }
+.macro-label { font-size: 13px; font-weight: 500; margin-top: 4px; color: var(--black); }
 
 /* CTA after results */
 .after-results { background: white; border-radius: 20px; border: 1px solid var(--gray-lt); padding: 28px 24px; text-align: center; margin-bottom: 24px; }
@@ -115,13 +123,14 @@ html, body {
 .info-section h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 14px; }
 .info-section p { font-size: 15px; color: var(--gray); line-height: 1.75; margin-bottom: 14px; }
 
-footer { background: var(--navy); padding: 40px 24px; text-align: center; }
+footer { background: #FAFBFC; padding: 40px 24px; text-align: center; border-top: 0.5px solid var(--gray-lt); }
 .footer-inner { max-width: 900px; margin: 0 auto; }
 .footer-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.footer-logo span { font-size: 16px; font-weight: 700; color: var(--black); letter-spacing: -0.3px; }
 .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
-.footer-links a { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; }
-.footer-links a:hover { color: white; }
-.footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
+.footer-links a { font-size: 13px; color: var(--gray); text-decoration: none; transition: color 0.15s; }
+.footer-links a:hover { color: var(--blue); }
+.footer-copy { font-size: 12px; color: var(--gray); opacity: 0.75; }
 </style>
 </head>
 <body>
@@ -136,7 +145,7 @@ footer { background: var(--navy); padding: 40px 24px; text-align: center; }
 <div class="hero">
   <div class="hero-badge">Free Calculator</div>
   <h1>How many calories<br>should you eat per day?</h1>
-  <p>Calculate your TDEE and personalized macro targets in 30 seconds using the Mifflin-St Jeor equation — the same formula used by registered dietitians.</p>
+  <p>Estimate your TDEE and personalized macro targets in 30 seconds using the widely-used Mifflin-St Jeor equation. This is an estimate — your real needs may vary.</p>
 </div>
 
 <div class="calc-wrap">
@@ -289,19 +298,20 @@ footer { background: var(--navy); padding: 40px 24px; text-align: center; }
   <h2>What is TDEE?</h2>
   <p>TDEE stands for Total Daily Energy Expenditure — the total number of calories your body burns in a day, including exercise and daily activity. Eating at your TDEE maintains your current weight. Eating below it causes fat loss; eating above it causes weight gain.</p>
   <h2 style="margin-top:32px;">How is this calculated?</h2>
-  <p>This calculator uses the <strong>Mifflin-St Jeor equation</strong> — the same formula used by registered dietitians and the most accurate TDEE model for the general population. It calculates your Basal Metabolic Rate (BMR) from your height, weight, age, and sex, then multiplies by an activity factor to get your full TDEE.</p>
-  <p>Macro targets (protein, carbs, fat) are set based on your goal: high protein for fat loss and muscle gain, balanced for maintenance.</p>
+  <p>This calculator uses the <strong>Mifflin-St Jeor equation</strong>, a widely-used formula that estimates Basal Metabolic Rate (BMR) from your height, weight, age, and sex, then multiplies by an activity factor to estimate your full daily expenditure (TDEE).</p>
+  <p>Macro targets (protein, carbs, fat) are set based on your goal: higher protein for fat loss and muscle gain, balanced for maintenance.</p>
+  <p style="font-size:13px;color:var(--gray);opacity:0.85;margin-top:18px;">This tool gives an estimate, not medical advice. For personalized nutrition guidance, talk to a registered dietitian or physician.</p>
 </div>
 
 <footer>
   <div class="footer-inner">
     <div class="footer-logo">
-      <svg width="24" height="22" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="white"/>
-        <circle cx="82" cy="32" r="7" fill="white"/>
-        <circle cx="82" cy="56" r="7" fill="white"/>
+      <svg width="26" height="24" viewBox="0 0 106 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M56,20 A38,38,0,1,0,56,78 L46,78 L3,94 L18,74 L56,68 A24,24,0,1,1,56,32 Z" fill="#0096FF"/>
+        <circle cx="82" cy="32" r="7" fill="#0096FF"/>
+        <circle cx="82" cy="56" r="7" fill="#0096FF"/>
       </svg>
-      <span style="font-size:16px;font-weight:700;color:white;letter-spacing:-0.3px">TextCalio</span>
+      <span>TextCalio</span>
     </div>
     <div class="footer-links">
       <a href="/">Home</a>
@@ -357,10 +367,13 @@ function calculate() {
     bmr = ((10 * weightKg + 6.25 * heightCm - 5 * age + 5) + (10 * weightKg + 6.25 * heightCm - 5 * age - 161)) / 2;
   }
 
+  // Mirror of lib/macros.js — keep in sync with backend.
   const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
   const tdee = bmr * mult[state.activity];
   let calories = state.goal === 'lose' ? tdee - 500 : state.goal === 'gain' ? tdee + 300 : tdee;
+  // Floor at 1200, then round to nearest 50 for clean display
   calories = Math.max(Math.round(calories), 1200);
+  calories = Math.round(calories / 50) * 50;
   const protein = Math.round(weightKg * (state.goal === 'gain' ? 2.2 : state.goal === 'lose' ? 2.0 : 1.8));
   const fat = Math.round((calories * 0.25) / 9);
   const carbs = Math.max(Math.round((calories - protein * 4 - fat * 9) / 4), 50);

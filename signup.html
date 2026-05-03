@@ -35,7 +35,7 @@
 html, body {
   height: 100%;
   font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
+  background: var(--white);
   color: var(--black);
   -webkit-font-smoothing: antialiased;
 }
@@ -127,46 +127,24 @@ html, body {
   pointer-events: none;
 }
 
-/* Welcome screen */
-.welcome-logo {
-  width: 72px; height: 72px; margin-bottom: 32px; object-fit: contain;
+/* Gender cards — premium SVG icons, centered */
+.gender-card {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 10px 18px;
+  min-height: 152px;
+  justify-content: space-between;
 }
-.welcome-tagline {
-  font-size: 11px; font-weight: 600; color: var(--blue);
-  text-transform: uppercase; letter-spacing: 1px;
-  margin-bottom: 16px;
+.gender-card .gender-svg {
+  margin-bottom: 12px;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.2s;
 }
-.welcome-h1 {
-  font-size: clamp(32px, 8vw, 44px);
-  font-weight: 700;
-  letter-spacing: -1.2px;
-  line-height: 1.1;
-  color: var(--black);
-  margin-bottom: 16px;
-}
-.welcome-h1 em { font-style: normal; color: var(--blue); }
-.welcome-sub {
-  font-size: 16px;
-  color: var(--gray);
-  line-height: 1.65;
-  margin-bottom: 40px;
-  max-width: 340px;
-}
-.social-proof {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 32px;
-}
-.avatars { display: flex; }
-.avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  border: 2px solid var(--cream);
-  margin-left: -8px; background: var(--blue-dk);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: white; font-weight: 600;
-}
-.avatar:first-child { margin-left: 0; }
-.proof-text { font-size: 13px; color: var(--gray); }
-.proof-text strong { color: var(--black); }
+.gender-card:hover .gender-svg { opacity: 1; transform: translateY(-1px); }
+.gender-card.selected .gender-svg { opacity: 1; }
+.gender-card .card-name { font-size: 14px; }
+.gender-card .card-check { margin: 8px auto 0; }
 
 /* Question screens */
 .q-label {
@@ -493,8 +471,8 @@ html, body {
 </head>
 <body>
 <div class="wrap">
-  <!-- Progress bar (hidden on welcome) -->
-  <div class="progress-rail" id="progress-rail" style="visibility:hidden">
+  <!-- Progress bar -->
+  <div class="progress-rail" id="progress-rail">
     <div class="progress-fill" id="progress-fill" style="width:0%"></div>
   </div>
 
@@ -504,7 +482,7 @@ html, body {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       Back
     </button>
-    <div class="logo-wrap" id="nav-logo" style="display:none">
+    <div class="logo-wrap" id="nav-logo">
       <img class="logo-mark" src="/icons/textcalio-horizontal-logo.png" alt="TextCalio">
     </div>
     <span class="step-indicator" id="step-indicator"></span>
@@ -513,19 +491,8 @@ html, body {
   <!-- Screens viewport -->
   <div class="screens-viewport">
 
-    <!-- ── SCREEN 0: Welcome ─────────────────────────────────────────────── -->
-    <div class="screen active" id="screen-0">
-      <img class="welcome-logo" src="/icons/textcalio-icon.png" alt="TextCalio">
-      <p class="welcome-tagline">TextCalio — Meet Calio</p>
-      <h1 class="welcome-h1">Your AI nutrition tracker, <em>by text.</em></h1>
-      <p class="welcome-sub">Text Calio what you eat. Get instant calories and macros — no app needed, no manual logging.</p>
-      <div class="social-proof">
-        <p class="proof-text" style="color:var(--gray)">Now onboarding early users.</p>
-      </div>
-    </div>
-
-    <!-- ── SCREEN 1: Goal ───────────────────────────────────────────────── -->
-    <div class="screen" id="screen-1">
+    <!-- ── SCREEN 1: Goal (first real screen — welcome was removed) ────── -->
+    <div class="screen active" id="screen-1">
       <p class="q-label">Step 1 of 8</p>
       <h2 class="q-title">What's your main goal?</h2>
       <p class="q-sub">Calio builds your targets around this.</p>
@@ -559,44 +526,47 @@ html, body {
       <h2 class="q-title">What's your biological sex?</h2>
       <p class="q-sub">Used for the calorie formula — nothing else.</p>
       <div class="cards-grid three-col">
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:22px 10px 16px;" data-value="male" onclick="selectCard('gender', 'male', this)">
-          <svg width="44" height="70" viewBox="0 0 56 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:12px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
-            <circle cx="28" cy="13" r="11" fill="#0096FF"/>
-            <rect x="24" y="22" width="8" height="7" rx="3" fill="#0096FF"/>
-            <path d="M8 32 Q28 27 48 32 L46 64 H38 L36 51 H20 L18 64 H10 Z" fill="#0096FF"/>
-            <rect x="10" y="64" width="14" height="22" rx="5" fill="#0096FF"/>
-            <rect x="32" y="64" width="14" height="22" rx="5" fill="#0096FF"/>
+        <!-- Mars symbol (♂) — clean line style, blue accent -->
+        <div class="card gender-card" data-value="male" onclick="selectCard('gender', 'male', this)">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="gender-svg">
+            <g stroke="#0096FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="20" cy="28" r="11"/>
+              <path d="M28 20 L40 8"/>
+              <path d="M30 8 L40 8 L40 18"/>
+            </g>
           </svg>
           <div class="card-name">Male</div>
-          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:22px 10px 16px;" data-value="female" onclick="selectCard('gender', 'female', this)">
-          <svg width="40" height="70" viewBox="0 0 50 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:12px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
-            <circle cx="25" cy="13" r="11" fill="#0096FF"/>
-            <rect x="21" y="22" width="8" height="7" rx="3" fill="#0096FF"/>
-            <path d="M12 32 Q25 27 38 32 Q35 43 32 50 Q38 57 40 68 Q33 72 25 72 Q17 72 10 68 Q12 57 18 50 Q15 43 12 32 Z" fill="#0096FF"/>
-            <rect x="10" y="68" width="12" height="20" rx="5" fill="#0096FF"/>
-            <rect x="28" y="68" width="12" height="20" rx="5" fill="#0096FF"/>
+        <!-- Venus symbol (♀) — clean line style, blue accent -->
+        <div class="card gender-card" data-value="female" onclick="selectCard('gender', 'female', this)">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="gender-svg">
+            <g stroke="#0096FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="18" r="11"/>
+              <path d="M24 29 L24 42"/>
+              <path d="M17 36 L31 36"/>
+            </g>
           </svg>
           <div class="card-name">Female</div>
-          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
-        <div class="card" style="flex-direction:column;align-items:center;text-align:center;padding:22px 10px 16px;" data-value="other" onclick="selectCard('gender', 'other', this)">
-          <svg width="40" height="70" viewBox="0 0 50 88" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:12px;opacity:0.75;transition:opacity 0.2s" class="gender-svg">
-            <circle cx="25" cy="13" r="11" fill="#0096FF"/>
-            <path d="M10 32 Q25 27 40 32 L38 68 H12 Z" fill="#0096FF"/>
-            <rect x="13" y="68" width="11" height="20" rx="5" fill="#0096FF"/>
-            <rect x="26" y="68" width="11" height="20" rx="5" fill="#0096FF"/>
+        <!-- Neutral silhouette — respectful "prefer not to say" -->
+        <div class="card gender-card" data-value="other" onclick="selectCard('gender', 'other', this)">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="gender-svg">
+            <g stroke="#0096FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="16" r="7"/>
+              <path d="M10 40 C10 31 16 26 24 26 C32 26 38 31 38 40"/>
+            </g>
           </svg>
-          <div class="card-name" style="font-size:12px">Prefer not to say</div>
-          <div class="card-check" style="margin:8px auto 0"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+          <div class="card-name">Prefer not to say</div>
+          <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
       </div>
     </div>
 
-    <!-- ── SCREEN 3: Name ───────────────────────────────────────────────── -->
+    <!-- ── SCREEN 3: Name (shown after plan reveal) ──────────────────── -->
     <div class="screen" id="screen-3">
-      <p class="q-label">Step 3 of 8</p>
+      <p class="q-label">One last thing</p>
       <h2 class="q-title">What's your first name?</h2>
       <p class="q-sub">So Calio can greet you personally.</p>
       <input class="text-input" id="name-input" type="text" placeholder="First name" autocomplete="given-name" autocapitalize="words" oninput="onTextChange('name', this.value)">
@@ -605,7 +575,7 @@ html, body {
 
     <!-- ── SCREEN 4: Age ─────────────────────────────────────────────────── -->
     <div class="screen" id="screen-4">
-      <p class="q-label">Step 4 of 8</p>
+      <p class="q-label">Step 3 of 8</p>
       <h2 class="q-title">How old are you?</h2>
       <p class="q-sub">Age affects your metabolic rate.</p>
       <div class="input-wrap">
@@ -617,7 +587,7 @@ html, body {
 
     <!-- ── SCREEN 5: Units ───────────────────────────────────────────────── -->
     <div class="screen" id="screen-5">
-      <p class="q-label">Step 5 of 8</p>
+      <p class="q-label">Step 4 of 8</p>
       <h2 class="q-title">Which units do you prefer?</h2>
       <p class="q-sub">Choose what feels natural to you.</p>
       <div class="cards-grid two-col">
@@ -638,7 +608,7 @@ html, body {
 
     <!-- ── SCREEN 6: Weight ─────────────────────────────────────────────── -->
     <div class="screen" id="screen-6">
-      <p class="q-label">Step 6 of 8</p>
+      <p class="q-label">Step 5 of 8</p>
       <h2 class="q-title">Current weight</h2>
       <p class="q-sub">Calio uses this to calculate your daily targets.</p>
       <div class="input-wrap">
@@ -650,7 +620,7 @@ html, body {
 
     <!-- ── SCREEN 7: Height ─────────────────────────────────────────────── -->
     <div class="screen" id="screen-7">
-      <p class="q-label">Step 7 of 8</p>
+      <p class="q-label">Step 6 of 8</p>
       <h2 class="q-title">Your height</h2>
       <p class="q-sub" id="height-sub">Enter your height in cm.</p>
       <div class="input-wrap">
@@ -662,7 +632,7 @@ html, body {
 
     <!-- ── SCREEN 8: Target weight ─────────────────────────────────────── -->
     <div class="screen" id="screen-8">
-      <p class="q-label">Step 8 of 8</p>
+      <p class="q-label">Step 7 of 8</p>
       <h2 class="q-title" id="target-title">What's your target weight?</h2>
       <p class="q-sub" id="target-sub">Your goal to work toward.</p>
       <div class="input-wrap">
@@ -849,14 +819,16 @@ const PRICE_IDS = {
   yearly:  'price_1TRLMoBSGwHBXwI8kbeB0hQ0'
 };
 
-let currentScreen = 0;
+let currentScreen = 1; // Start at goal — welcome screen removed
 const TOTAL_QUESTIONS = 8; // screens 1-9 (excl. target for maintain/recomp)
 
 // Screens that are "question" screens (for progress bar)
-// Dynamic: screen 8 (target weight) may be skipped
+// Dynamic: screen 8 (target weight) may be skipped for maintain/recomp goals.
+// Order: goal → gender → age → units → weight → height → [target] → activity
+//        → calculating → plan reveal → name → account → plan selection
 function getScreenFlow() {
   const skipTarget = data.goal === 'maintain' || data.goal === 'recomp';
-  return [0, 1, 2, 4, 5, 6, 7, skipTarget ? null : 8, 9, 10, 11, 3, 12, 13].filter(n => n !== null);
+  return [1, 2, 4, 5, 6, 7, skipTarget ? null : 8, 9, 10, 11, 3, 12, 13].filter(n => n !== null);
 }
 
 function getQuestionScreens() {
@@ -885,17 +857,13 @@ function updateUI(flowIdx, screenId) {
   const screens = getScreenFlow();
   const questionScreens = getQuestionScreens();
 
-  // Progress bar
+  // Progress bar — always visible (no welcome screen anymore)
   const rail = document.getElementById('progress-rail');
   const fill = document.getElementById('progress-fill');
-  if (screenId === 0) {
-    rail.style.visibility = 'hidden';
-  } else {
-    rail.style.visibility = 'visible';
-    const qIdx = questionScreens.indexOf(screenId);
-    const pct = qIdx >= 0 ? ((qIdx + 1) / questionScreens.length) * 100 : 100;
-    fill.style.width = Math.min(pct, 100) + '%';
-  }
+  rail.style.visibility = 'visible';
+  const qIdx = questionScreens.indexOf(screenId);
+  const pct  = qIdx >= 0 ? ((qIdx + 1) / questionScreens.length) * 100 : 100;
+  fill.style.width = Math.min(pct, 100) + '%';
 
   // Top nav
   const backBtn    = document.getElementById('back-btn');
@@ -903,29 +871,23 @@ function updateUI(flowIdx, screenId) {
   const stepInd    = document.getElementById('step-indicator');
   const termsNote  = document.getElementById('terms-note');
 
-  if (screenId === 0) {
+  navLogo.style.display = 'flex';
+  // Hide back button only on the first screen of the flow
+  if (flowIdx === 0) {
     backBtn.classList.add('hidden');
-    navLogo.style.display = 'none';
-    stepInd.textContent = '';
   } else {
     backBtn.classList.remove('hidden');
-    navLogo.style.display = 'flex';
-    if (screenId >= 1 && screenId <= 9) {
-      const qIdx = questionScreens.indexOf(screenId);
-      stepInd.textContent = `${qIdx + 1} of ${questionScreens.length}`;
-    } else {
-      stepInd.textContent = '';
-    }
+  }
+  if (screenId >= 1 && screenId <= 9) {
+    stepInd.textContent = `${qIdx + 1} of ${questionScreens.length}`;
+  } else {
+    stepInd.textContent = '';
   }
 
   // Button text
   const btnText = document.getElementById('btn-text');
   const btnSvg  = document.querySelector('#main-btn svg');
-  if (screenId === 0) {
-    btnText.textContent = 'Get started — it\'s free';
-    btnSvg.style.display = '';
-    termsNote.style.display = 'none';
-  } else if (screenId === 11) {
+  if (screenId === 11) {
     btnText.textContent = 'Start my free trial';
     btnSvg.style.display = '';
     termsNote.style.display = 'none';
@@ -1093,22 +1055,37 @@ async function handleNext() {
 }
 
 // ── Calculation animation ────────────────────────────────────────────────────
+// Mirror of lib/macros.js — keep in sync with backend.
+// Mifflin-St Jeor BMR → activity TDEE → goal-adjusted calories →
+// floor at 1200 → round to nearest 50 → protein/fat/carb split.
 function calculatePlan() {
   const { gender, weight, height, age, activityLevel, goal, units } = data;
   const weightKg = units === 'imperial' ? weight * 0.453592 : weight;
-  const heightCm = units === 'imperial' ? height * 2.54 : height;
-  let bmr = gender === 'male'
-    ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
-    : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
-  if (data.gender === 'other') {
+  const heightCm = units === 'imperial' ? height * 2.54     : height;
+
+  // BMR (Mifflin-St Jeor)
+  let bmr;
+  if (gender === 'male') {
+    bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+  } else if (gender === 'female') {
+    bmr = 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  } else {
+    // 'other' — average of male and female formulas
     const bmrMale   = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
     const bmrFemale = 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
     bmr = (bmrMale + bmrFemale) / 2;
   }
+
+  // TDEE × activity multiplier
   const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
-  const tdee = bmr * mult[activityLevel];
+  const tdee = bmr * (mult[activityLevel] || 1.375);
+
+  // Goal-adjusted calories
   let calories = goal === 'lose' ? tdee - 500 : goal === 'gain' ? tdee + 300 : tdee;
+  // Floor at 1200, then round to nearest 50 for clean display
   calories = Math.max(Math.round(calories), 1200);
+  calories = Math.round(calories / 50) * 50;
+
   const protein = Math.round(weightKg * (goal === 'gain' ? 2.2 : goal === 'lose' ? 2.0 : 1.8));
   const fat = Math.round((calories * 0.25) / 9);
   const carbs = Math.max(Math.round((calories - protein * 4 - fat * 9) / 4), 50);
@@ -1233,12 +1210,13 @@ async function createCheckout() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 function init() {
+  // Welcome screen removed — start directly at the goal question (screen 1)
   const screens = getScreenFlow();
-  currentScreen = 0;
+  currentScreen = screens[0]; // 1 (goal)
   selectPlan('yearly');
   const urlPlan = new URLSearchParams(location.search).get('plan');
   if (urlPlan === 'monthly') selectPlan('monthly');
-  updateUI(0, 0);
+  updateUI(0, currentScreen);
 }
 
 init();

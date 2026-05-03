@@ -77,23 +77,33 @@ main { padding: 20px 0 60px; }
 .section { padding: 0 20px; margin-bottom: 12px; }
 .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 10px; margin-left: 2px; }
 
-.cal-card { background: #0B1F33; border-radius: var(--radius); padding: 22px; color: #fff; overflow: hidden; position: relative; }
+/* Calorie card — clean white with blue ring + dark numbers */
+.cal-card {
+  background: #FFFFFF;
+  border: 1px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 22px;
+  color: var(--text);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0,150,255,0.06);
+}
 .cal-top { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
 .ring-wrap { position: relative; width: 92px; height: 92px; flex-shrink: 0; }
 .ring-wrap svg { transform: rotate(-90deg); display: block; }
 .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-.ring-pct  { font-size: 19px; font-weight: 700; color: #fff; line-height: 1; }
-.ring-sub  { font-size: 9px; color: rgba(255,255,255,0.45); margin-top: 2px; letter-spacing: 0.2px; }
+.ring-pct  { font-size: 19px; font-weight: 700; color: #0096FF; line-height: 1; }
+.ring-sub  { font-size: 9px; color: var(--text3); margin-top: 2px; letter-spacing: 0.2px; }
 .cal-info  { flex: 1; }
-.cal-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 3px; }
-.cal-num   { font-size: 38px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: #fff; }
-.cal-unit  { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.5); margin-left: 2px; letter-spacing: 0; }
-.cal-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 5px; }
-.cal-divider { height: 0.5px; background: rgba(255,255,255,0.1); margin-bottom: 14px; }
+.cal-label { font-size: 11px; color: var(--text2); margin-bottom: 3px; font-weight: 500; }
+.cal-num   { font-size: 38px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: var(--text); }
+.cal-unit  { font-size: 13px; font-weight: 400; color: var(--text2); margin-left: 2px; letter-spacing: 0; }
+.cal-sub   { font-size: 11px; color: var(--text3); margin-top: 5px; }
+.cal-divider { height: 0.5px; background: var(--border); margin-bottom: 14px; }
 .cal-stats { display: flex; justify-content: space-around; }
 .cal-stat  { text-align: center; }
-.cal-stat-num   { font-size: 17px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
-.cal-stat-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.cal-stat-num   { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
+.cal-stat-label { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
 .pill-row { display: flex; gap: 10px; }
 .info-pill { flex: 1; background: var(--bg2); border-radius: var(--r-sm); padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
@@ -149,14 +159,22 @@ main { padding: 20px 0 60px; }
 .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
 .empty-sub   { font-size: 13px; color: var(--text2); line-height: 1.5; }
 
-/* ── Log a meal CTA card ── */
-.log-cta-card  { background: #0B1F33; border-radius: var(--radius); padding: 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: #fff; transition: opacity 0.15s; -webkit-tap-highlight-color: transparent; cursor: pointer; }
-.log-cta-card:active { opacity: 0.75; }
+/* ── Log a meal CTA card (solid blue button, premium) ── */
+.log-cta-card  {
+  background: #0096FF; border-radius: var(--radius); padding: 18px;
+  display: flex; align-items: center; gap: 14px;
+  text-decoration: none; color: #fff;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.18s;
+  -webkit-tap-highlight-color: transparent; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,150,255,0.22);
+}
+.log-cta-card:hover  { background: #007ACC; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(0,150,255,0.28); }
+.log-cta-card:active { transform: translateY(0); opacity: 0.92; }
 .log-cta-icon  { font-size: 26px; flex-shrink: 0; }
 .log-cta-body  { flex: 1; }
 .log-cta-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: #fff; }
-.log-cta-sub   { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; }
-.log-cta-arrow { font-size: 18px; color: rgba(255,255,255,0.35); flex-shrink: 0; }
+.log-cta-sub   { font-size: 12px; color: rgba(255,255,255,0.78); margin-top: 2px; }
+.log-cta-arrow { font-size: 18px; color: rgba(255,255,255,0.7); flex-shrink: 0; }
 .log-cta-num   { text-align: center; font-size: 12px; color: var(--text3); margin-top: 8px; letter-spacing: 0.2px; }
 
 /* ── Weight single-entry state ── */
@@ -309,11 +327,12 @@ function dayLabel(dateStr) {
 }
 
 function ring(pct) {
+  // Track is light gray, fill is brand blue (red if over 110% of goal)
   const r = 38, c = 2 * Math.PI * r;
   const fill = c * Math.min(Math.max(pct, 0) / 100, 1);
-  const color = pct > 110 ? '#ff3b30' : 'rgba(255,255,255,0.92)';
+  const color = pct > 110 ? '#ff3b30' : '#0096FF';
   return `<svg width="92" height="92" viewBox="0 0 92 92">
-    <circle cx="46" cy="46" r="${r}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7.5"/>
+    <circle cx="46" cy="46" r="${r}" fill="none" stroke="#E5E7EB" stroke-width="7.5"/>
     <circle cx="46" cy="46" r="${r}" fill="none" stroke="${color}" stroke-width="7.5"
       stroke-dasharray="${fill} ${c - fill}" stroke-linecap="round"
       style="transition:stroke-dasharray 0.8s cubic-bezier(0.22,1,0.36,1)"/>
