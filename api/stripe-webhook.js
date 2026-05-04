@@ -77,14 +77,26 @@ module.exports = async (req, res) => {
             trial_end:              trialEnd?.toISOString() || null
           }).eq('phone', phone);
 
-          // Send welcome SMS
-          const goalLabels = { lose: 'fat loss', gain: 'muscle gain', maintain: 'maintenance', recomp: 'body recomp' };
-          const trialLine  = isTrialing && trialEnd
-            ? `\n\nYour 7-day free trial runs until ${trialEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`
-            : '';
-          const dashUrl = `https://www.textcalio.com/dashboard?u=${user.dashboard_token}`;
+          // Send welcome SMS — concise, action-oriented, examples up front.
+          // Single message; total length ≤ ~480 chars to stay within a few SMS segments.
+          const dashUrl  = `https://www.textcalio.com/dashboard?u=${user.dashboard_token}`;
+          const greeting = user.name || name ? `Welcome to TextCalio, ${user.name || name}` : 'Welcome to TextCalio';
 
-          const welcome = `Welcome to TextCalio, ${user.name || name}! 🎉 I'm Calio, your AI nutrition assistant.${trialLine}\n\nYour ${goalLabels[user.goal] || 'wellness'} targets are set:\n• ${user.daily_calorie_target} cal/day\n• ${user.daily_protein_target}g protein\n• ${user.daily_carb_target}g carbs\n• ${user.daily_fat_target}g fat\n\nTo start, text me what you last ate — even a rough description works.\n\nI'll log your meals instantly and send you a quick recap each evening.\n\nDashboard:\n${dashUrl}\n\nType HELP anytime for commands.`;
+          const welcome =
+`${greeting} — I'm Calio 👋
+
+Text me what you eat, or send a food/label photo.
+
+Try:
+• "I had chicken, rice, and avocado"
+• "stats"
+• "164.5 lbs"
+• "delete last"
+
+Your dashboard:
+${dashUrl}
+
+Reply HELP anytime.`;
           await sendSMS(phone, welcome);
         }
         break;

@@ -19,11 +19,13 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --cream: #FBF7EF;
-  --blue:  #0096FF;
-  --black: #111111;
-  --gray:  #6B7280;
-  --white: #FFFFFF;
+  --blue:    #0096FF;
+  --blue-dk: #007ACC;
+  --black:   #111111;
+  --gray:    #6B7280;
+  --gray-lt: #E5E7EB;
+  --white:   #FFFFFF;
+  --radius:  16px;
 }
 
 html, body {
@@ -35,38 +37,36 @@ html, body {
 }
 
 .wrap {
-  max-width: 480px;
+  max-width: 520px;
   margin: 0 auto;
   padding: 0 24px 60px;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 /* ── Logo ────────────────────────────────────────────────────────────────── */
 .logo-row {
   display: flex; align-items: center; gap: 10px;
-  margin-bottom: 48px;
+  margin-bottom: 36px;
   padding-top: 32px;
 }
 .logo-mark { height: 38px; width: auto; }
-.logo-text { font-size: 17px; font-weight: 700; color: var(--black); letter-spacing: -0.3px; }
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */
 .check-circle {
-  width: 72px; height: 72px;
+  width: 64px; height: 64px;
   background: var(--blue);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
   animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 @keyframes pop {
   from { transform: scale(0.5); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
 }
-.check-circle svg { width: 32px; height: 32px; color: white; }
+.check-circle svg { width: 28px; height: 28px; color: white; }
 
 .badge {
   display: inline-block;
@@ -76,86 +76,120 @@ html, body {
 }
 
 h1 {
-  font-size: clamp(28px, 7vw, 38px);
+  font-size: clamp(26px, 6vw, 34px);
   font-weight: 700;
-  letter-spacing: -1px;
-  line-height: 1.15;
-  margin-bottom: 14px;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+  margin-bottom: 12px;
   color: var(--black);
 }
 
 .sub {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--gray);
-  line-height: 1.65;
-  margin-bottom: 40px;
-}
-
-/* ── Steps ───────────────────────────────────────────────────────────────── */
-.steps {
-  display: flex; flex-direction: column; gap: 0;
-  background: var(--white);
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.07);
+  line-height: 1.6;
   margin-bottom: 28px;
 }
-.step {
-  display: flex; align-items: flex-start; gap: 16px;
-  padding: 18px 20px;
-  position: relative;
+
+.thanks {
+  background: rgba(0,150,255,0.05);
+  border: 1px solid rgba(0,150,255,0.12);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  font-size: 14px;
+  color: var(--black);
+  line-height: 1.55;
+  margin-bottom: 32px;
+}
+
+/* ── Section heading ─────────────────────────────────────────────────────── */
+.section-head {
+  font-size: 11px; font-weight: 600; color: var(--blue);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.section-title {
+  font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.section-sub {
+  font-size: 14px; color: var(--gray);
+  line-height: 1.5; margin-bottom: 20px;
+}
+
+/* ── Tutorial cards ──────────────────────────────────────────────────────── */
+.tutorial {
+  display: grid; gap: 10px;
+  margin-bottom: 28px;
+}
+.tut-card {
+  background: var(--white);
+  border: 1px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: border-color 0.15s, box-shadow 0.15s;
   animation: fadeUp 0.4s ease both;
 }
-.step:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.06); }
-.step:nth-child(1) { animation-delay: 0.2s; }
-.step:nth-child(2) { animation-delay: 0.35s; }
-.step:nth-child(3) { animation-delay: 0.5s; }
+.tut-card:hover { border-color: rgba(0,150,255,0.25); box-shadow: 0 2px 12px rgba(0,150,255,0.05); }
+.tut-card:nth-child(1) { animation-delay: 0.05s; }
+.tut-card:nth-child(2) { animation-delay: 0.1s; }
+.tut-card:nth-child(3) { animation-delay: 0.15s; }
+.tut-card:nth-child(4) { animation-delay: 0.2s; }
+.tut-card:nth-child(5) { animation-delay: 0.25s; }
+.tut-card:nth-child(6) { animation-delay: 0.3s; }
+.tut-card:nth-child(7) { animation-delay: 0.35s; }
+.tut-card:nth-child(8) { animation-delay: 0.4s; }
+.tut-card:nth-child(9) { animation-delay: 0.45s; }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.step-num {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: rgba(0,150,255,0.1);
-  color: var(--blue);
-  font-size: 14px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; margin-top: 1px;
+.tut-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px;
 }
-.step-body { flex: 1; }
-.step-title { font-size: 15px; font-weight: 600; color: var(--black); margin-bottom: 3px; }
-.step-desc  { font-size: 13px; color: var(--gray); line-height: 1.5; }
-.step-code  {
-  display: inline-block; margin-top: 6px;
-  background: rgba(0,150,255,0.1); color: #0096FF;
-  font-size: 12px; font-weight: 600;
-  padding: 4px 10px; border-radius: 6px;
-  letter-spacing: 0.3px;
+.tut-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(0,150,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.tut-title { font-size: 15px; font-weight: 600; color: var(--black); }
+.tut-example {
+  display: inline-block;
+  font-size: 13px; font-weight: 500;
+  color: var(--blue);
+  background: rgba(0,150,255,0.08);
+  padding: 5px 10px;
+  border-radius: 6px;
+  margin: 4px 0 4px;
+}
+.tut-result {
+  font-size: 13px; color: var(--gray); line-height: 1.5; margin-top: 4px;
 }
 
-/* ── Phone number CTA — clean white card with blue accent ───────────── */
+/* ── SMS card ────────────────────────────────────────────────────────────── */
 .sms-card {
   background: white;
   border: 1.5px solid rgba(0,150,255,0.18);
   border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 22px;
+  margin-bottom: 14px;
   text-align: center;
-  box-shadow: 0 6px 20px rgba(0,150,255,0.07);
-  animation: fadeUp 0.4s 0.6s ease both;
+  box-shadow: 0 4px 20px rgba(0,150,255,0.06);
 }
 .sms-label {
-  font-size: 12px; font-weight: 600; color: var(--blue);
+  font-size: 11px; font-weight: 600; color: var(--blue);
   text-transform: uppercase; letter-spacing: 0.8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .sms-number {
-  font-size: 26px; font-weight: 700; color: var(--black);
-  letter-spacing: -0.5px; margin-bottom: 8px;
+  font-size: 24px; font-weight: 700; color: var(--black);
+  letter-spacing: -0.5px; margin-bottom: 6px;
 }
-.sms-hint { font-size: 13px; color: var(--gray); }
+.sms-hint { font-size: 12px; color: var(--gray); }
 
-/* ── CTA button ──────────────────────────────────────────────────────────── */
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn-primary {
   width: 100%;
   background: var(--blue);
@@ -163,19 +197,34 @@ h1 {
   font-family: 'DM Sans', sans-serif;
   font-size: 16px; font-weight: 600;
   padding: 16px 24px;
-  border: none; border-radius: 16px;
+  border: none; border-radius: var(--radius);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   text-decoration: none;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   transition: all 0.18s;
-  animation: fadeUp 0.4s 0.7s ease both;
 }
-.btn-primary:hover { background: #007ACC; transform: translateY(-1px); }
+.btn-primary:hover { background: var(--blue-dk); transform: translateY(-1px); }
+.btn-secondary {
+  width: 100%;
+  background: var(--white);
+  color: var(--black);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600;
+  padding: 14px 24px;
+  border: 1.5px solid var(--gray-lt);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  text-decoration: none;
+  margin-bottom: 14px;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+.btn-secondary[hidden] { display: none; }
 
 .footer-note {
   font-size: 12px; color: var(--gray); text-align: center; line-height: 1.5;
-  animation: fadeUp 0.4s 0.8s ease both;
 }
 .footer-note a { color: var(--gray); }
 </style>
@@ -194,47 +243,122 @@ h1 {
   </div>
 
   <p class="badge">Your trial has started</p>
-  <h1>Welcome to TextCalio.</h1>
-  <p class="sub">Calio is ready for you. Just text the number below to start tracking — no app to download, ever.</p>
+  <h1>Your plan is ready. Here's how to use Calio.</h1>
+  <p class="sub">Text what you ate, send a photo, or ask for your stats — Calio keeps your day updated automatically.</p>
 
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <div class="step-title">Check your phone</div>
-        <div class="step-desc">A welcome SMS from Calio is on its way with your personalized targets and dashboard link.</div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <div class="step-title">Text Calio anything you eat</div>
-        <div class="step-desc">Natural language works. Try something like:<br>
-          <span class="step-code">"Had a chicken caesar salad for lunch"</span>
-        </div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <div class="step-title">Send a photo for instant scanning</div>
-        <div class="step-desc">Take a photo of your meal or nutrition label and Calio reads it automatically. 📸</div>
-      </div>
-    </div>
+  <div class="thanks">
+    Thanks for trusting Calio with your nutrition tracking. We'll keep it simple: text what you ate, send photos when helpful, and check your dashboard anytime.
   </div>
 
   <div class="sms-card">
     <div class="sms-label">Your Calio number</div>
     <div class="sms-number">+1 (647) 424-4438</div>
-    <div class="sms-hint">Save this number as "Calio" in your contacts</div>
+    <div class="sms-hint">Save this as "Calio" in your contacts</div>
   </div>
 
-  <a class="btn-primary" href="sms:+16474244438?body=Hi%20Calio!">
+  <a class="btn-primary" href="sms:+16474244438?body=Hi%20Calio">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
-    Text Calio now
+    Text Hi Calio
   </a>
+
+  <a class="btn-secondary" id="dashboard-btn" href="#" hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="9"/>
+      <rect x="14" y="3" width="7" height="5"/>
+      <rect x="14" y="12" width="7" height="9"/>
+      <rect x="3" y="16" width="7" height="5"/>
+    </svg>
+    Open dashboard
+  </a>
+
+  <p class="section-head" style="margin-top:24px">Quick tutorial</p>
+  <div class="section-title">9 things you can do</div>
+  <p class="section-sub">Take a quick look — you'll use 1 or 2 of these every day.</p>
+
+  <div class="tutorial">
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">🍽️</div>
+        <div class="tut-title">Log a meal</div>
+      </div>
+      <div class="tut-example">"I had 3 eggs and toast"</div>
+      <div class="tut-result">Calio logs calories and macros.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">📸</div>
+        <div class="tut-title">Send a meal photo</div>
+      </div>
+      <div class="tut-example">Send a photo of your plate</div>
+      <div class="tut-result">Calio estimates the meal and logs it.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">🏷️</div>
+        <div class="tut-title">Send a nutrition label photo</div>
+      </div>
+      <div class="tut-example">Snap any nutrition label</div>
+      <div class="tut-result">Calio reads the label and logs it.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">📊</div>
+        <div class="tut-title">Ask for stats</div>
+      </div>
+      <div class="tut-example">"stats"</div>
+      <div class="tut-result">Calio sends today's calories, macros, and streak.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">✏️</div>
+        <div class="tut-title">Edit a food log</div>
+      </div>
+      <div class="tut-example">"Actually, it was half an apple"</div>
+      <div class="tut-result">Calio updates the most recent log.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">🗑️</div>
+        <div class="tut-title">Delete a log</div>
+      </div>
+      <div class="tut-example">"delete last"</div>
+      <div class="tut-result">Calio removes your most recent entry.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">⚖️</div>
+        <div class="tut-title">Log your weight</div>
+      </div>
+      <div class="tut-example">"164.5 lbs"</div>
+      <div class="tut-result">Calio updates your weight trend.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">📱</div>
+        <div class="tut-title">Open your dashboard</div>
+      </div>
+      <div class="tut-example">"dashboard"</div>
+      <div class="tut-result">Calio texts your private dashboard link.</div>
+    </div>
+
+    <div class="tut-card">
+      <div class="tut-head">
+        <div class="tut-icon">🌙</div>
+        <div class="tut-title">Daily summary</div>
+      </div>
+      <div class="tut-example">Each evening, automatically</div>
+      <div class="tut-result">Calio sends a quick recap of your day.</div>
+    </div>
+  </div>
 
   <p class="footer-note">
     7-day free trial — no charge until your trial ends.<br>
@@ -242,5 +366,21 @@ h1 {
   </p>
 
 </div>
+
+<script>
+// If a dashboard token was passed in the success URL, surface the dashboard CTA.
+// Stripe redirects with ?session_id=... — Stripe webhook owns dashboard token
+// generation, so we don't always have it on this page. We only show the
+// secondary CTA when the token is explicitly available, e.g. via ?u=TOKEN.
+(function(){
+  const params = new URLSearchParams(location.search);
+  const token  = params.get('u') || params.get('dashboard') || null;
+  if (token && /^[a-z2-9]{6,12}$/i.test(token)) {
+    const btn = document.getElementById('dashboard-btn');
+    btn.href = `/dashboard.html?u=${encodeURIComponent(token)}`;
+    btn.hidden = false;
+  }
+})();
+</script>
 </body>
 </html>

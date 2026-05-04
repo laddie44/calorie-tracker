@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
       phone, email, priceId,
       name, goal, gender, age,
       weight, height, units, activityLevel,
-      targetWeight
+      targetWeight, pace
     } = body;
 
     // Validate required fields (email is optional — not collected in signup form)
@@ -40,10 +40,11 @@ module.exports = async (req, res) => {
     const digits     = phone.replace(/\D/g, '');
     const normalized = digits.startsWith('1') ? `+${digits}` : `+1${digits}`;
 
-    // Calculate macros server-side (same formula as macros.js)
+    // Calculate macros server-side (same formula as macros.js).
+    // pace is optional — if missing/invalid, falls back to standard defaults.
     const macros = calculateMacros({
       gender, weight: parseFloat(weight), height: parseFloat(height),
-      age: parseInt(age), activityLevel, goal, units
+      age: parseInt(age), activityLevel, goal, units, pace
     });
 
     // Create or retrieve Stripe customer
@@ -127,6 +128,7 @@ module.exports = async (req, res) => {
           height:         String(height),
           units,
           activityLevel,
+          pace:           pace ? String(pace) : 'standard',
           calories:       String(macros.calories),
           protein:        String(macros.protein),
           carbs:          String(macros.carbs),

@@ -404,17 +404,6 @@ html, body {
   text-decoration: underline; text-underline-offset: 2px; margin-bottom: 20px;
 }
 
-.reveal-projection {
-  background: var(--white);
-  border: 1px solid var(--gray-lt);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 24px;
-  font-size: 14px; color: var(--gray);
-}
-.reveal-projection strong { color: var(--black); }
-
 /* Primary button */
 .btn-primary {
   width: 100%;
@@ -467,6 +456,154 @@ html, body {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
+
+/* ── Birthday picker (3 selects) ─────────────────────────────────────────── */
+.dob-row { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 10px; margin-bottom: 10px; }
+.dob-select {
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--black);
+  background: var(--white);
+  border: 2px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%236B7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><polyline points='2 4 6 8 10 4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 32px;
+  transition: border-color 0.2s;
+}
+.dob-select:focus { border-color: var(--blue); }
+.dob-select.empty { color: #C8CDD5; font-weight: 400; }
+.privacy-note { font-size: 12px; color: var(--gray); margin-top: 4px; }
+
+/* ── Pace selector (optional, inside target weight screen) ───────────────── */
+.pace-toggle {
+  margin-top: 14px;
+  background: rgba(0,150,255,0.05);
+  border: 1px solid rgba(0,150,255,0.15);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pace-toggle summary {
+  padding: 12px 14px;
+  font-size: 13px; font-weight: 500; color: var(--blue);
+  cursor: pointer; list-style: none;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.pace-toggle summary::-webkit-details-marker { display: none; }
+.pace-toggle summary .chev { font-size: 16px; transition: transform 0.2s; }
+.pace-toggle[open] summary .chev { transform: rotate(45deg); }
+.pace-toggle-body { padding: 4px 12px 14px; }
+.pace-toggle-body .pace-sub {
+  font-size: 12px; color: var(--gray); margin-bottom: 10px; line-height: 1.5;
+}
+.pace-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.pace-card {
+  background: var(--white);
+  border: 1.5px solid var(--gray-lt);
+  border-radius: 10px;
+  padding: 10px 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pace-card:hover { border-color: var(--blue); }
+.pace-card.selected { border-color: var(--blue); background: rgba(0,150,255,0.06); }
+.pace-card .pace-name { font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 2px; }
+.pace-card .pace-desc { font-size: 11px; color: var(--gray); line-height: 1.3; }
+
+/* ── Optional micro-questions (multi-select chips + radios) ──────────────── */
+.optional-section {
+  margin-top: 12px;
+  background: var(--white);
+  border: 1px solid var(--gray-lt);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.optional-section summary {
+  padding: 12px 14px;
+  font-size: 13px; font-weight: 500; color: var(--black);
+  cursor: pointer; list-style: none;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.optional-section summary::-webkit-details-marker { display: none; }
+.optional-section summary .chev { font-size: 16px; color: var(--gray); transition: transform 0.2s; }
+.optional-section[open] summary .chev { transform: rotate(45deg); }
+.optional-section-body { padding: 4px 14px 14px; }
+.optional-label {
+  font-size: 12px; font-weight: 600; color: var(--gray);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin: 12px 0 8px;
+}
+.optional-label:first-child { margin-top: 4px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--black);
+  background: var(--white);
+  border: 1.5px solid var(--gray-lt);
+  border-radius: 100px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:hover { border-color: var(--blue); }
+.chip.selected { border-color: var(--blue); background: rgba(0,150,255,0.08); color: var(--blue); }
+.chip[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Trust slide inside calc animation ───────────────────────────────────── */
+.calc-trust {
+  margin: 32px auto 0;
+  max-width: 320px;
+  padding: 14px 18px;
+  background: rgba(0,150,255,0.06);
+  border: 1px solid rgba(0,150,255,0.15);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--black);
+  line-height: 1.55;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.calc-trust.show { opacity: 1; transform: translateY(0); }
+.calc-trust strong { color: var(--blue); display: block; margin-bottom: 4px; font-weight: 600; }
+
+/* ── Projection mini chart on reveal ─────────────────────────────────────── */
+.proj-card {
+  background: var(--white);
+  border: 1px solid var(--gray-lt);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.proj-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 4px;
+}
+.proj-title { font-size: 13px; font-weight: 600; color: var(--black); }
+.proj-sub   { font-size: 11px; color: var(--gray); }
+.proj-svg-wrap { width: 100%; margin: 10px 0 6px; }
+.proj-svg { width: 100%; height: 90px; display: block; }
+.proj-foot {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--gray);
+}
+.proj-disclaimer {
+  font-size: 11px; color: var(--gray); margin-top: 8px; line-height: 1.4;
+}
 </style>
 </head>
 <body>
@@ -518,6 +655,32 @@ html, body {
           <div class="card-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
         </div>
       </div>
+
+      <!-- Optional micro-questions: secondary goals + past tracking. Skippable, frontend-only. -->
+      <details class="optional-section" id="opt-section">
+        <summary>
+          <span>Optional — tell Calio more <span style="color:var(--gray);font-weight:400">(skip anytime)</span></span>
+          <span class="chev">+</span>
+        </summary>
+        <div class="optional-section-body">
+          <div class="optional-label">Anything else you want Calio to help with? (up to 2)</div>
+          <div class="chip-row" id="secondary-chips">
+            <button type="button" class="chip" data-value="protein" onclick="toggleSecondary(this)">Eat more protein</button>
+            <button type="button" class="chip" data-value="consistency" onclick="toggleSecondary(this)">Build consistency</button>
+            <button type="button" class="chip" data-value="habits" onclick="toggleSecondary(this)">Understand my eating habits</button>
+            <button type="button" class="chip" data-value="workouts" onclick="toggleSecondary(this)">Support workouts</button>
+            <button type="button" class="chip" data-value="restaurants" onclick="toggleSecondary(this)">Improve restaurant tracking</button>
+            <button type="button" class="chip" data-value="simple" onclick="toggleSecondary(this)">Keep it simple</button>
+          </div>
+
+          <div class="optional-label">Have you tracked food before?</div>
+          <div class="chip-row" id="tracked-chips">
+            <button type="button" class="chip" data-value="lapsed" onclick="setTrackedBefore(this)">Yes, but I stopped</button>
+            <button type="button" class="chip" data-value="active" onclick="setTrackedBefore(this)">Yes, I still do</button>
+            <button type="button" class="chip" data-value="new" onclick="setTrackedBefore(this)">No, this is new to me</button>
+          </div>
+        </div>
+      </details>
     </div>
 
     <!-- ── SCREEN 2: Gender ─────────────────────────────────────────────── -->
@@ -573,16 +736,30 @@ html, body {
       <div class="error-msg" id="name-error">Please enter your first name.</div>
     </div>
 
-    <!-- ── SCREEN 4: Age ─────────────────────────────────────────────────── -->
+    <!-- ── SCREEN 4: Birthday ────────────────────────────────────────────── -->
     <div class="screen" id="screen-4">
       <p class="q-label">Step 3 of 8</p>
-      <h2 class="q-title">How old are you?</h2>
+      <h2 class="q-title">When's your birthday?</h2>
       <p class="q-sub">Age affects your metabolic rate.</p>
-      <div class="input-wrap">
-        <input class="num-input" id="age-input" type="number" inputmode="numeric" placeholder="28" min="16" max="100" oninput="onNumberChange('age', this.value)">
-        <span class="input-unit">yrs</span>
+      <div class="dob-row">
+        <select class="dob-select empty" id="dob-month" onchange="onDobChange()">
+          <option value="" disabled selected>Month</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select>
+        <select class="dob-select empty" id="dob-day" onchange="onDobChange()">
+          <option value="" disabled selected>Day</option>
+        </select>
+        <select class="dob-select empty" id="dob-year" onchange="onDobChange()">
+          <option value="" disabled selected>Year</option>
+        </select>
       </div>
-      <div class="error-msg" id="age-error">Please enter a valid age (16-100).</div>
+      <p class="privacy-note">Used only to calculate your targets.</p>
+      <div class="error-msg" id="age-error">Please enter a valid birthday.</div>
     </div>
 
     <!-- ── SCREEN 5: Units ───────────────────────────────────────────────── -->
@@ -630,7 +807,7 @@ html, body {
       <div class="error-msg" id="height-error">Please enter a valid height.</div>
     </div>
 
-    <!-- ── SCREEN 8: Target weight ─────────────────────────────────────── -->
+    <!-- ── SCREEN 8: Target weight + optional pace ────────────────────── -->
     <div class="screen" id="screen-8">
       <p class="q-label">Step 7 of 8</p>
       <h2 class="q-title" id="target-title">What's your target weight?</h2>
@@ -640,6 +817,18 @@ html, body {
         <span class="input-unit" id="target-unit">kg</span>
       </div>
       <div class="error-msg" id="target-error">Please enter a target weight.</div>
+
+      <!-- Optional pace selector. Only meaningful for lose/gain — hidden otherwise. -->
+      <details class="pace-toggle" id="pace-toggle">
+        <summary>
+          <span>Want to customize your pace?</span>
+          <span class="chev">+</span>
+        </summary>
+        <div class="pace-toggle-body">
+          <p class="pace-sub">Optional — you can keep the recommended pace.</p>
+          <div class="pace-cards" id="pace-cards"></div>
+        </div>
+      </details>
     </div>
 
     <!-- ── SCREEN 9: Activity ─────────────────────────────────────────── -->
@@ -695,6 +884,10 @@ html, body {
             Your personalized plan is ready
           </div>
         </div>
+        <div class="calc-trust" id="calc-trust">
+          <strong>You're not starting another complicated tracking app.</strong>
+          Calio helps you learn your targets, then track by text — no searching, no barcode scanning, no app to manage.
+        </div>
       </div>
     </div>
 
@@ -727,14 +920,25 @@ html, body {
             </div>
           </div>
         </div>
-        <div class="reveal-projection" id="reveal-projection" style="display:none">
-          <span>📅</span>
-          <span id="reveal-proj-text">Based on your targets...</span>
+        <!-- Projection mini chart (loss/gain) or maintain band -->
+        <div class="proj-card" id="proj-card" style="display:none">
+          <div class="proj-head">
+            <div class="proj-title" id="proj-title">Estimated path</div>
+            <div class="proj-sub">Based on your current inputs</div>
+          </div>
+          <div class="proj-svg-wrap">
+            <svg class="proj-svg" id="proj-svg" viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true"></svg>
+          </div>
+          <div class="proj-foot">
+            <span id="proj-start">Today</span>
+            <span id="proj-end">—</span>
+          </div>
+          <p class="proj-disclaimer">Your actual progress may vary.</p>
         </div>
         <details class="reveal-explain">
           <summary>How were these numbers calculated? <span style="font-size:16px">+</span></summary>
           <div class="reveal-explain-body">
-            Calio uses the <strong>Mifflin-St Jeor equation</strong> — the gold standard formula used by registered dietitians. It factors in your height, weight, age, and sex to calculate your basal metabolic rate, then adjusts for your activity level and goal (±500 cal for fat loss/gain). Macro splits are optimized for your specific goal.
+            Calio uses the <strong>Mifflin-St Jeor equation</strong> — a widely used formula. It factors in your height, weight, age, and sex to calculate your basal metabolic rate, then adjusts for your activity level and goal. Standard pace is ±500 cal for fat loss and +300 cal for gain; if you chose a different pace, that adjusts your calories accordingly. Macro splits are tuned for your specific goal.
           </div>
         </details>
         <button class="reveal-edit-link" onclick="goToScreen(getScreenFlow().indexOf(7))">
@@ -807,12 +1011,47 @@ html, body {
 // ── State ─────────────────────────────────────────────────────────────────────
 const data = {
   goal: null, gender: null, name: '',
-  age: null, units: null, weight: null,
+  age: null, dobMonth: null, dobDay: null, dobYear: null,
+  units: null, weight: null,
   height: null, targetWeight: null, activityLevel: null,
   phone: '', email: '',
   plan: null, priceId: null,
+  pace: null,             // optional: 'easy'|'standard'|'faster' (lose) | 'lean'|'standard'|'faster' (gain)
+  secondaryGoals: [],     // optional: up to 2 keys, frontend-only
+  trackedBefore: null,    // optional: 'lapsed'|'active'|'new', frontend-only
   calories: 0, protein: 0, carbs: 0, fat: 0
 };
+
+// Pace options & calorie deltas — must match lib/macros.js PACE_DELTAS
+const PACE_OPTIONS = {
+  lose: [
+    { value: 'easy',     name: 'Easy pace',     desc: '~250 cal/day deficit' },
+    { value: 'standard', name: 'Standard pace', desc: '~500 cal/day deficit' },
+    { value: 'faster',   name: 'Faster pace',   desc: '~750 cal/day deficit' }
+  ],
+  gain: [
+    { value: 'lean',     name: 'Lean pace',     desc: '~150 cal/day surplus' },
+    { value: 'standard', name: 'Standard pace', desc: '~300 cal/day surplus' },
+    { value: 'faster',   name: 'Faster pace',   desc: '~450 cal/day surplus' }
+  ]
+};
+const PACE_DELTAS = {
+  lose: { easy: -250, standard: -500, faster: -750 },
+  gain: { lean: 150,  standard: 300,  faster: 450 }
+};
+function paceDelta(goal, pace) {
+  if (goal !== 'lose' && goal !== 'gain') return 0;
+  const t = PACE_DELTAS[goal];
+  return t[pace] != null ? t[pace] : t.standard;
+}
+// Approx kg/week for projection (uses pace if set, else default rate)
+function weeklyKgRate(goal, pace) {
+  // 7700 kcal ≈ 1 kg of bodyweight change. Conservative for gain (muscle):
+  // half of surplus is treated as fat-free mass change visible on the scale.
+  const kcalPerKg = goal === 'gain' ? 4400 : 7700;
+  const delta = Math.abs(paceDelta(goal, pace) || (goal === 'lose' ? -500 : 300));
+  return (delta * 7) / kcalPerKg;
+}
 
 const PRICE_IDS = {
   monthly: 'price_1TRLLwBSGwHBXwI8t2p8ZQd6',
@@ -909,20 +1148,21 @@ function updateUI(flowIdx, screenId) {
   }
   document.getElementById('main-btn').style.display = '';
 
-  // Auto-focus inputs
+  // Auto-focus inputs (skip screen 4 — uses selects, not a text input)
   setTimeout(() => {
-    const inputs = { 3: 'name-input', 4: 'age-input', 6: 'weight-input', 7: 'height-input', 8: 'target-input', 12: 'phone-input' };
+    const inputs = { 3: 'name-input', 6: 'weight-input', 7: 'height-input', 8: 'target-input', 12: 'phone-input' };
     if (inputs[screenId]) {
       const el = document.getElementById(inputs[screenId]);
       if (el) el.focus();
     }
   }, 380);
 
-  // Screen 8 (target weight): update labels based on units
+  // Screen 8 (target weight): update labels based on units + build pace cards
   if (screenId === 8) {
     const isImp = data.units === 'imperial';
     document.getElementById('target-unit').textContent = isImp ? 'lbs' : 'kg';
     document.getElementById('target-sub').textContent = `Your ${data.goal === 'lose' ? 'goal' : 'target'} weight in ${isImp ? 'lbs' : 'kg'}.`;
+    buildPaceCards();
   }
 
   // Screen 6 (weight) + 7 (height): update units
@@ -954,12 +1194,146 @@ function selectCard(field, value, el) {
   const parent = el.closest('.cards-grid');
   parent.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  // Auto-advance after short delay
-  setTimeout(() => handleNext(), 280);
+  // Auto-advance after short delay — except on the goal screen, where the
+  // optional collapsible (secondary goals + past tracking) is below the cards
+  // and would be skipped past. User taps Continue manually there.
+  if (field !== 'goal') {
+    setTimeout(() => handleNext(), 280);
+  }
 }
 
 function onTextChange(field, value) { data[field] = value.trim(); }
 function onNumberChange(field, value) { data[field] = value ? parseFloat(value) : null; }
+
+// ── Birthday (3 selects) → derives age ────────────────────────────────────────
+function ageFromDob(year, month, day) {
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  const m = today.getMonth() + 1 - month;
+  if (m < 0 || (m === 0 && today.getDate() < day)) age--;
+  return age;
+}
+function populateDobSelects() {
+  const yearSel = document.getElementById('dob-year');
+  const daySel  = document.getElementById('dob-day');
+  if (!yearSel || !daySel) return;
+  // Years: this year - 100 → this year - 13 (we still validate ≥16 in handleNext)
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear - 13; y >= thisYear - 100; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+  rebuildDobDays();
+}
+function rebuildDobDays() {
+  const monthSel = document.getElementById('dob-month');
+  const yearSel  = document.getElementById('dob-year');
+  const daySel   = document.getElementById('dob-day');
+  const month = parseInt(monthSel.value);
+  const year  = parseInt(yearSel.value);
+  const prev  = parseInt(daySel.value);
+  // Days in selected month (defaults to 31 if month/year not set)
+  let maxDay = 31;
+  if (month && year) maxDay = new Date(year, month, 0).getDate();
+  else if (month)    maxDay = [31,29,31,30,31,30,31,31,30,31,30,31][month - 1];
+  // Clear all but first
+  while (daySel.options.length > 1) daySel.remove(1);
+  for (let d = 1; d <= maxDay; d++) {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    daySel.appendChild(opt);
+  }
+  if (prev && prev <= maxDay) daySel.value = prev;
+}
+function onDobChange() {
+  const monthSel = document.getElementById('dob-month');
+  const daySel   = document.getElementById('dob-day');
+  const yearSel  = document.getElementById('dob-year');
+  // Visual state for placeholders
+  [monthSel, daySel, yearSel].forEach(s => s.classList.toggle('empty', !s.value));
+  rebuildDobDays();
+  data.dobMonth = monthSel.value ? parseInt(monthSel.value) : null;
+  data.dobDay   = daySel.value   ? parseInt(daySel.value)   : null;
+  data.dobYear  = yearSel.value  ? parseInt(yearSel.value)  : null;
+  if (data.dobMonth && data.dobDay && data.dobYear) {
+    data.age = ageFromDob(data.dobYear, data.dobMonth, data.dobDay);
+  } else {
+    data.age = null;
+  }
+}
+
+// ── Optional secondary goals (chip multi-select, max 2) ──────────────────────
+function toggleSecondary(btn) {
+  const value = btn.dataset.value;
+  const all = document.querySelectorAll('#secondary-chips .chip');
+  if (value === 'simple') {
+    // "Keep it simple" clears the others and toggles itself
+    all.forEach(c => c.classList.remove('selected'));
+    if (!data.secondaryGoals.includes('simple')) {
+      btn.classList.add('selected');
+      data.secondaryGoals = ['simple'];
+    } else {
+      data.secondaryGoals = [];
+    }
+    return;
+  }
+  // De-select 'simple' if any other is chosen
+  data.secondaryGoals = data.secondaryGoals.filter(v => v !== 'simple');
+  all.forEach(c => { if (c.dataset.value === 'simple') c.classList.remove('selected'); });
+
+  if (data.secondaryGoals.includes(value)) {
+    data.secondaryGoals = data.secondaryGoals.filter(v => v !== value);
+    btn.classList.remove('selected');
+  } else {
+    if (data.secondaryGoals.length >= 2) {
+      // Drop oldest to keep at most 2
+      const dropped = data.secondaryGoals.shift();
+      const droppedBtn = Array.from(all).find(c => c.dataset.value === dropped);
+      if (droppedBtn) droppedBtn.classList.remove('selected');
+    }
+    data.secondaryGoals.push(value);
+    btn.classList.add('selected');
+  }
+}
+function setTrackedBefore(btn) {
+  const value = btn.dataset.value;
+  const all = document.querySelectorAll('#tracked-chips .chip');
+  if (data.trackedBefore === value) {
+    btn.classList.remove('selected');
+    data.trackedBefore = null;
+    return;
+  }
+  all.forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  data.trackedBefore = value;
+}
+
+// ── Optional pace selector ────────────────────────────────────────────────────
+function buildPaceCards() {
+  const wrap = document.getElementById('pace-cards');
+  const toggle = document.getElementById('pace-toggle');
+  if (!wrap || !toggle) return;
+  if (data.goal !== 'lose' && data.goal !== 'gain') {
+    toggle.style.display = 'none';
+    data.pace = null;
+    return;
+  }
+  toggle.style.display = '';
+  const opts = PACE_OPTIONS[data.goal];
+  wrap.innerHTML = opts.map(o => `
+    <div class="pace-card${data.pace === o.value ? ' selected' : ''}" data-value="${o.value}" onclick="selectPace('${o.value}')">
+      <div class="pace-name">${o.name}</div>
+      <div class="pace-desc">${o.desc}</div>
+    </div>
+  `).join('');
+}
+function selectPace(value) {
+  data.pace = value;
+  document.querySelectorAll('#pace-cards .pace-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.value === value);
+  });
+}
 
 function selectPlan(plan) {
   data.plan = plan;
@@ -994,8 +1368,21 @@ function validate(screenId) {
     case 2: return data.gender ? true : err('', '');
     case 3: return data.name.length >= 2 ? true : err('name-error', 'Please enter your first name.');
     case 4:
-      const age = parseInt(data.age);
-      return (age >= 16 && age <= 100) ? true : err('age-error', 'Please enter a valid age (16–100).');
+      if (!data.dobMonth || !data.dobDay || !data.dobYear) {
+        return err('age-error', 'Please select your full birthday.');
+      }
+      // Sanity-check: real date (e.g. not Feb 30)
+      const checkDate = new Date(data.dobYear, data.dobMonth - 1, data.dobDay);
+      if (checkDate.getFullYear() !== data.dobYear ||
+          checkDate.getMonth() !== data.dobMonth - 1 ||
+          checkDate.getDate() !== data.dobDay) {
+        return err('age-error', 'That date doesn\'t look valid.');
+      }
+      const age = ageFromDob(data.dobYear, data.dobMonth, data.dobDay);
+      data.age = age;
+      if (age < 16) return err('age-error', 'You must be at least 16 to use Calio.');
+      if (age > 100) return err('age-error', 'Please enter a valid birthday.');
+      return true;
     case 5: return data.units ? true : err('', '');
     case 6:
       const w = parseFloat(data.weight);
@@ -1080,8 +1467,10 @@ function calculatePlan() {
   const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
   const tdee = bmr * (mult[activityLevel] || 1.375);
 
-  // Goal-adjusted calories
-  let calories = goal === 'lose' ? tdee - 500 : goal === 'gain' ? tdee + 300 : tdee;
+  // Goal-adjusted calories — pace optional, defaults to standard.
+  let calories = (goal === 'recomp' || goal === 'maintain')
+    ? tdee
+    : tdee + paceDelta(goal, data.pace);
   // Floor at 1200, then round to nearest 50 for clean display
   calories = Math.max(Math.round(calories), 1200);
   calories = Math.round(calories / 50) * 50;
@@ -1102,6 +1491,12 @@ function runCalcAnimation() {
     }, delays[i]);
   });
 
+  // Trust slide appears partway through the animation (no extra screen).
+  setTimeout(() => {
+    const trust = document.getElementById('calc-trust');
+    if (trust) trust.classList.add('show');
+  }, 1700);
+
   setTimeout(() => {
     const { calories, protein, carbs, fat } = calculatePlan();
     data.calories = calories; data.protein = protein; data.carbs = carbs; data.fat = fat;
@@ -1110,7 +1505,7 @@ function runCalcAnimation() {
     currentScreen = 11;
     showScreen(revIdx);
     animateReveal(calories, protein, carbs, fat);
-  }, 2400);
+  }, 2700);
 }
 
 function animateCount(el, target, duration) {
@@ -1136,23 +1531,107 @@ function animateReveal(cal, prot, carbs, fat) {
     animateCount(document.getElementById('reveal-fat'),   fat,   700);
   }, 200);
 
-  // Projection
-  const projEl = document.getElementById('reveal-projection');
-  const projTx = document.getElementById('reveal-proj-text');
-  if (data.targetWeight && (data.goal === 'lose' || data.goal === 'gain')) {
-    const weightKg  = data.units === 'imperial' ? data.weight * 0.453592 : data.weight;
-    const targetKg  = data.units === 'imperial' ? data.targetWeight * 0.453592 : data.targetWeight;
-    const diff      = Math.abs(targetKg - weightKg);
-    const weeklyKg  = data.goal === 'lose' ? 0.5 : 0.3;
-    const weeks     = Math.round(diff / weeklyKg);
-    const goalDate  = new Date();
-    goalDate.setDate(goalDate.getDate() + weeks * 7);
-    const dateStr   = goalDate.toLocaleDateString('en-US', { month:'long', year:'numeric' });
-    projTx.innerHTML = `At this rate, you could reach <strong>${data.targetWeight}${data.units === 'imperial' ? 'lbs' : 'kg'}</strong> by <strong>${dateStr}</strong>`;
-    projEl.style.display = 'flex';
-  } else {
-    projEl.style.display = 'none';
+  renderProjection();
+}
+
+// ── Projection mini chart ─────────────────────────────────────────────────────
+// Renders one of:
+//   - lose/gain: small line chart from current → target weight, with timeline
+//   - maintain:  flat band showing weight stability
+//   - recomp:    skipped (consistency, not scale-driven)
+function renderProjection() {
+  const card  = document.getElementById('proj-card');
+  const svg   = document.getElementById('proj-svg');
+  const title = document.getElementById('proj-title');
+  const startEl = document.getElementById('proj-start');
+  const endEl   = document.getElementById('proj-end');
+  if (!card || !svg) return;
+
+  const unit = data.units === 'imperial' ? 'lbs' : 'kg';
+  const fmt  = n => Math.round(n * 10) / 10;
+
+  // Recomp: skip projection (focus is consistency, not scale weight)
+  if (data.goal === 'recomp') { card.style.display = 'none'; return; }
+
+  // Maintain: show a flat band visual
+  if (data.goal === 'maintain' || !data.targetWeight) {
+    if (!data.weight) { card.style.display = 'none'; return; }
+    title.textContent = 'Maintain your range';
+    startEl.textContent = `Today · ${fmt(data.weight)} ${unit}`;
+    endEl.textContent   = '12 weeks';
+    // Flat line with subtle natural fluctuation band
+    const W = 300, H = 90, pad = 12, midY = H / 2;
+    const points = [];
+    for (let i = 0; i <= 12; i++) {
+      const x = pad + (W - pad * 2) * (i / 12);
+      const wave = Math.sin(i * 0.9) * 3;
+      points.push(`${x},${midY + wave}`);
+    }
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="proj-fill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#0096FF" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#0096FF" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line x1="0" y1="${midY-10}" x2="${W}" y2="${midY-10}" stroke="#E5E7EB" stroke-dasharray="3 4" stroke-width="1"/>
+      <line x1="0" y1="${midY+10}" x2="${W}" y2="${midY+10}" stroke="#E5E7EB" stroke-dasharray="3 4" stroke-width="1"/>
+      <polyline points="${points.join(' ')}" fill="none" stroke="#0096FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    `;
+    card.style.display = 'block';
+    return;
   }
+
+  // Lose / Gain: convert to kg internally, project using pace
+  const weightKg = data.units === 'imperial' ? data.weight       * 0.453592 : data.weight;
+  const targetKg = data.units === 'imperial' ? data.targetWeight * 0.453592 : data.targetWeight;
+  const diffKg   = Math.abs(targetKg - weightKg);
+  const wkRate   = weeklyKgRate(data.goal, data.pace);
+  const weeks    = Math.max(1, Math.min(78, Math.round(diffKg / wkRate))); // clamp 1–78 weeks (~18 mo)
+  const goalDate = new Date();
+  goalDate.setDate(goalDate.getDate() + weeks * 7);
+  const dateStr  = goalDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+  title.textContent = `Estimated path to ${fmt(data.targetWeight)} ${unit}`;
+  startEl.textContent = `Today · ${fmt(data.weight)} ${unit}`;
+  endEl.textContent   = `${dateStr} · ${fmt(data.targetWeight)} ${unit}`;
+
+  // Build smooth curve from current → target across N weekly steps
+  const W = 300, H = 90, pad = 12;
+  const N = Math.min(weeks, 26); // cap visual density
+  const minW = Math.min(data.weight, data.targetWeight);
+  const maxW = Math.max(data.weight, data.targetWeight);
+  const span = Math.max(maxW - minW, 0.5);
+  const yFor = w => H - pad - ((w - minW) / span) * (H - pad * 2);
+
+  const pts = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    // Slight ease-out curve for visual interest
+    const ease = 1 - Math.pow(1 - t, 1.6);
+    const w = data.weight + (data.targetWeight - data.weight) * ease;
+    const x = pad + (W - pad * 2) * t;
+    pts.push([x, yFor(w)]);
+  }
+  const linePts = pts.map(p => `${p[0]},${p[1]}`).join(' ');
+  const areaPts = `${pad},${H} ${linePts} ${W - pad},${H}`;
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="proj-fill" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#0096FF" stop-opacity="0.20"/>
+        <stop offset="100%" stop-color="#0096FF" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <line x1="0" y1="${H * 0.25}" x2="${W}" y2="${H * 0.25}" stroke="#F3F4F6" stroke-width="1"/>
+    <line x1="0" y1="${H * 0.5}"  x2="${W}" y2="${H * 0.5}"  stroke="#F3F4F6" stroke-width="1"/>
+    <line x1="0" y1="${H * 0.75}" x2="${W}" y2="${H * 0.75}" stroke="#F3F4F6" stroke-width="1"/>
+    <polygon points="${areaPts}" fill="url(#proj-fill)"/>
+    <polyline points="${linePts}" fill="none" stroke="#0096FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="3.5" fill="#0096FF"/>
+    <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4" fill="#0096FF" stroke="white" stroke-width="2"/>
+  `;
+  card.style.display = 'block';
 }
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
@@ -1172,18 +1651,22 @@ async function createCheckout() {
 
   try {
     const payload = {
-      phone:         data.phone,
-      email:         data.email,
-      priceId:       data.priceId,
-      name:          data.name,
-      goal:          data.goal,
-      gender:        data.gender,
-      age:           data.age,
-      weight:        data.weight,
-      height:        data.height,
-      units:         data.units,
-      activityLevel: data.activityLevel,
-      targetWeight:  data.targetWeight
+      phone:           data.phone,
+      email:           data.email,
+      priceId:         data.priceId,
+      name:            data.name,
+      goal:            data.goal,
+      gender:          data.gender,
+      age:             data.age,
+      weight:          data.weight,
+      height:          data.height,
+      units:           data.units,
+      activityLevel:   data.activityLevel,
+      targetWeight:    data.targetWeight,
+      pace:            data.pace || null,
+      // Optional, frontend-collected — backend currently ignores these (no schema change in this pass).
+      secondaryGoals:  data.secondaryGoals,
+      trackedBefore:   data.trackedBefore
     };
 
     const res  = await fetch('/api/create-checkout', {
@@ -1211,6 +1694,7 @@ async function createCheckout() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 function init() {
   // Welcome screen removed — start directly at the goal question (screen 1)
+  populateDobSelects();
   const screens = getScreenFlow();
   currentScreen = screens[0]; // 1 (goal)
   selectPlan('yearly');

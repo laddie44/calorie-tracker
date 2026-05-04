@@ -368,6 +368,8 @@ function calculate() {
   }
 
   // Mirror of lib/macros.js — keep in sync with backend.
+  // Uses "standard" pace defaults (-500 / +300). Signup flow may use a
+  // different pace if the user customizes it; this public calculator does not.
   const mult = { '1': 1.2, '2': 1.375, '3': 1.55, '4': 1.725 };
   const tdee = bmr * mult[state.activity];
   let calories = state.goal === 'lose' ? tdee - 500 : state.goal === 'gain' ? tdee + 300 : tdee;
