@@ -6,6 +6,7 @@
 
 const { supabase }        = require('../lib/supabase');
 const { calculateMacros } = require('../lib/macros');
+const memory             = require('../lib/meal-memory');
 const { OpenAI }          = require('openai');
 const twilio              = require('twilio');
 const crypto              = require('crypto');
@@ -929,13 +930,263 @@ function needsWebSearch(text) {
 
 
 
+// ── Meal Memory helpers ──────────────────────────────────────────────────────
+// Per-user only. Never use one user's data for another. No medical claims.
+
+async function handleSaveLastAs(phone, message, user, mealName) {
+  const cleanName = String(mealName || '').trim();
+  if (!cleanName) {
+    const reply = "What should I call it? Try 'save this as protein shake'.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const { data: last } = await supabase
+    .from('food_logs')
+    .select('*')
+    .eq('user_phone', phone)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!last) {
+    const reply = "Nothing to save yet — log a meal first, then text 'save this as [name]'.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const titled = memory.titleCase(cleanName);
+  let result = null;
+  try {
+    result = await memory.createOrUpdateSavedMeal(phone, {
+      meal_name:             titled,
+      canonical_description: last.food_description,
+      calories:              last.calories,
+      protein_g:             last.protein_g,
+      carbs_g:               last.carbs_g,
+      fat_g:                 last.fat_g,
+      source:                'manual'
+    });
+  } catch (err) {
+    console.error('save meal failed:', err);
+  }
+
+  if (!result) {
+    const reply = "Couldn't save that one — Meal Memory may not be set up yet. Try again in a moment.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const verb = result.updated ? 'Updated' : 'Saved';
+  const reply = `${verb} ✅ Next time, just text '${titled.toLowerCase()}' and I'll log it for you.`;
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+async function handleListSavedMeals(phone, message) {
+  const meals = await memory.listSavedMeals(phone);
+  let reply;
+  if (!meals || meals.length === 0) {
+    reply = "No saved meals yet. After you log a meal, text 'save this as [name]' and I'll remember it.";
+  } else {
+    const top = meals.slice(0, 10);
+    const lines = top.map((m, i) => `${i + 1}. ${m.meal_name} — ${m.calories} cal`);
+    const more = meals.length > top.length ? `\n…and ${meals.length - top.length} more` : '';
+    reply = `Your saved meals:\n${lines.join('\n')}${more}\n\nText any saved meal name to log it.`;
+  }
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+async function handleDeleteSavedMeal(phone, message, name) {
+  const meal = await memory.findSavedMealByName(phone, name);
+  if (!meal) {
+    const reply = `No saved meal named '${name}'. Text 'my meals' to see what's saved.`;
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+  const ok = await memory.deleteSavedMealById(phone, meal.id);
+  const reply = ok
+    ? `Deleted '${meal.meal_name}' from your saved meals. (Past food logs are untouched.)`
+    : "Couldn't delete that one — try again in a moment.";
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+async function handleRenameSavedMeal(phone, message, oldName, newName) {
+  const meal = await memory.findSavedMealByName(phone, oldName);
+  if (!meal) {
+    const reply = `No saved meal named '${oldName}'. Text 'my meals' to see what's saved.`;
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+  const titled = memory.titleCase(newName);
+  const normalized = memory.normalizeMealName(titled);
+  if (!normalized) {
+    const reply = "What's the new name? Try 'rename meal protein shake to morning shake'.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const collision = await memory.findSavedMealByName(phone, titled);
+  if (collision && collision.id !== meal.id) {
+    const reply = `You already have a saved meal called '${collision.meal_name}'. Pick a different name?`;
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('saved_meals')
+      .update({ meal_name: titled, normalized_name: normalized, updated_at: new Date().toISOString() })
+      .eq('id', meal.id);
+    if (error) throw error;
+  } catch (err) {
+    console.error('rename meal failed:', err);
+    const reply = "Couldn't rename that one — try again in a moment.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const reply = `Renamed '${meal.meal_name}' to '${titled}'.`;
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+async function handleUpdateSavedMealFromLast(phone, message, name) {
+  const meal = await memory.findSavedMealByName(phone, name);
+  if (!meal) {
+    const reply = `No saved meal named '${name}'. Text 'my meals' to see what's saved.`;
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+  const { data: last } = await supabase
+    .from('food_logs')
+    .select('*')
+    .eq('user_phone', phone)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!last) {
+    const reply = "Log your latest version first, then text 'update meal [name] from last'.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  try {
+    const { error } = await supabase.from('saved_meals').update({
+      canonical_description: String(last.food_description).slice(0, 300),
+      calories:              last.calories,
+      protein_g:             last.protein_g,
+      carbs_g:               last.carbs_g,
+      fat_g:                 last.fat_g,
+      updated_at:            new Date().toISOString()
+    }).eq('id', meal.id);
+    if (error) throw error;
+  } catch (err) {
+    console.error('update meal from last failed:', err);
+    const reply = "Couldn't update that one — try again in a moment.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const reply = `Updated '${meal.meal_name}' with your latest version. ✅\n${last.calories} cal · ${last.protein_g}g P · ${last.carbs_g}g C · ${last.fat_g}g F`;
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+async function handleSavedMealShortcut(phone, message, user, meal) {
+  try {
+    await memory.logSavedMeal(phone, meal);
+    await updateStreak(phone, user);
+
+    const tracked = user.tracked_macros || ['protein', 'carbs', 'fat'];
+    const macroParts = [
+      `~${meal.calories} cal`,
+      tracked.includes('protein') ? `${meal.protein_g}g P` : null,
+      tracked.includes('carbs')   ? `${meal.carbs_g}g C`   : null,
+      tracked.includes('fat')     ? `${meal.fat_g}g F`     : null
+    ].filter(Boolean).join(' · ');
+
+    const reply = `Logged: ${meal.meal_name}\n${macroParts}`;
+    await saveMessage(phone, 'user',      message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  } catch (err) {
+    console.error('saved meal log failed:', err);
+    const reply = "Couldn't log that — try texting the food details instead.";
+    await saveMessage(phone, 'user',      message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+}
+
+async function handlePendingSuggestionResponse(phone, message, user, pending, parsed) {
+  if (parsed.kind === 'no') {
+    await memory.updateSuggestionStatus(pending.id, 'rejected');
+    const reply = "No problem — I won't suggest that one again for a while.";
+    await saveMessage(phone, 'user',      message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  // 'yes' or 'rename'
+  const name = parsed.kind === 'rename' ? parsed.name : pending.suggested_name;
+
+  let result = null;
+  try {
+    result = await memory.createOrUpdateSavedMeal(phone, {
+      meal_name:             name,
+      canonical_description: pending.canonical_description,
+      calories:              pending.calories,
+      protein_g:             pending.protein_g,
+      carbs_g:               pending.carbs_g,
+      fat_g:                 pending.fat_g,
+      source:                'suggested'
+    });
+  } catch (err) {
+    console.error('accept suggestion failed:', err);
+  }
+
+  if (!result) {
+    await memory.updateSuggestionStatus(pending.id, 'ignored');
+    const reply = "Couldn't save that one — try again in a moment.";
+    await saveMessage(phone, 'user',      message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  await memory.updateSuggestionStatus(pending.id, 'accepted');
+  const reply = `Saved ✅ Next time, just text '${name.toLowerCase()}'.`;
+  await saveMessage(phone, 'user',      message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
 async function handleFoodLog(phone, message, user) {
   const lower = message.toLowerCase().trim();
 
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (lower === 'help') {
-    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "delete account" → remove all your data\n• "weight" → see your weight history\n• "help" → this list\n\nhttps://www.textcalio.com/dashboard?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
+    return `Calio commands 📋\n\n• Any food → log it\n• Photo → scan it 📸\n• "stats" → today's totals\n• "my targets" → see your targets\n• "edit last [fix]" → correct last entry\n• "delete last" → remove last entry\n• "save this as [name]" → save meal shortcut\n• "my meals" → list saved meals\n• "set macros" → choose what to track\n• "update goals" → recalculate targets\n• "weight" → see your weight history\n• "delete account" → remove all your data\n• "help" → this list\n\nhttps://www.textcalio.com/dashboard?u=${user.dashboard_token}\n\nText STOP to unsubscribe.`;
   }
 
   if (lower === 'my targets' || lower === 'my goals' || lower === 'targets' || lower === 'my macros') {
@@ -1038,6 +1289,36 @@ async function handleFoodLog(phone, message, user) {
     }
   }
 
+  // ── Meal Memory commands ─────────────────────────────────────────────────────
+  // "my meals" / "saved meals"
+  if (lower === 'my meals' || lower === 'saved meals' || lower === 'my saved meals') {
+    return handleListSavedMeals(phone, message);
+  }
+
+  // "save this as [name]" / "save last as [name]" / "save that as [name]"
+  const saveAsMatch = message.match(/^\s*save\s+(?:this|last|that|it)\s+as\s+(.{1,80})\s*$/i);
+  if (saveAsMatch) {
+    return handleSaveLastAs(phone, message, user, saveAsMatch[1].trim());
+  }
+
+  // "rename meal X to Y" — must come before "delete meal" (longer prefix wins)
+  const renameMealMatch = message.match(/^\s*rename\s+(?:saved\s+)?meal\s+(.+?)\s+to\s+(.{1,80})\s*$/i);
+  if (renameMealMatch) {
+    return handleRenameSavedMeal(phone, message, renameMealMatch[1].trim(), renameMealMatch[2].trim());
+  }
+
+  // "update meal X from last"
+  const updateMealMatch = message.match(/^\s*update\s+(?:saved\s+)?meal\s+(.+?)\s+from\s+last\s*$/i);
+  if (updateMealMatch) {
+    return handleUpdateSavedMealFromLast(phone, message, updateMealMatch[1].trim());
+  }
+
+  // "delete meal X" — guard against "delete meal" with no name
+  const deleteMealMatch = message.match(/^\s*delete\s+(?:saved\s+)?meal\s+(.{1,80})\s*$/i);
+  if (deleteMealMatch) {
+    return handleDeleteSavedMeal(phone, message, deleteMealMatch[1].trim());
+  }
+
   // ── Weight commands ──────────────────────────────────────────────────────────
 
   if (lower === 'weight' || lower === 'my weight' || lower === 'weight history') {
@@ -1047,6 +1328,24 @@ async function handleFoodLog(phone, message, user) {
   // Auto-detect weight entry (e.g. "75kg", "165 lbs", "weighed 180")
   const weightResult = await handleWeightLog(phone, message, user);
   if (weightResult !== null) return weightResult;
+
+  // ── Pending Meal Memory suggestion response (yes / no / "call it X") ─────────
+  // Only intercept if a pending suggestion exists — otherwise these words
+  // continue to normal food logging or AI clarification.
+  const pendingSuggestion = await memory.getPendingSuggestion(phone);
+  if (pendingSuggestion) {
+    const parsedReply = memory.parseSuggestionResponse(message);
+    if (parsedReply) {
+      return handlePendingSuggestionResponse(phone, message, user, pendingSuggestion, parsedReply);
+    }
+  }
+
+  // ── Saved-meal shortcut: exact normalized name match logs the saved meal ─────
+  // Only matches if the entire message normalizes to a saved meal name.
+  const savedMatch = await memory.findSavedMealByText(phone, message);
+  if (savedMatch) {
+    return handleSavedMealShortcut(phone, message, user, savedMatch);
+  }
 
   // ── Natural correction: update the previous log instead of creating a new one ─
   // If the message contains correction language ("actually", "I meant", etc.)
@@ -1119,7 +1418,7 @@ async function handleFoodLog(phone, message, user) {
   const log = parseLogLine(reply);
 
   if (log) {
-    await saveFoodLog(phone, log);
+    const savedLog = await saveFoodLog(phone, log);
     await updateStreak(phone, user);
 
     const tracked    = user.tracked_macros || ['protein', 'carbs', 'fat'];
@@ -1137,8 +1436,22 @@ async function handleFoodLog(phone, message, user) {
       ? `${textBefore}\n${macroParts}`
       : `Logged: ${log.description}\n${macroParts}`;
 
-    await saveMessage(phone, 'assistant', confirm);
-    return confirm;
+    // Best-effort: detect repeated meals and append a save suggestion.
+    // Never block the food log if this fails.
+    let suggestionTail = '';
+    try {
+      const suggestion = await memory.maybeSuggestMealMemory(phone, savedLog);
+      if (suggestion) {
+        const lcName = suggestion.suggested_name.toLowerCase();
+        suggestionTail = `\n\n💡 I noticed you've logged this a few times. Want me to save it as '${suggestion.suggested_name}' so next time you can just text '${lcName}'? (reply yes / no)`;
+      }
+    } catch (e) {
+      console.warn('meal memory suggestion error:', e.message);
+    }
+
+    const finalReply = confirm + suggestionTail;
+    await saveMessage(phone, 'assistant', finalReply);
+    return finalReply;
   }
 
   // No food identified — clarifying question or non-food reply
@@ -1203,9 +1516,21 @@ module.exports = async (req, res) => {
       return res.send(twiml("You've been unsubscribed from Calio messages. Text START to resubscribe anytime."));
     }
 
-    if (msgLower === 'start' || msgLower === 'unstop' || msgLower === 'yes') {
+    if (msgLower === 'start' || msgLower === 'unstop') {
       await supabase.from('users').update({ opted_out: false }).eq('phone', phone);
       return res.send(twiml("Welcome back! You're resubscribed to Calio. Text me anything you eat to start logging."));
+    }
+
+    // "yes" is treated as opt-in ONLY when the user is currently opted_out.
+    // Otherwise it may be a Meal Memory confirmation — let it fall through.
+    if (msgLower === 'yes') {
+      const { data: maybeOptedOut } = await supabase
+        .from('users').select('opted_out').eq('phone', phone).maybeSingle();
+      if (maybeOptedOut?.opted_out) {
+        await supabase.from('users').update({ opted_out: false }).eq('phone', phone);
+        return res.send(twiml("Welcome back! You're resubscribed to Calio. Text me anything you eat to start logging."));
+      }
+      // fall through to normal routing
     }
 
     if (msgLower === 'help') {
