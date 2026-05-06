@@ -5,6 +5,7 @@
 // ============================================================
 
 const { supabase } = require('../lib/supabase');
+const { listSavedMeals } = require('../lib/meal-memory');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -80,6 +81,14 @@ module.exports = async (req, res) => {
       .gte('logged_date', thirtyDaysAgo)
       .order('logged_date', { ascending: true });
 
+    // Saved meals — degrades to [] if Meal Memory tables aren't migrated yet
+    let savedMeals = [];
+    try {
+      savedMeals = await listSavedMeals(user.phone);
+    } catch (e) {
+      console.warn('listSavedMeals failed:', e.message);
+    }
+
     return res.json({
       user: {
         name:               user.name,
@@ -95,6 +104,7 @@ module.exports = async (req, res) => {
       logs:        todayLogs,
       weeklyData,
       weightData:  weightData || [],
+      savedMeals:  savedMeals || [],
       today
     });
   }

@@ -230,6 +230,33 @@ main { padding: 20px 0 60px; }
 
 .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--text); color: #fff; padding: 11px 18px; border-radius: 100px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; z-index: 500; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Meal Memory section ─────────────────────────────────────────────── */
+.mm-summary { background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
+.mm-summary summary {
+  list-style: none; cursor: pointer; padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.mm-summary summary::-webkit-details-marker { display: none; }
+.mm-title-wrap { display: flex; flex-direction: column; }
+.mm-title { font-size: 14px; font-weight: 600; }
+.mm-subtitle { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.mm-chevron { font-size: 14px; color: var(--text3); transition: transform 0.2s; }
+.mm-summary[open] .mm-chevron { transform: rotate(90deg); }
+.mm-body { padding: 0 0 4px; }
+.mm-empty { padding: 18px 16px 22px; text-align: center; font-size: 13px; color: var(--text2); line-height: 1.5; }
+.mm-list { display: flex; flex-direction: column; }
+.mm-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 0.5px solid var(--border); }
+.mm-item-info { flex: 1; min-width: 0; }
+.mm-item-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mm-item-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.mm-actions { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
+.mm-log-btn { padding: 6px 11px; border-radius: 100px; border: none; background: #0096FF; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+.mm-log-btn:active { opacity: 0.75; }
+.mm-icon-btn { width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text3); transition: background 0.12s, color 0.12s; }
+.mm-icon-btn svg { width: 13px; height: 13px; pointer-events: none; }
+.mm-icon-btn.edit:active { background: #e8f0ff; color: #007aff; }
+.mm-icon-btn.trash:active { background: #ffe5e5; color: #ff3b30; }
 </style>
 </head>
 <body>
@@ -476,6 +503,7 @@ function formatFoodDisplayName(desc) {
 }
 
 let weeklyDataStore = [];
+let savedMealsStore = [];
 
 function buildChart(weeklyData, goal) {
   weeklyDataStore = weeklyData;
@@ -577,6 +605,44 @@ function render(data) {
     : `<div class="log-list">${logs.map(l => `<div class="log-item" id="li-${l.id}"><div class="log-food-wrap"><div class="log-food-name">${formatFoodDisplayName(l.food_description)}</div><div class="log-food-macros">${macroLine(l)}</div></div><div class="log-cal-wrap"><div class="log-cal-num">${l.calories||0}</div><div class="log-cal-lbl">cal</div></div><div class="log-actions"><button class="act-btn edit" onclick='openEdit(${JSON.stringify(l)})' aria-label="Edit">${ICON_EDIT}</button><button class="act-btn trash" onclick="deleteLog('${l.id}')" aria-label="Delete">${ICON_TRASH}</button></div></div>`).join('')}</div>`;
 
   const logSection = `<div class="section fade-up d5"><div class="section-label">Today's log</div>${logInner}</div>`;
+
+  const savedMeals = data.savedMeals || [];
+  savedMealsStore = savedMeals;
+  const mmInner = savedMeals.length === 0
+    ? `<div class="mm-empty">No saved meals yet.<br>When you repeat a meal, Calio can remember it for next time.</div>`
+    : `<div class="mm-list">${savedMeals.map(m => {
+        const macroText = [
+          tracked.includes('protein') ? `${Math.round(m.protein_g||0)}g P` : null,
+          tracked.includes('carbs')   ? `${Math.round(m.carbs_g||0)}g C`   : null,
+          tracked.includes('fat')     ? `${Math.round(m.fat_g||0)}g F`     : null
+        ].filter(Boolean).join(' · ');
+        const usageBit = m.usage_count ? ` · used ${m.usage_count}×` : '';
+        const lastBit  = m.last_used_at ? ` · last ${new Date(m.last_used_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : '';
+        return `<div class="mm-item" id="mm-${m.id}">
+          <div class="mm-item-info">
+            <div class="mm-item-name">${escapeHtml(m.meal_name)}</div>
+            <div class="mm-item-meta">${m.calories} cal${macroText ? ' · ' + macroText : ''}${usageBit}${lastBit}</div>
+          </div>
+          <div class="mm-actions">
+            <button class="mm-log-btn" onclick="logSavedMeal('${m.id}')">Log</button>
+            <button class="mm-icon-btn edit"  onclick="openSavedMealEdit('${m.id}')" aria-label="Rename">${ICON_EDIT}</button>
+            <button class="mm-icon-btn trash" onclick="deleteSavedMeal('${m.id}')"     aria-label="Delete">${ICON_TRASH}</button>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+  const savedMealsSection = `<div class="section fade-up d5">
+    <div class="section-label">Meal Memory</div>
+    <details class="mm-summary"${savedMeals.length > 0 ? ' open' : ''}>
+      <summary>
+        <div class="mm-title-wrap">
+          <div class="mm-title">Saved meals${savedMeals.length ? ` (${savedMeals.length})` : ''}</div>
+          <div class="mm-subtitle">Saved shortcuts you can text anytime.</div>
+        </div>
+        <div class="mm-chevron">›</div>
+      </summary>
+      <div class="mm-body">${mmInner}</div>
+    </details>
+  </div>`;
   // "Log a meal" CTA — tapping opens the SMS app pre-addressed to Calio's number
   const cta = `<div class="section fade-up d6">
     <a class="log-cta-card" href="sms:+16474244438" target="_self">
@@ -591,7 +657,13 @@ function render(data) {
   </div>`;
 
   $('username').textContent = user.name || 'Calio';
-  $('main').innerHTML = calCard + pillRow + chartSection + weightSection + macroSection + logSection + cta;
+  $('main').innerHTML = calCard + pillRow + chartSection + weightSection + macroSection + logSection + savedMealsSection + cta;
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function openEdit(log) {
@@ -651,6 +723,60 @@ async function deleteLog(id) {
   } catch {
     if (el) el.classList.remove('removing');
     toast('Could not delete — try again');
+  }
+}
+
+async function logSavedMeal(id) {
+  try {
+    const res = await fetch(`/api/saved-meals?u=${encodeURIComponent(TOKEN)}&action=log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (!res.ok) throw new Error();
+    toast('Logged ✓');
+    loadData();
+  } catch {
+    toast('Could not log — try again');
+  }
+}
+
+async function deleteSavedMeal(id) {
+  const meal = savedMealsStore.find(m => m.id === id);
+  const name = meal ? meal.meal_name : 'this saved meal';
+  if (!confirm(`Delete saved meal "${name}"? Your past food logs will not be affected.`)) return;
+  try {
+    const res = await fetch(`/api/saved-meals?u=${encodeURIComponent(TOKEN)}&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    toast('Saved meal deleted ✓');
+    loadData();
+  } catch {
+    toast('Could not delete — try again');
+  }
+}
+
+function openSavedMealEdit(id) {
+  const meal = savedMealsStore.find(m => m.id === id);
+  if (!meal) return;
+  const newName = prompt('Rename saved meal:', meal.meal_name || '');
+  if (newName == null) return;
+  const trimmed = String(newName).trim();
+  if (!trimmed || trimmed === meal.meal_name) return;
+  renameSavedMeal(meal.id, trimmed);
+}
+
+async function renameSavedMeal(id, newName) {
+  try {
+    const res = await fetch(`/api/saved-meals?u=${encodeURIComponent(TOKEN)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, meal_name: newName })
+    });
+    if (!res.ok) throw new Error();
+    toast('Renamed ✓');
+    loadData();
+  } catch {
+    toast('Could not rename — try again');
   }
 }
 
