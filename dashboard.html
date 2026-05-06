@@ -476,14 +476,30 @@ function buildWeightCard(weightData, units) {
 // Strips verbose prefixes, applies title case, shortens multi-ingredient entries.
 // Max ~32 chars to keep the log list tidy.
 function formatFoodDisplayName(desc) {
-  if (!desc) return 'Food item';
+  if (!desc) return 'Untitled meal';
+
+  // Strip AI prompt artifacts that historically leaked into food_description:
+  // leading ~, ~:, :, ", ', “, ”, “Logged:” / “estimate:” prefixes
+  let name = String(desc).trim()
+    .replace(/^[\s~:"'`“”‘’]+/, '')
+    .replace(/^(?:logged|estimate|log)\s*:?\s*/i, '')
+    .replace(/[\s.…]+$/, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  // Replace known garbage placeholders with a clean fallback
+  if (/^(food\s+item|logged|untitled.*)$/i.test(name) || /^sure[,!.\s]/i.test(name) || /^here'?s\b/i.test(name) || /^got it[,!.\s]/i.test(name)) {
+    return 'Untitled meal';
+  }
 
   // Strip common verbal logging prefixes ("I had", "I actually had", etc.)
-  let name = desc.trim()
+  name = name
     .replace(/^(I\s+(actually\s+|just\s+)?(had\s+a\s+|ate\s+a\s+|had\s+an\s+|ate\s+an\s+|had\s+|ate\s+|have\s+|ordered\s+|got\s+))/i, '')
     .replace(/^(it was\s+|that was\s+|make that\s+|actually\s+a\s+|actually\s+an\s+|actually\s+)/i, '')
     .replace(/^(a |an )/i, '')
     .trim();
+
+  if (!name) return 'Untitled meal';
 
   // Title case helper
   const titleCase = s => s.toLowerCase().replace(/(^|[\s\-\/])\S/g, c => c.toUpperCase());

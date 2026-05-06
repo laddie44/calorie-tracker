@@ -126,9 +126,13 @@ async function updateStreak(phone, user) {
 }
 
 async function saveFoodLog(phone, log) {
+  // Always sanitize the description before persisting. The dashboard reads
+  // food_description directly, so anything ugly (e.g. leading "~:", "Logged:",
+  // "Food item", "Sure, here's the breakdown...") would surface to users.
+  const safeDescription = String(log.description || '').slice(0, 200);
   const { data, error } = await supabase.from('food_logs').insert({
     user_phone:       phone,
-    food_description: String(log.description).slice(0, 200),
+    food_description: safeDescription,
     calories:         Math.round(Number(log.calories)),
     protein_g:        Math.round(Number(log.protein_g) * 10) / 10,
     carbs_g:          Math.round(Number(log.carbs_g)   * 10) / 10,
@@ -138,7 +142,116 @@ async function saveFoodLog(phone, log) {
   return data;
 }
 
-// Robust LOG parser — primary parser + fallback for conversational macro extraction
+// Build the final food-log row to persist. Single source of truth for
+// description (used as the dashboard display name) and reconciled macros.
+function buildFinalLog(parsed, userText) {
+  const reconciled = memory.reconcileMacrosAndCalories(parsed);
+
+  // Prefer AI-provided display_name → sanitized description → rules-based generator → user text
+  const displayName = (() => {
+    const aiDisplay = memory.sanitizeDescription(parsed.display_name);
+    if (aiDisplay && aiDisplay.length <= 60) return memory.titleCase(aiDisplay);
+    const generated = memory.generateMealDisplayName(parsed.description, userText);
+    return memory.titleCase(generated);
+  })();
+
+  return {
+    description: displayName,
+    canonical:   memory.sanitizeDescription(parsed.description) || userText || displayName,
+    calories:    reconciled.calories,
+    protein_g:   reconciled.protein_g,
+    carbs_g:     reconciled.carbs_g,
+    fat_g:       reconciled.fat_g,
+    adjusted:    reconciled.adjusted
+  };
+}
+
+// Build the SMS confirmation purely from the saved log row — never from
+// the AI's free-form text. Eliminates duplicate macro lines and ensures
+// the message matches what's stored.
+function buildConfirmSms(savedLog, user, opts = {}) {
+  const tracked = user.tracked_macros || ['protein', 'carbs', 'fat'];
+  const macroParts = [
+    `~${Math.round(savedLog.calories)} cal`,
+    tracked.includes('protein') ? `${savedLog.protein_g}g P` : null,
+    tracked.includes('carbs')   ? `${savedLog.carbs_g}g C`   : null,
+    tracked.includes('fat')     ? `${savedLog.fat_g}g F`     : null
+  ].filter(Boolean).join(' · ');
+  const prefix = opts.searchEmoji ? ' 🔍' : '';
+  return `Logged: ${savedLog.food_description}${prefix}\n${macroParts}`;
+}
+
+// Look up a recent food_log for this same user that matches the current
+// user message (after normalization). If found, reuse the macros for
+// consistency rather than re-querying the AI.
+//
+// Skips when:
+//  - the message contains correction/portion-change language
+//  - no exact normalized match was found
+//  - the prior log has obviously bad data (calories <= 0)
+async function findRecentExactMatchLog(phone, message, windowDays = 30) {
+  if (!phone || !message) return null;
+
+  const lower = String(message).toLowerCase();
+  // Don't reuse if the user is correcting or explicitly changing portion size.
+  // (Standalone "half" / "quarter" inside an ingredient list IS a quantity, not a
+  //  correction — those should NOT block reuse.)
+  if (/\b(actually|i meant|i mean|instead\s+of|instead|correction|edit\b|change(?:\s+(?:that|it))?|make\s+(?:it|that)|doubled?|tripled?|halved|twice\s+as)\b/i.test(lower)) {
+    return null;
+  }
+
+  const normalizedNow = memory.canonicalForm(message);
+  if (!normalizedNow || normalizedNow.split(' ').length < 2) return null;
+
+  // Look at this user's last N user messages — pull from food_logs by
+  // joining via timestamps. Simpler: query conversation_history for
+  // recent user messages, find one whose canonical form matches.
+  try {
+    const since = new Date(Date.now() - windowDays * 86400000).toISOString();
+    const { data: msgs } = await supabase
+      .from('conversation_history')
+      .select('content, created_at')
+      .eq('user_phone', phone)
+      .eq('role', 'user')
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(120);
+    if (!msgs || msgs.length === 0) return null;
+
+    const match = msgs.find(m => {
+      if (!m.content) return false;
+      const c = memory.canonicalForm(m.content);
+      return c && c === normalizedNow;
+    });
+    if (!match) return null;
+
+    // Find the next assistant message after this user message — but actually
+    // we just want the food_log created near this timestamp.
+    const matchTime = new Date(match.created_at).getTime();
+    const windowStart = new Date(matchTime - 1000).toISOString();
+    const windowEnd   = new Date(matchTime + 5 * 60 * 1000).toISOString();
+    const { data: logs } = await supabase
+      .from('food_logs')
+      .select('id, food_description, calories, protein_g, carbs_g, fat_g, created_at')
+      .eq('user_phone', phone)
+      .gte('created_at', windowStart)
+      .lte('created_at', windowEnd)
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (!logs || logs.length === 0) return null;
+    const log = logs[0];
+    if (!log.calories || log.calories <= 0) return null;
+    return log;
+  } catch (e) {
+    console.warn('[consistency] findRecentExactMatchLog failed — falling through to AI:', e.message);
+    return null;
+  }
+}
+
+// Robust LOG parser — primary parser + fallback for conversational macro extraction.
+// Returns the FIRST valid LOG object. Emits an extra `display_name` field if the
+// AI provided one (the new prompt format requests it).
 function parseLogLine(reply) {
   // ── Primary: look for LOG:{...} ────────────────────────────────────────────
   const logIdx = reply.indexOf('LOG:');
@@ -153,8 +266,17 @@ function parseLogLine(reply) {
         }
         if (jsonEnd !== -1) {
           const parsed = JSON.parse(reply.slice(jsonStart, jsonEnd));
-          // Validate it has the required fields
-          if (parsed.calories && parsed.protein_g !== undefined) return parsed;
+          if (parsed.calories != null && parsed.protein_g !== undefined) {
+            // display_name is optional — older AI responses won't have it
+            return {
+              display_name: parsed.display_name || '',
+              description:  parsed.description || parsed.display_name || '',
+              calories:     parsed.calories,
+              protein_g:    parsed.protein_g,
+              carbs_g:      parsed.carbs_g,
+              fat_g:        parsed.fat_g
+            };
+          }
         }
       }
     } catch (e) {
@@ -170,15 +292,15 @@ function parseLogLine(reply) {
   const fatMatch  = reply.match(/(\d+(?:\.\d+)?)\s*g\s*F(?:at)?/i);
 
   if (calMatch && protMatch && carbMatch && fatMatch) {
-    // Extract a short food description from the reply
-    // Look for common patterns like "Logged your X" or use first meaningful line
-    // Pull description from first line of reply as best guess
-    let description = 'Food item';
+    // Pull description from first line of reply as best guess; sanitization
+    // happens later in buildFinalLog().
+    let description = '';
     const firstLine = reply.split('\n')[0].replace(/logged|your|log|thanks|!/gi, '').trim();
     if (firstLine.length > 3 && firstLine.length < 80) description = firstLine;
 
     console.log('Fallback parser rescued log from conversational response');
     return {
+      display_name: '',
       description,
       calories:  parseFloat(calMatch[1]),
       protein_g: parseFloat(protMatch[1]),
@@ -855,29 +977,32 @@ const FOOD_PROMPT_SEARCH = `You are Calio, an AI nutrition assistant by TextCali
 The user described food they ate. Use your web search tool to find the exact nutrition data — restaurant website, brand nutrition page, or USDA database. Use the real verified numbers you find.
 
 RESPONSE FORMAT — exactly two lines, nothing else:
-Line 1: "Logged: [food name] 🔍" — max 12 words, no URLs, no citations, no source names, no parentheses
+Line 1: "Logged: [short clean name] 🔍" — max 12 words, no URLs, no citations, no source names, no parentheses
 Line 2: The LOG line (must start with LOG:)
 
-LOG:{"description":"Item name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+LOG:{"display_name":"Short Title-Case Name","description":"What user actually ate","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
 STRICT RULES:
 - Your entire response must be exactly 2 lines — confirmation then LOG line
+- Output exactly ONE LOG line. Never output two macro lines, never output alternate totals.
+- Honor the EXACT quantities the user gave. If they say "200g uncooked beef", use 200g uncooked beef. Do not silently convert to cooked weight or change portions.
 - Do NOT include URLs, links, citations, footnotes, source names, or parenthetical references anywhere
 - Do NOT write "According to..." or mention where you found the data
 - Do NOT add any text after the LOG line's closing }
-- Do NOT add explanation if exact nutrition is unavailable — use your best estimate and the same 2-line format
 - LOG line must start with LOG: on its own line
-- Valid JSON only — numbers, no units inside the JSON, all 4 fields required
+- Valid JSON only — numbers, no units inside the JSON, all 6 fields required
+- display_name must be 2-4 words, Title Case, human-readable (e.g., "Starbucks Sausage Sandwich", "Chick-fil-A Spicy Deluxe", "Berry Protein Shake")
+- description should briefly capture the actual items (e.g., "Spicy deluxe + waffle fries + lemonade")
 - Sum ALL items mentioned into ONE log line total
 - Include sides, drinks, sauces if mentioned
 
 Good example:
-Logged: Starbucks Sausage Egg Cheddar Sandwich 🔍
-LOG:{"description":"Starbucks Sausage Egg Cheddar","calories":480,"protein_g":18.0,"carbs_g":34.0,"fat_g":29.0}
+Logged: Starbucks Sausage Sandwich 🔍
+LOG:{"display_name":"Starbucks Sausage Sandwich","description":"Sausage egg cheddar sandwich","calories":480,"protein_g":18.0,"carbs_g":34.0,"fat_g":29.0}
 
-Bad example (never do this):
-According to Starbucks official nutrition ([source](https://...)) the sandwich has 480 calories
-LOG:{"description":"...","calories":480,"protein_g":18.0,"carbs_g":34.0,"fat_g":29.0}`;
+Bad example (never do this — two macro lines):
+~580 cal · 53g P · 54g C · 17g
+~580 cal · 53g P · 100g C · 17g F`;
 
 // ── Prompt for anchor path (simple whole foods) ───────────────────────────────
 const FOOD_PROMPT_ANCHOR = `You are Calio, an AI nutrition assistant by TextCalio.
@@ -890,30 +1015,46 @@ For items NOT in the table: estimate using careful nutritional knowledge.
 
 RESPONSE FORMAT (always in this order):
 1. One short confirmation line only — never more than one line before LOG:
-   - Single item: "Logged: [food name]!"
-   - Multiple items: "Logged: [item1] + [item2]"
-   - Estimate with assumed portion: "~Logged: [food] (assumed [portion])"
+   - Single item: "Logged: [short clean name]"
+   - Multiple items: "Logged: [short clean name]"
+   - Estimate with assumed portion: "~Logged: [short clean name] (assumed [portion])"
 2. LOG line on its own line
 
-LOG:{"description":"Short name","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
+LOG:{"display_name":"Short Title-Case Name","description":"What user ate","calories":NNN,"protein_g":N.N,"carbs_g":N.N,"fat_g":N.N}
 
-RULES:
-- LOG line MUST start with LOG: at the beginning of a line
-- Valid JSON — no trailing text after the closing }
-- Numbers only inside the JSON, all 4 fields required
-- Sum ALL items mentioned into ONE log line
-- Include sauces, drinks, condiments, oils
-- Alcohol: 7 cal/gram of ethanol
-- The LOG line saves food to the database — never skip it
-- NEVER write ingredient breakdowns, per-item lists, or paragraph explanations before the LOG line
+CRITICAL RULES — break any of these and the log will be rejected:
+- Output exactly ONE LOG line per response. Never output two macro lines, alternate totals, or duplicate "g P · g C · g F" lines.
+- Honor the EXACT quantities and units the user gave. Examples:
+  • User says "200g uncooked extra lean ground beef" → use 200g uncooked. Do NOT halve, do NOT convert to cooked, do NOT round to 100g.
+  • User says "half cup pasta" → use 0.5 cup. Do NOT silently turn it into 1 cup.
+  • User says "2 eggs" → use 2 eggs. Do NOT log 1 or 3.
+- Cooked vs uncooked: if the user specifies, honor it. If ambiguous, pick the more common interpretation and briefly note the assumption.
+- LOG line MUST start with LOG: at the beginning of a line.
+- Valid JSON — no trailing text after the closing }.
+- All 6 fields required. Numbers only inside the JSON (no units like "g" or "cal").
+- display_name must be 2-4 words, Title Case, human-readable. Good: "Protein Oats", "Berry Protein Shake", "Beef Protein Pasta", "Chicken Rice Bowl", "Eggs & Bacon". Bad: "Oats, Milk & More", "Food item", "Logged".
+- description briefly captures what the user actually ate — the ingredient summary or short phrase.
+- Sum ALL items mentioned into ONE log entry.
+- Include sauces, drinks, condiments, oils in the totals.
+- Alcohol: 7 cal/gram of ethanol.
+- NEVER write ingredient breakdowns, per-item lists, or paragraph explanations before the LOG line.
 
 Correct example:
-Logged: 2 eggs + wheat toast!
-LOG:{"description":"2 eggs + wheat toast","calories":221,"protein_g":16.0,"carbs_g":15.5,"fat_g":11.1}
+Logged: Eggs & Toast
+LOG:{"display_name":"Eggs & Toast","description":"2 eggs + wheat toast","calories":221,"protein_g":16.0,"carbs_g":15.5,"fat_g":11.1}
 
 Correct example (estimate):
-~Logged: pasta marinara (assumed 2 cups cooked)
-LOG:{"description":"Pasta marinara","calories":520,"protein_g":14.0,"carbs_g":89.0,"fat_g":9.0}`;
+~Logged: Pasta Marinara (assumed 2 cups cooked)
+LOG:{"display_name":"Pasta Marinara","description":"Pasta with marinara sauce, ~2 cups","calories":520,"protein_g":14.0,"carbs_g":89.0,"fat_g":9.0}
+
+Correct example (oats shake):
+Logged: Protein Oats
+LOG:{"display_name":"Protein Oats","description":"Oats + 2% milk + whey + peanut butter + maple syrup","calories":428,"protein_g":42.0,"carbs_g":42.5,"fat_g":13.5}
+
+Bad example (NEVER do this — two macro lines):
+~Logged: Beef Protein Pasta
+~580 cal · 53g P · 54g C · 17g
+~580 cal · 53g P · 100g C · 17g F`;
 
 // ── Detect if message needs a real-time web lookup ────────────────────────────
 const SEARCH_PATTERNS = [
@@ -1107,6 +1248,59 @@ async function handleUpdateSavedMealFromLast(phone, message, name) {
   }
 
   const reply = `Updated '${meal.meal_name}' with your latest version. ✅\n${last.calories} cal · ${last.protein_g}g P · ${last.carbs_g}g C · ${last.fat_g}g F`;
+  await saveMessage(phone, 'user', message);
+  await saveMessage(phone, 'assistant', reply);
+  return reply;
+}
+
+// Apply a natural-language rename to a recently-saved meal. Updates the
+// saved_meals row so the dashboard reflects the new name on next refresh.
+async function handleNaturalRenameSavedMeal(phone, message, meal, newName) {
+  const titled = memory.titleCase(String(newName).trim());
+  const normalized = memory.normalizeMealName(titled);
+
+  if (!normalized) {
+    const reply = "What's the new name? Try 'rename it to morning shake'.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+  if (titled.toLowerCase() === (meal.meal_name || '').toLowerCase()) {
+    const reply = `'${meal.meal_name}' already has that name.`;
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  // Avoid clobbering another existing saved meal with the same name.
+  try {
+    const collision = await memory.findSavedMealByName(phone, titled);
+    if (collision && collision.id !== meal.id) {
+      const reply = `You already have a saved meal called '${collision.meal_name}'. Pick a different name?`;
+      await saveMessage(phone, 'user', message);
+      await saveMessage(phone, 'assistant', reply);
+      return reply;
+    }
+  } catch (e) {
+    // collision check failure is non-fatal; continue
+  }
+
+  try {
+    const { error } = await supabase
+      .from('saved_meals')
+      .update({ meal_name: titled, normalized_name: normalized, updated_at: new Date().toISOString() })
+      .eq('id', meal.id)
+      .eq('user_phone', phone);
+    if (error) throw error;
+  } catch (err) {
+    console.error('natural rename meal failed:', err);
+    const reply = "Couldn't rename that one — try again in a moment.";
+    await saveMessage(phone, 'user', message);
+    await saveMessage(phone, 'assistant', reply);
+    return reply;
+  }
+
+  const reply = `Renamed '${meal.meal_name}' to '${titled}' ✅ Next time, just text '${titled.toLowerCase()}'.`;
   await saveMessage(phone, 'user', message);
   await saveMessage(phone, 'assistant', reply);
   return reply;
@@ -1332,19 +1526,57 @@ async function handleFoodLog(phone, message, user) {
   // ── Pending Meal Memory suggestion response (yes / no / "call it X") ─────────
   // Only intercept if a pending suggestion exists — otherwise these words
   // continue to normal food logging or AI clarification.
-  const pendingSuggestion = await memory.getPendingSuggestion(phone);
+  // Belt-and-suspenders: any failure here MUST NOT block normal food logging.
+  let pendingSuggestion = null;
+  try {
+    pendingSuggestion = await memory.getPendingSuggestion(phone);
+  } catch (e) {
+    console.error('[meal-memory] getPendingSuggestion failed — continuing without it:', e.message);
+  }
   if (pendingSuggestion) {
     const parsedReply = memory.parseSuggestionResponse(message);
     if (parsedReply) {
-      return handlePendingSuggestionResponse(phone, message, user, pendingSuggestion, parsedReply);
+      try {
+        return await handlePendingSuggestionResponse(phone, message, user, pendingSuggestion, parsedReply);
+      } catch (e) {
+        console.error('[meal-memory] handlePendingSuggestionResponse failed — falling through:', e.message);
+      }
     }
+  }
+
+  // ── Natural rename of the most recent saved meal ─────────────────────────────
+  // Fires for phrases like "change the name to overnight oats", "rename it to X",
+  // "call it X", "make it X" — only when the user has a saved meal that was
+  // updated within the last 30 minutes (i.e. a fresh save/rename interaction).
+  // This fixes the bug where Calio said "Updated ✅" but the DB never changed.
+  try {
+    const newName = memory.parseNaturalRename(message);
+    if (newName) {
+      const recentMeal = await memory.getMostRecentSavedMeal(phone, 30 * 60 * 1000);
+      if (recentMeal) {
+        return await handleNaturalRenameSavedMeal(phone, message, recentMeal, newName);
+      }
+      // No recent saved meal — fall through; AI logging will respond.
+    }
+  } catch (e) {
+    console.error('[meal-memory] natural rename failed — falling through:', e.message);
   }
 
   // ── Saved-meal shortcut: exact normalized name match logs the saved meal ─────
   // Only matches if the entire message normalizes to a saved meal name.
-  const savedMatch = await memory.findSavedMealByText(phone, message);
+  // Wrapped so a missing-table or any other Meal Memory error never blocks food logging.
+  let savedMatch = null;
+  try {
+    savedMatch = await memory.findSavedMealByText(phone, message);
+  } catch (e) {
+    console.error('[meal-memory] findSavedMealByText failed — continuing without it:', e.message);
+  }
   if (savedMatch) {
-    return handleSavedMealShortcut(phone, message, user, savedMatch);
+    try {
+      return await handleSavedMealShortcut(phone, message, user, savedMatch);
+    } catch (e) {
+      console.error('[meal-memory] handleSavedMealShortcut failed — falling through to AI logging:', e.message);
+    }
   }
 
   // ── Natural correction: update the previous log instead of creating a new one ─
@@ -1374,67 +1606,90 @@ async function handleFoodLog(phone, message, user) {
   const history = await getHistory(phone, 10);
   await saveMessage(phone, 'user', message);
 
-  let reply;
-  let useSearch = needsWebSearch(message);
+  // ── Repeat-meal consistency: if the same user logged the exact same text
+  //     recently, reuse those macros instead of asking AI again. Cuts AI
+  //     calls for power users and keeps recurring meals consistent.
+  let reusedFromHistory = false;
+  let log = null;
+  try {
+    const recentMatch = await findRecentExactMatchLog(phone, message, 30);
+    if (recentMatch) {
+      console.log(`[consistency] reusing recent macros for ${phone} from log ${recentMatch.id}`);
+      log = {
+        display_name: recentMatch.food_description,
+        description:  recentMatch.food_description,
+        calories:     recentMatch.calories,
+        protein_g:    recentMatch.protein_g,
+        carbs_g:      recentMatch.carbs_g,
+        fat_g:        recentMatch.fat_g
+      };
+      reusedFromHistory = true;
+    }
+  } catch (e) {
+    console.warn('[consistency] lookup failed — continuing with AI:', e.message);
+  }
 
-  if (useSearch) {
-    // ── Web search path: restaurant chains, branded products ────────────────
-    try {
-      console.log('Using web search for:', message.slice(0, 60));
-      const response = await openai.responses.create({
+  let reply;
+  if (!reusedFromHistory) {
+    let useSearch = needsWebSearch(message);
+
+    if (useSearch) {
+      // ── Web search path: restaurant chains, branded products ────────────────
+      try {
+        console.log('Using web search for:', message.slice(0, 60));
+        const response = await openai.responses.create({
+          model: 'gpt-4o',
+          tools: [{ type: 'web_search_preview' }],
+          instructions: FOOD_PROMPT_SEARCH,
+          input: [
+            // Include recent conversation context
+            ...history.slice(-6).map(h => ({ role: h.role, content: h.content })),
+            { role: 'user', content: message }
+          ],
+        });
+        reply = response.output_text || '';
+        console.log('Web search reply received, length:', reply.length);
+      } catch (searchErr) {
+        console.error('Web search failed, falling back to anchor path:', searchErr.message);
+        // Fall through to anchor path below
+        useSearch = false;
+      }
+    }
+
+    if (!useSearch || !reply) {
+      // ── Anchor path: whole foods, simple items, fallback ────────────────────
+      const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
-        tools: [{ type: 'web_search_preview' }],
-        instructions: FOOD_PROMPT_SEARCH,
-        input: [
-          // Include recent conversation context
-          ...history.slice(-6).map(h => ({ role: h.role, content: h.content })),
+        messages: [
+          { role: 'system', content: FOOD_PROMPT_ANCHOR },
+          ...history.map(h => ({ role: h.role, content: h.content })),
           { role: 'user', content: message }
         ],
+        max_tokens: 300,
+        temperature: 0.2
       });
-      reply = response.output_text || '';
-      console.log('Web search reply received, length:', reply.length);
-    } catch (searchErr) {
-      console.error('Web search failed, falling back to anchor path:', searchErr.message);
-      // Fall through to anchor path below
-      useSearch = false;
+      reply = completion.choices[0].message.content.trim();
     }
-  }
 
-  if (!useSearch || !reply) {
-    // ── Anchor path: whole foods, simple items, fallback ────────────────────
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: FOOD_PROMPT_ANCHOR },
-        ...history.map(h => ({ role: h.role, content: h.content })),
-        { role: 'user', content: message }
-      ],
-      max_tokens: 300,
-      temperature: 0.2
-    });
-    reply = completion.choices[0].message.content.trim();
+    log = parseLogLine(reply);
   }
-
-  const log = parseLogLine(reply);
 
   if (log) {
-    const savedLog = await saveFoodLog(phone, log);
+    // Build the canonical, sanitized log row (display name + reconciled macros)
+    const finalized = buildFinalLog(log, message);
+    const savedLog  = await saveFoodLog(phone, {
+      description: finalized.description,
+      calories:    finalized.calories,
+      protein_g:   finalized.protein_g,
+      carbs_g:     finalized.carbs_g,
+      fat_g:       finalized.fat_g
+    });
     await updateStreak(phone, user);
 
-    const tracked    = user.tracked_macros || ['protein', 'carbs', 'fat'];
-    const rawBefore  = reply.slice(0, reply.indexOf('LOG:')).trim();
-    const textBefore = stripCitations(rawBefore)
-      .split('\n').filter(l => l.trim()).slice(0, 2).join('\n');
-    const macroParts = [
-      `~${Math.round(log.calories)} cal`,
-      tracked.includes('protein') ? `${log.protein_g}g P` : null,
-      tracked.includes('carbs')   ? `${log.carbs_g}g C`   : null,
-      tracked.includes('fat')     ? `${log.fat_g}g F`     : null
-    ].filter(Boolean).join(' · ');
-
-    const confirm = textBefore
-      ? `${textBefore}\n${macroParts}`
-      : `Logged: ${log.description}\n${macroParts}`;
+    // SMS confirm is built from the SAVED row only — never from the AI's
+    // free text. Eliminates duplicate / conflicting macro lines.
+    const useSearchEmoji = !reusedFromHistory && reply && reply.includes('🔍');
+    const confirm = buildConfirmSms(savedLog, user, { searchEmoji: useSearchEmoji });
 
     // Best-effort: detect repeated meals and append a save suggestion.
     // Never block the food log if this fails.
