@@ -28,7 +28,11 @@ module.exports = async (req, res) => {
       phone, email, priceId,
       name, goal, gender, age,
       weight, height, units, activityLevel,
-      targetWeight, pace
+      targetWeight,
+      // Optional fields — added in 2026-05 update; safe to omit:
+      pace,                  // 'easy' | 'standard' | 'faster' | 'lean' (gain) — controls calorie delta
+      secondaryGoals,        // array of strings — UI personalization only
+      pastTracking           // string — UI personalization only
     } = body;
 
     // Validate required fields (email is optional — not collected in signup form)
@@ -41,7 +45,8 @@ module.exports = async (req, res) => {
     const normalized = digits.startsWith('1') ? `+${digits}` : `+1${digits}`;
 
     // Calculate macros server-side (same formula as macros.js).
-    // pace is optional — if missing/invalid, falls back to standard defaults.
+    // `pace` is optional — when omitted, defaults to the previous behaviour
+    // (-500 cal for lose, +300 cal for gain) so existing callers/back-compat preserved.
     const macros = calculateMacros({
       gender, weight: parseFloat(weight), height: parseFloat(height),
       age: parseInt(age), activityLevel, goal, units, pace
@@ -128,11 +133,14 @@ module.exports = async (req, res) => {
           height:         String(height),
           units,
           activityLevel,
-          pace:           pace ? String(pace) : 'standard',
           calories:       String(macros.calories),
           protein:        String(macros.protein),
           carbs:          String(macros.carbs),
-          fat:            String(macros.fat)
+          fat:            String(macros.fat),
+          // Optional new fields — empty strings preserve back-compat
+          pace:                pace || '',
+          secondaryGoals:      Array.isArray(secondaryGoals) ? secondaryGoals.join(',') : '',
+          pastTracking:        pastTracking || ''
         }
       },
       customer_update: { address: 'auto' },
